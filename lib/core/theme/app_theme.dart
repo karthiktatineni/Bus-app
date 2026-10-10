@@ -26,7 +26,6 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         onPrimary: onPrimaryColor,
-        background: background,
         surface: surface,
         surfaceContainerHighest: surfaceMuted,
         error: danger,
@@ -49,7 +48,7 @@ class AppTheme {
         labelMedium: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary),
         labelSmall: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 10, fontWeight: FontWeight.w500, color: textSecondary),
       ),
-      cardTheme: const CardTheme(
+      cardTheme: const CardThemeData(
         elevation: 0,
         color: surface,
         margin: EdgeInsets.all(0),
