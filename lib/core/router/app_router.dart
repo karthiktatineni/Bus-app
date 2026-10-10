@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'app_router.g.dart';
+import '../theme/app_theme.dart';
 
 enum AppRoute {
   login,
   dashboard,
 }
 
-@riverpod
-GoRouter goRouter(GoRouterRef ref) {
+final goRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
     routes: [
@@ -30,4 +29,4 @@ GoRouter goRouter(GoRouterRef ref) {
       ),
     ],
   );
-}
+});

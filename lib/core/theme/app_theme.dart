@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Brand Colors
@@ -24,7 +23,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: primaryColor,
         onPrimary: onPrimaryColor,
         background: background,
@@ -34,19 +33,21 @@ class AppTheme {
         onSurface: textPrimary,
       ),
       scaffoldBackgroundColor: background,
-      textTheme: GoogleFonts.hankenGroteskTextTheme().copyWith(
-        displayLarge: GoogleFonts.hankenGrotesk(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary),
-        displayMedium: GoogleFonts.hankenGrotesk(fontSize: 22, fontWeight: FontWeight.w600, color: textPrimary),
-        displaySmall: GoogleFonts.hankenGrotesk(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
-        titleLarge: GoogleFonts.hankenGrotesk(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
-        titleMedium: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
-        bodyLarge: GoogleFonts.hankenGrotesk(fontSize: 15, fontWeight: FontWeight.w400, color: textPrimary),
-        bodyMedium: GoogleFonts.hankenGrotesk(fontSize: 13, fontWeight: FontWeight.w400, color: textPrimary),
-        bodySmall: GoogleFonts.hankenGrotesk(fontSize: 11, fontWeight: FontWeight.w400, color: textPrimary),
-        // JetBrains Mono mappings for data/labels
-        labelLarge: GoogleFonts.jetbrainsMono(fontSize: 13, fontWeight: FontWeight.w500, color: textSecondary),
-        labelMedium: GoogleFonts.jetbrainsMono(fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary),
-        labelSmall: GoogleFonts.jetbrainsMono(fontSize: 10, fontWeight: FontWeight.w500, color: textSecondary),
+      // Using local font family (Hanken Grotesk and JetBrains Mono)
+      fontFamily: 'HankenGrotesk',
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary),
+        displayMedium: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textPrimary),
+        displaySmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
+        titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+        titleMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+        bodyLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: textPrimary),
+        bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: textPrimary),
+        bodySmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: textPrimary),
+        // Data labels mapped to JetBrainsMono via fontFamily override in specific widgets
+        labelLarge: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 13, fontWeight: FontWeight.w500, color: textSecondary),
+        labelMedium: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary),
+        labelSmall: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 10, fontWeight: FontWeight.w500, color: textSecondary),
       ),
       cardTheme: const CardTheme(
         elevation: 0,
@@ -66,7 +67,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          textStyle: GoogleFonts.hankenGrotesk(fontSize: 14, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'HankenGrotesk'),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -95,7 +96,6 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
-    // Basic dark theme placeholder - to be refined in later milestone
     return ThemeData(
       useMaterial3: true,
       colorScheme: const ColorScheme.dark(
