@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../mock/mock_data.dart';
 import '../../../mock/mock_delay.dart';
@@ -80,7 +79,3 @@ class MockUserRepository implements UserRepository {
     _users.removeAt(index);
   }
 }
-
-final userRepositoryProvider = Provider<UserRepository>((ref) {
-  return MockUserRepository();
-});

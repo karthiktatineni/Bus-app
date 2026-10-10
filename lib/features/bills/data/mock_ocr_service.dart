@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../mock/mock_delay.dart';
 import '../domain/ocr_service.dart';
 
@@ -34,7 +33,3 @@ class MockOcrService implements OcrService {
     );
   }
 }
-
-final ocrServiceProvider = Provider<OcrService>((ref) {
-  return MockOcrService();
-});

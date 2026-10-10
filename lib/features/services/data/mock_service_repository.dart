@@ -1,15 +1,20 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../mock/mock_data.dart';
 import '../../../mock/mock_delay.dart';
 import '../domain/service_record.dart';
 import '../domain/maintenance_task.dart';
+import '../domain/service_schedule.dart';
 import '../domain/service_repository.dart';
 
 class MockServiceRepository implements ServiceRepository {
   final List<ServiceRecord> _services = MockData.generateServiceRecords();
-  final List<MaintenanceTask> _tasks = MockData.generateTasks();
+  final List<ServiceSchedule> _schedules = MockData.generateSchedules();
+  late final List<MaintenanceTask> _tasks;
+
+  MockServiceRepository() {
+    _tasks = MockData.generateTasks(schedules: _schedules);
+  }
 
   @override
   Future<List<ServiceRecord>> listAll({String? vehicleId}) async {
@@ -42,6 +47,16 @@ class MockServiceRepository implements ServiceRepository {
 
     await MockDelay.simulate();
     _services.insert(0, r);
+
+    // If this service was for a schedule, advance the schedule's cycle
+    final scheduleIndex = _schedules.indexWhere((s) => s.vehicleId == r.vehicleId);
+    if (scheduleIndex != -1) {
+      _schedules[scheduleIndex] = _schedules[scheduleIndex].cycleCompleted(
+        completedDate: r.date,
+        completedKm: r.odometerKm,
+      );
+    }
+
     return r;
   }
 
@@ -67,14 +82,51 @@ class MockServiceRepository implements ServiceRepository {
     if (index == -1) {
       throw NotFoundException('Task with ID $taskId not found.');
     }
-    _tasks[index] = _tasks[index].copyWith(
+
+    final task = _tasks[index];
+    _tasks[index] = task.copyWith(
       isDone: done,
       completedAt: done ? DateTime.now() : null,
       completedBy: done ? 'usr-001' : null,
     );
+
+    // Advance schedule if task was linked to a schedule
+    if (done && task.scheduleId != null) {
+      final scheduleIndex = _schedules.indexWhere((s) => s.id == task.scheduleId);
+      if (scheduleIndex != -1) {
+        final currentSchedule = _schedules[scheduleIndex];
+        _schedules[scheduleIndex] = currentSchedule.cycleCompleted(
+          completedDate: DateTime.now(),
+          completedKm: currentSchedule.nextDueKm,
+        );
+      }
+    }
+  }
+
+  @override
+  Future<List<ServiceSchedule>> listSchedules({String? vehicleId}) async {
+    await MockDelay.simulate();
+    if (vehicleId != null) {
+      return _schedules.where((s) => s.vehicleId == vehicleId).toList();
+    }
+    return List.unmodifiable(_schedules);
+  }
+
+  @override
+  Future<ServiceSchedule> createSchedule(ServiceSchedule s) async {
+    await MockDelay.simulate();
+    _schedules.add(s);
+    return s;
+  }
+
+  @override
+  Future<ServiceSchedule> updateSchedule(ServiceSchedule s) async {
+    await MockDelay.simulate();
+    final index = _schedules.indexWhere((item) => item.id == s.id);
+    if (index == -1) {
+      throw NotFoundException('Schedule with ID ${s.id} not found.');
+    }
+    _schedules[index] = s;
+    return s;
   }
 }
-
-final serviceRepositoryProvider = Provider<ServiceRepository>((ref) {
-  return MockServiceRepository();
-});

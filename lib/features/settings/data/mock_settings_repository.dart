@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../mock/mock_delay.dart';
 import '../domain/user_settings.dart';
 import '../domain/company_settings.dart';
@@ -38,7 +37,3 @@ class MockSettingsRepository implements SettingsRepository {
     _companySettings = s;
   }
 }
-
-final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
-  return MockSettingsRepository();
-});

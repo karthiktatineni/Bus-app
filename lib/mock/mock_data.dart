@@ -4,6 +4,7 @@ import '../features/vehicles/domain/vehicle_document.dart';
 import '../features/vehicles/domain/vehicle_status.dart';
 import '../features/services/domain/service_record.dart';
 import '../features/services/domain/maintenance_task.dart';
+import '../features/services/domain/service_schedule.dart';
 import '../features/bills/domain/bill.dart';
 import '../features/settings/domain/user_settings.dart';
 import '../features/settings/domain/company_settings.dart';
@@ -632,87 +633,103 @@ class MockData {
   }
 
   // ---------------------------------------------------------
-  // MAINTENANCE TASKS (Due soon, Overdue, Scheduled)
+  // SERVICE SCHEDULES (Intervals: km and months)
   // ---------------------------------------------------------
-  static List<MaintenanceTask> generateTasks() {
-    return [
-      MaintenanceTask(
-        id: 'tsk-001',
-        vehicleId: 'veh-003',
-        title: 'PUC Renewal & Emission Test (Overdue)',
-        dueDate: now.subtract(const Duration(days: 4)),
-        isDone: false,
-        scheduleId: 'sch-puc-3',
-      ),
-      MaintenanceTask(
-        id: 'tsk-002',
-        vehicleId: 'veh-003',
-        title: 'Annual Fitness Certificate (FC) Renewal',
-        dueDate: now.subtract(const Duration(days: 12)),
-        isDone: false,
-        scheduleId: 'sch-fc-3',
-      ),
-      MaintenanceTask(
-        id: 'tsk-003',
-        vehicleId: 'veh-002',
-        title: 'Annual Fitness Test Inspection',
-        dueDate: now.add(const Duration(days: 8)),
-        isDone: false,
-        scheduleId: 'sch-fc-2',
-      ),
-      MaintenanceTask(
-        id: 'tsk-004',
-        vehicleId: 'veh-002',
-        title: 'Comprehensive Insurance Policy Renewal',
-        dueDate: now.add(const Duration(days: 18)),
-        isDone: false,
-        scheduleId: 'sch-ins-2',
-      ),
-      MaintenanceTask(
-        id: 'tsk-005',
-        vehicleId: 'veh-006',
-        title: 'Third Party + Collision Insurance Renewal',
-        dueDate: now.add(const Duration(days: 6)),
-        isDone: false,
-        scheduleId: 'sch-ins-6',
-      ),
-      MaintenanceTask(
-        id: 'tsk-006',
-        vehicleId: 'veh-001',
-        title: '150,000 km Scheduled Oil & Fluid Service',
-        dueDate: now.add(const Duration(days: 14)),
-        dueKm: 150000,
-        isDone: false,
-        scheduleId: 'sch-oil-1',
-      ),
-      MaintenanceTask(
-        id: 'tsk-007',
-        vehicleId: 'veh-004',
-        title: 'Clutch Actuator Calibration & Road Test',
-        dueDate: now.add(const Duration(days: 2)),
-        isDone: false,
-        scheduleId: 'sch-ws-4',
-      ),
-      MaintenanceTask(
-        id: 'tsk-008',
-        vehicleId: 'veh-005',
-        title: 'Brake Pad Thickness & Air Line Pressure Check',
-        dueDate: now.add(const Duration(days: 10)),
-        isDone: false,
-        scheduleId: 'sch-brk-5',
-      ),
-      // Completed task
-      MaintenanceTask(
-        id: 'tsk-009',
-        vehicleId: 'veh-001',
-        title: 'Speed Governor Calibration Certificate',
-        dueDate: now.subtract(const Duration(days: 20)),
-        isDone: true,
-        completedAt: now.subtract(const Duration(days: 19)),
-        completedBy: 'usr-003',
-        scheduleId: 'sch-gov-1',
-      ),
-    ];
+  static List<ServiceSchedule> generateSchedules() {
+    final schedules = <ServiceSchedule>[];
+    for (int i = 1; i <= 10; i++) {
+      final vehId = 'veh-${i.toString().padLeft(3, '0')}';
+      final baseOdo = 35000 + (i * 25000);
+
+      schedules.addAll([
+        ServiceSchedule(
+          id: 'sch-oil-$i',
+          vehicleId: vehId,
+          taskName: 'Engine Oil & Filter Service',
+          intervalKm: 10000,
+          intervalMonths: 3,
+          lastDoneDate: now.subtract(Duration(days: 15 + (i * 8))),
+          lastDoneKm: baseOdo - 7500,
+        ),
+        ServiceSchedule(
+          id: 'sch-brk-$i',
+          vehicleId: vehId,
+          taskName: 'Brake Overhaul & Lining Check',
+          intervalKm: 20000,
+          intervalMonths: 6,
+          lastDoneDate: now.subtract(Duration(days: 60 + (i * 12))),
+          lastDoneKm: baseOdo - 16000,
+        ),
+        ServiceSchedule(
+          id: 'sch-clutch-$i',
+          vehicleId: vehId,
+          taskName: 'Clutch & Transmission Inspection',
+          intervalKm: 40000,
+          intervalMonths: 12,
+          lastDoneDate: now.subtract(Duration(days: 180 + (i * 15))),
+          lastDoneKm: baseOdo - 35000,
+        ),
+      ]);
+    }
+    return schedules;
+  }
+
+  // ---------------------------------------------------------
+  // MAINTENANCE TASKS (Calculated from schedules + statutory deadlines)
+  // ---------------------------------------------------------
+  static List<MaintenanceTask> generateTasks({List<Vehicle>? vehicles, List<ServiceSchedule>? schedules}) {
+    final vehList = vehicles ?? generateVehicles();
+    final schedList = schedules ?? generateSchedules();
+    final tasks = <MaintenanceTask>[];
+
+    int taskCounter = 1;
+
+    // 1. Calculate tasks from schedules
+    for (final schedule in schedList) {
+      final vehicle = vehList.firstWhere(
+        (v) => v.id == schedule.vehicleId,
+        orElse: () => vehList.first,
+      );
+
+      final nextDueKm = schedule.nextDueKm;
+      final nextDueDate = schedule.nextDueDate;
+      final isDueByKm = vehicle.odometerKm >= nextDueKm;
+      final daysDiff = nextDueDate.difference(now).inDays;
+
+      // Include in task list if due soon (within 20 days) or due by km or overdue
+      if (isDueByKm || daysDiff <= 20) {
+        tasks.add(
+          schedule.generateTask(
+            taskId: 'tsk-${taskCounter.toString().padLeft(3, '0')}',
+            currentOdometerKm: vehicle.odometerKm,
+            currentDate: now,
+          ),
+        );
+        taskCounter++;
+      }
+    }
+
+    // 2. Add statutory document tasks (PUC, Fitness, Insurance)
+    for (final vehicle in vehList) {
+      for (final doc in vehicle.documents) {
+        final daysDiff = doc.expiryDate.difference(now).inDays;
+        if (daysDiff <= 20) {
+          tasks.add(
+            MaintenanceTask(
+              id: 'tsk-${taskCounter.toString().padLeft(3, '0')}',
+              vehicleId: vehicle.id,
+              title: '${doc.type.label} Renewal (${vehicle.registrationNo})',
+              dueDate: doc.expiryDate,
+              isDone: false,
+              scheduleId: 'sch-doc-${doc.id}',
+            ),
+          );
+          taskCounter++;
+        }
+      }
+    }
+
+    return tasks;
   }
 
   static UserSettings defaultUserSettings = const UserSettings();

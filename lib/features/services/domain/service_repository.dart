@@ -1,5 +1,6 @@
 import 'service_record.dart';
 import 'maintenance_task.dart';
+import 'service_schedule.dart';
 
 abstract class ServiceRepository {
   Future<List<ServiceRecord>> listAll({String? vehicleId});
@@ -7,4 +8,7 @@ abstract class ServiceRepository {
   Future<ServiceRecord> create(ServiceRecord r);
   Future<List<MaintenanceTask>> upcomingTasks({int withinDays = 14});
   Future<void> setTaskDone(String taskId, bool done);
+  Future<List<ServiceSchedule>> listSchedules({String? vehicleId});
+  Future<ServiceSchedule> createSchedule(ServiceSchedule s);
+  Future<ServiceSchedule> updateSchedule(ServiceSchedule s);
 }

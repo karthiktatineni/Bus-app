@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../mock/mock_data.dart';
 import '../../../mock/mock_delay.dart';
@@ -68,7 +67,3 @@ class MockAuthRepository implements AuthRepository {
     return _currentUser;
   }
 }
-
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return MockAuthRepository();
-});

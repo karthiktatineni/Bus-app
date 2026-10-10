@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../mock/mock_data.dart';
 import '../../../mock/mock_delay.dart';
@@ -68,7 +67,3 @@ class MockVehicleRepository implements VehicleRepository {
     _vehicles.removeAt(index);
   }
 }
-
-final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
-  return MockVehicleRepository();
-});

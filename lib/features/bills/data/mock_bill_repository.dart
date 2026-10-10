@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../mock/mock_data.dart';
 import '../../../mock/mock_delay.dart';
@@ -75,7 +74,3 @@ class MockBillRepository implements BillRepository {
     _bills.removeAt(index);
   }
 }
-
-final billRepositoryProvider = Provider<BillRepository>((ref) {
-  return MockBillRepository();
-});

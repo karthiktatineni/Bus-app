@@ -10,8 +10,17 @@ import 'package:bus_app/features/bills/data/mock_bill_repository.dart';
 import 'package:bus_app/features/bills/data/mock_ocr_service.dart';
 import 'package:bus_app/features/users/data/mock_user_repository.dart';
 import 'package:bus_app/features/settings/data/mock_settings_repository.dart';
+import 'package:bus_app/mock/mock_delay.dart';
 
 void main() {
+  setUpAll(() {
+    MockDelay.enableDelays = false;
+  });
+
+  tearDownAll(() {
+    MockDelay.enableDelays = true;
+  });
+
   group('MockAuthRepository Tests', () {
     late MockAuthRepository repo;
 
