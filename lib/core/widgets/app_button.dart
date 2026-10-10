@@ -6,6 +6,7 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isSecondary;
   final bool isDestructive;
+  final bool isLoading;
 
   const AppButton({
     super.key,
@@ -13,6 +14,7 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.isSecondary = false,
     this.isDestructive = false,
+    this.isLoading = false,
   });
 
   @override
@@ -30,13 +32,22 @@ class AppButton extends StatelessWidget {
     }
 
     return ElevatedButton(
-      onPressed: onPressed,
+      onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: bg,
         foregroundColor: fg,
         side: border,
       ),
-      child: Text(text),
+      child: isLoading
+          ? SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: isSecondary ? AppTheme.primaryColor : AppTheme.onPrimaryColor,
+              ),
+            )
+          : Text(text),
     );
   }
 }
