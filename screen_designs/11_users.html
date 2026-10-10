@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Users &amp; Roles - FleetTrack Maintenance</title>
+<!-- Google Fonts: Hanken Grotesk & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS with Forms and Container Queries -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-fixed": "#131c28",
+            "inverse-on-surface": "#edf0ff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#141b2b",
+            "primary-fixed-dim": "#a0c9ff",
+            "surface-container-high": "#e1e8fd",
+            "tertiary-fixed-dim": "#b1c5ff",
+            "outline-variant": "#c2c7d1",
+            "tertiary-container": "#0044a7",
+            "surface-bright": "#f9f9ff",
+            "on-tertiary-fixed": "#001847",
+            "inverse-primary": "#a0c9ff",
+            "secondary-fixed": "#dae3f4",
+            "primary": "#00355f",
+            "on-secondary-fixed-variant": "#3e4755",
+            "on-surface-variant": "#42474f",
+            "on-primary-fixed": "#001c37",
+            "secondary-container": "#dae3f4",
+            "primary-container": "#0f4c81",
+            "on-tertiary-container": "#9fb9ff",
+            "surface-container-low": "#f1f3ff",
+            "error-container": "#ffdad6",
+            "background": "#f9f9ff",
+            "secondary-fixed-dim": "#bec7d7",
+            "outline": "#727780",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed-variant": "#07497d",
+            "on-tertiary-fixed-variant": "#0040a0",
+            "surface": "#f9f9ff",
+            "on-secondary-container": "#5c6573",
+            "surface-tint": "#2d6197",
+            "on-background": "#141b2b",
+            "surface-container": "#e9edff",
+            "secondary": "#565f6d",
+            "on-primary-container": "#8ebdf9",
+            "surface-dim": "#d3daef",
+            "on-tertiary": "#ffffff",
+            "tertiary": "#002f79",
+            "tertiary-fixed": "#dae2ff",
+            "surface-variant": "#dce2f7",
+            "primary-fixed": "#d2e4ff",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#dce2f7",
+            "on-error-container": "#93000a",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "inverse-surface": "#293040"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1rem",
+            "space-xs": "0.25rem",
+            "gutter": "0.75rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Hanken Grotesk"],
+            "body-lg": ["Hanken Grotesk"],
+            "title-md": ["Hanken Grotesk"],
+            "label-lg": ["JetBrains Mono"],
+            "body-sm": ["Hanken Grotesk"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Hanken Grotesk"],
+            "headline-lg": ["Hanken Grotesk"],
+            "label-md": ["JetBrains Mono"],
+            "title-sm": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "body-lg": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "title-md": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+            "label-lg": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "body-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}],
+            "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "title-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+            "headline-md": ["22px", {"lineHeight": "28px", "fontWeight": "600"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-family: 'Material Symbols Outlined';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 20px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    body {
+      background-color: #F6F7F9;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex justify-center selection:bg-primary selection:text-on-primary">
+<!-- Mobile Viewport Canvas: 390px x 844px strict operational shell -->
+<div class="w-full max-w-[390px] min-h-[844px] bg-background flex flex-col relative border-x border-outline-variant">
+<!-- Top Status / Depot Meta Band -->
+<header class="sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant">
+<!-- TopAppBar with Leading Back Action & Trailing Quick Tools -->
+<div class="flex items-center justify-between px-space-lg h-14 w-full">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Go back" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-surface-container text-on-surface-variant transition-colors duration-150 active:opacity-80" type="button">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div>
+<h1 class="text-title-md font-title-md text-on-surface tracking-tight leading-none">Users &amp; Roles</h1>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container inline-block"></span>
+<span class="text-label-sm font-label-sm text-secondary uppercase tracking-wider">Depot: Bengaluru Central</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Depot filter" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-surface-container text-secondary transition-colors duration-150 active:opacity-80" type="button">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+</button>
+<button aria-label="Audit history" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-surface-container text-secondary transition-colors duration-150 active:opacity-80" type="button">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+</div>
+</div>
+<!-- Quick Metrics Counter Strip -->
+<div class="grid grid-cols-3 border-t border-outline-variant bg-surface-container-low px-space-md py-space-xs">
+<div class="flex flex-col px-space-xs">
+<span class="text-label-sm font-label-sm text-secondary">Depot Total</span>
+<span class="text-title-sm font-title-sm text-on-surface font-semibold font-label-lg">05 Members</span>
+</div>
+<div class="flex flex-col px-space-xs border-l border-outline-variant">
+<span class="text-label-sm font-label-sm text-secondary">Active Shift</span>
+<span class="text-title-sm font-title-sm text-on-surface font-semibold font-label-lg">04 On-duty</span>
+</div>
+<div class="flex flex-col px-space-xs border-l border-outline-variant">
+<span class="text-label-sm font-label-sm text-secondary">Bays Staffed</span>
+<span class="text-title-sm font-title-sm text-on-surface font-semibold font-label-lg">3 / 4 In-use</span>
+</div>
+</div>
+</header>
+<!-- Main Scrollable Content Canvas -->
+<main class="flex-1 px-space-lg pt-space-md pb-28 space-y-space-md overflow-y-auto">
+<!-- Search Field Component -->
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-[18px]" data-icon="search">search</span>
+</div>
+<input class="w-full h-10 pl-9 pr-8 text-body-md font-body-md rounded-lg bg-surface-container-lowest border border-outline-variant text-on-surface placeholder:text-secondary focus:border-primary-container focus:ring-0 focus:outline-none transition-colors" placeholder="Search depot personnel or email..." type="text"/>
+<button class="absolute inset-y-0 right-0 pr-3 flex items-center text-secondary hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="tune">tune</span>
+</button>
+</div>
+<!-- Segmented Role Filter Chips -->
+<div class="flex items-center gap-space-xs overflow-x-auto pb-0.5 no-scrollbar">
+<button class="px-space-md py-1 rounded-[6px] text-label-md font-label-md bg-primary-container text-on-primary font-medium tracking-tight whitespace-nowrap border border-primary-container" type="button">
+          All (5)
+        </button>
+<button class="px-space-md py-1 rounded-[6px] text-label-md font-label-md bg-surface-container-lowest text-secondary font-medium tracking-tight whitespace-nowrap border border-outline-variant hover:bg-surface-container transition-colors" type="button">
+          Admins (2)
+        </button>
+<button class="px-space-md py-1 rounded-[6px] text-label-md font-label-md bg-surface-container-lowest text-secondary font-medium tracking-tight whitespace-nowrap border border-outline-variant hover:bg-surface-container transition-colors" type="button">
+          Staff (3)
+        </button>
+</div>
+<!-- Section Label & Metric Indicator -->
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="manage_accounts">manage_accounts</span>
+<span class="text-label-md font-label-md text-on-surface-variant font-medium uppercase tracking-wider">Registered Personnel</span>
+</div>
+<span class="text-label-sm font-label-sm text-secondary bg-surface-container px-2 py-0.5 rounded-[4px]">Depot Level Access</span>
+</div>
+<!-- User List: 1px crisp structural cards -->
+<div class="space-y-space-sm">
+<!-- User Card 1: Rajesh Sharma (Admin / Active) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md transition-colors hover:border-primary">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-start gap-space-md min-w-0">
+<!-- Avatar circle -->
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-lg font-semibold flex-shrink-0 tracking-tight">
+                RS
+              </div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-2">
+<h2 class="text-title-sm font-title-sm text-on-surface font-semibold truncate leading-tight">Rajesh Sharma</h2>
+<span class="px-1.5 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-primary-container text-on-primary font-bold uppercase tracking-wider">
+                    ADMIN
+                  </span>
+</div>
+<p class="text-label-md font-label-md text-secondary truncate mt-0.5">admin@demo.com</p>
+</div>
+</div>
+<!-- Trailing Action -->
+<button aria-label="Manage Rajesh Sharma" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1 text-label-md font-label-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="garage">garage</span>
+<span class="truncate">Bay 04 • Shift Lead</span>
+</div>
+<!-- Status Badge: Operational Active -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#157347]"></span>
+              Active
+            </span>
+</div>
+</article>
+<!-- User Card 2: Arun Kumar (Staff / Active) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md transition-colors hover:border-primary">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-start gap-space-md min-w-0">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-label-lg font-semibold flex-shrink-0 tracking-tight">
+                AK
+              </div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-2">
+<h2 class="text-title-sm font-title-sm text-on-surface font-semibold truncate leading-tight">Arun Kumar</h2>
+<span class="px-1.5 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-surface-container text-on-secondary-container font-semibold uppercase tracking-wider border border-outline-variant">
+                    STAFF
+                  </span>
+</div>
+<p class="text-label-md font-label-md text-secondary truncate mt-0.5">arun.k@fleetdepot.in</p>
+</div>
+</div>
+<button aria-label="Manage Arun Kumar" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1 text-label-md font-label-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="garage">garage</span>
+<span class="truncate">Bay 02 • Senior Mechanic</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#157347]"></span>
+              Active
+            </span>
+</div>
+</article>
+<!-- User Card 3: Vikram Singh (Staff / Invited) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md transition-colors hover:border-primary">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-start gap-space-md min-w-0">
+<div class="w-10 h-10 rounded-full bg-surface-container text-secondary flex items-center justify-center font-label-lg font-semibold flex-shrink-0 tracking-tight border border-outline-variant">
+                VS
+              </div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-2">
+<h2 class="text-title-sm font-title-sm text-on-surface font-semibold truncate leading-tight">Vikram Singh</h2>
+<span class="px-1.5 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-surface-container text-on-secondary-container font-semibold uppercase tracking-wider border border-outline-variant">
+                    STAFF
+                  </span>
+</div>
+<p class="text-label-md font-label-md text-secondary truncate mt-0.5">staff@demo.com</p>
+</div>
+</div>
+<button aria-label="Manage Vikram Singh" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1 text-label-md font-label-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="garage">garage</span>
+<span class="truncate">Bay 01 • Technician</span>
+</div>
+<!-- Status Badge: Invited/Pending -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-[#FFF4E5] text-[#B26A00] border border-[#FFD599] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#B26A00]"></span>
+              Invited
+            </span>
+</div>
+</article>
+<!-- User Card 4: Meera Patel (Admin / Active) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md transition-colors hover:border-primary">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-start gap-space-md min-w-0">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-lg font-semibold flex-shrink-0 tracking-tight">
+                MP
+              </div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-2">
+<h2 class="text-title-sm font-title-sm text-on-surface font-semibold truncate leading-tight">Meera Patel</h2>
+<span class="px-1.5 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-primary-container text-on-primary font-bold uppercase tracking-wider">
+                    ADMIN
+                  </span>
+</div>
+<p class="text-label-md font-label-md text-secondary truncate mt-0.5">meera.p@fleetdepot.in</p>
+</div>
+</div>
+<button aria-label="Manage Meera Patel" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1 text-label-md font-label-md text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="garage">garage</span>
+<span class="truncate">Depot HQ • Inventory Lead</span>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-[#157347]"></span>
+              Active
+            </span>
+</div>
+</article>
+<!-- User Card 5: Suresh K (Staff / Disabled) -->
+<article class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md transition-colors opacity-85 hover:border-primary">
+<div class="flex items-start justify-between gap-space-sm">
+<div class="flex items-start gap-space-md min-w-0">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest text-secondary flex items-center justify-center font-label-lg font-semibold flex-shrink-0 tracking-tight">
+                SK
+              </div>
+<div class="min-w-0 flex-1">
+<div class="flex items-center gap-2">
+<h2 class="text-title-sm font-title-sm text-on-surface font-semibold truncate leading-tight">Suresh K</h2>
+<span class="px-1.5 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-surface-container text-secondary font-semibold uppercase tracking-wider border border-outline-variant">
+                    STAFF
+                  </span>
+</div>
+<p class="text-label-md font-label-md text-secondary truncate mt-0.5">suresh.k@fleetdepot.in</p>
+</div>
+</div>
+<button aria-label="Manage Suresh K" class="w-8 h-8 flex items-center justify-center rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-space-md pt-space-xs border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-1 text-label-md font-label-md text-secondary">
+<span class="material-symbols-outlined text-[15px] text-secondary" data-icon="garage">garage</span>
+<span class="truncate">Unassigned • Inactive</span>
+</div>
+<!-- Status Badge: Disabled -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-label-sm font-label-sm bg-[#EEF0F3] text-secondary border border-outline-variant font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Disabled
+            </span>
+</div>
+</article>
+</div>
+<!-- Compliance Notice Tile -->
+<div class="rounded-lg border border-outline-variant bg-surface-container-low p-space-md flex gap-space-sm items-start">
+<span class="material-symbols-outlined text-[18px] text-primary-container flex-shrink-0 mt-0.5" data-icon="verified_user">verified_user</span>
+<div class="text-body-sm font-body-sm text-on-surface-variant">
+          Depot role privileges grant maintenance approval logs, tyre requisition sign-offs, and breakdown dispatch authorization according to FleetTrack ISO:9001 protocols.
+        </div>
+</div>
+</main>
+<!-- Contextual Extended FAB: Add User Button -->
+<div class="absolute bottom-20 right-4 z-40">
+<button class="flex items-center gap-2 h-11 px-4 bg-primary-container hover:bg-primary text-on-primary rounded-xl border border-primary font-headline-sm text-body-lg font-semibold tracking-tight active:scale-95 transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="person_add">person_add</span>
+<span>Add user</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar: Shared Component Blueprint -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline max-w-[390px] mx-auto right-0">
+<!-- Destination 1: Fleet -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-sm hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#fleet">
+<span class="material-symbols-outlined" data-icon="directions_bus">directions_bus</span>
+<span class="text-label-sm font-label-sm mt-0.5">Fleet</span>
+</a>
+<!-- Destination 2: Services -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-sm hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#services">
+<span class="material-symbols-outlined" data-icon="build">build</span>
+<span class="text-label-sm font-label-sm mt-0.5">Services</span>
+</a>
+<!-- Destination 3: Bills -->
+<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-sm hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#bills">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="text-label-sm font-label-sm mt-0.5">Bills</span>
+</a>
+<!-- Destination 4: Analytics (or Admin Root Mapping) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-label-sm font-medium hover:text-primary dark:hover:text-inverse-primary transition-colors duration-150 active:scale-95 transition-transform duration-100" href="#analytics">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="text-label-sm font-label-sm mt-0.5">Analytics</span>
+</a>
+</nav>
+</div>
+</body></html>

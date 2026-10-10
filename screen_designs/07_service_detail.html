@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Service Detail - SR-8492</title>
+<!-- Material Symbols Font -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Hanken Grotesk & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "surface-container": "#e9edff",
+          "on-surface": "#141b2b",
+          "outline-variant": "#c2c7d1",
+          "on-secondary-fixed": "#131c28",
+          "background": "#f9f9ff",
+          "inverse-on-surface": "#edf0ff",
+          "surface-container-high": "#e1e8fd",
+          "primary-container": "#0f4c81",
+          "primary-fixed": "#d2e4ff",
+          "surface-container-low": "#f1f3ff",
+          "primary": "#00355f",
+          "on-tertiary-fixed": "#001847",
+          "on-error": "#ffffff",
+          "surface-tint": "#2d6197",
+          "on-primary": "#ffffff",
+          "secondary-fixed": "#dae3f4",
+          "on-secondary-fixed-variant": "#3e4755",
+          "secondary-fixed-dim": "#bec7d7",
+          "on-primary-fixed": "#001c37",
+          "on-error-container": "#93000a",
+          "inverse-surface": "#293040",
+          "surface-container-lowest": "#ffffff",
+          "on-primary-container": "#8ebdf9",
+          "on-tertiary-fixed-variant": "#0040a0",
+          "inverse-primary": "#a0c9ff",
+          "error-container": "#ffdad6",
+          "outline": "#727780",
+          "on-tertiary": "#ffffff",
+          "secondary": "#565f6d",
+          "on-primary-fixed-variant": "#07497d",
+          "tertiary-fixed-dim": "#b1c5ff",
+          "surface-container-highest": "#dce2f7",
+          "surface-bright": "#f9f9ff",
+          "on-secondary-container": "#5c6573",
+          "on-secondary": "#ffffff",
+          "tertiary-fixed": "#dae2ff",
+          "surface": "#f9f9ff",
+          "on-tertiary-container": "#9fb9ff",
+          "surface-dim": "#d3daef",
+          "secondary-container": "#dae3f4",
+          "tertiary-container": "#0044a7",
+          "on-surface-variant": "#42474f",
+          "error": "#ba1a1a",
+          "surface-variant": "#dce2f7",
+          "tertiary": "#002f79",
+          "primary-fixed-dim": "#a0c9ff",
+          "on-background": "#141b2b"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-sm": "0.5rem",
+          "space-xl": "1.5rem",
+          "space-md": "0.75rem",
+          "space-lg": "1rem",
+          "gutter": "0.75rem",
+          "margin": "1rem",
+          "space-xs": "0.25rem"
+        },
+        "fontFamily": {
+          "headline-sm": ["Hanken Grotesk"],
+          "headline-lg": ["Hanken Grotesk"],
+          "title-md": ["Hanken Grotesk"],
+          "label-md": ["JetBrains Mono"],
+          "body-sm": ["Hanken Grotesk"],
+          "title-sm": ["Hanken Grotesk"],
+          "label-sm": ["JetBrains Mono"],
+          "body-md": ["Hanken Grotesk"],
+          "headline-md": ["Hanken Grotesk"],
+          "body-lg": ["Hanken Grotesk"],
+          "label-lg": ["JetBrains Mono"]
+        },
+        "fontSize": {
+          "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+          "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+          "title-md": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+          "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+          "body-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+          "title-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+          "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}],
+          "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+          "headline-md": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+          "body-lg": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+          "label-lg": ["13px", {"lineHeight": "16px", "fontWeight": "500"}]
+        }
+      }
+    }
+  }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased flex justify-center min-h-screen">
+<!-- Mobile Container viewport 390x844 constrained -->
+<div class="w-full max-w-[390px] min-h-screen bg-background border-x border-outline-variant flex flex-col relative pb-32">
+<!-- Top App Bar (Task-Focused: Sub-page header with back action, zero drop shadows, 1px bottom border) -->
+<header class="sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant px-space-lg h-14 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<button aria-label="Go back" class="p-1 rounded text-primary hover:bg-surface-container transition-colors active:opacity-80" type="button">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-on-surface tracking-tight">Service Detail</span>
+<span class="font-label-sm text-label-sm text-secondary">SR-8492</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="px-2 py-0.5 bg-surface-container text-primary text-label-sm font-label-sm rounded border border-outline-variant">Admin</span>
+<button aria-label="Share or Print Work Order" class="p-1.5 rounded text-on-surface-variant hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">share</span>
+</button>
+<button aria-label="More options" class="p-1.5 rounded text-on-surface-variant hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Main Content -->
+<main class="flex-1 px-space-md py-space-md space-y-space-md">
+<!-- Hero Service Banner Card -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md">
+<!-- Header row: Bus Registration & Status Chip -->
+<div class="flex items-center justify-between gap-2 pb-space-sm border-b border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="p-1 rounded bg-surface-container text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">directions_bus</span>
+</span>
+<div>
+<span class="font-label-md text-label-md font-semibold text-primary block leading-none">TS 09 UB 4521</span>
+<span class="font-body-sm text-body-sm text-secondary block mt-0.5">Ashok Leyland Viking 2020</span>
+</div>
+</div>
+<!-- Semantic Status Chip -->
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5]">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            Completed
+          </span>
+</div>
+<!-- Service Main Title -->
+<div class="pt-space-sm pb- space-y-1">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider block">Service Category</span>
+<h1 class="font-headline-sm text-headline-sm text-on-surface leading-snug">Full Engine &amp; Transmission Overhaul</h1>
+</div>
+<!-- Key Operational Metric Grid -->
+<div class="grid grid-cols-2 gap-2 my-space-md p-space-sm bg-surface-container-low rounded-lg border border-outline-variant">
+<div class="space-y-0.5">
+<span class="font-body-sm text-body-sm text-secondary block">Service Date</span>
+<span class="font-label-md text-label-md text-on-surface font-medium block">14 Feb 2024</span>
+</div>
+<div class="space-y-0.5">
+<span class="font-body-sm text-body-sm text-secondary block">Depot Bay</span>
+<span class="font-body-md text-body-md text-on-surface font-medium block">BLR Central • Bay 2</span>
+</div>
+<div class="space-y-0.5">
+<span class="font-body-sm text-body-sm text-secondary block">Odometer Logged</span>
+<span class="font-label-md text-label-md text-on-surface font-medium block">1,84,200 km</span>
+</div>
+<div class="space-y-0.5">
+<span class="font-body-sm text-body-sm text-secondary block">Lead Mechanic</span>
+<span class="font-body-md text-body-md text-on-surface font-medium block">Ramesh K. <span class="font-label-sm text-secondary">(ENG-042)</span></span>
+</div>
+</div>
+<!-- Service Technical Notes -->
+<div class="pt-1">
+<div class="flex items-center gap-1 text-on-surface-variant mb-1">
+<span class="material-symbols-outlined text-[15px]">description</span>
+<span class="font-title-sm text-title-sm font-semibold">Technician Service Notes</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant bg-surface-container-lowest p-2 rounded border border-outline-variant leading-relaxed">
+            Comprehensive engine flush, synthetic oil change 15W40 (28L), fuel filter assembly replaced due to high soot buildup. Replaced worn clutch pressure plate and release bearing. Road tested on Ring Road 15 km, performance nominal.
+          </p>
+</div>
+</section>
+<!-- Itemized Parts Replaced Section -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md">
+<div class="flex items-center justify-between pb-space-sm border-b border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">build_circle</span>
+<h2 class="font-title-md text-title-md text-on-surface">Itemized Parts Replaced</h2>
+</div>
+<span class="px-2 py-0.5 bg-surface-container text-primary font-label-sm text-label-sm rounded font-medium border border-outline-variant">
+            4 Items
+          </span>
+</div>
+<!-- Tabular List Rows -->
+<div class="divide-y divide-outline-variant pt-1">
+<!-- Item 1 -->
+<div class="py-2.5 flex items-start justify-between gap-2">
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Castrol Vecton Longdrain 15W-40</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary">PART #OIL-15W40-CS</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Qty: 28 L</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md font-semibold text-on-surface">₹14,280</span>
+<span class="block font-label-sm text-label-sm text-secondary">₹510 / L</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="py-2.5 flex items-start justify-between gap-2">
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Fuel Filter Spin-On Primary</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary">PART #FF-9021-AL</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Qty: 2 Pcs</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md font-semibold text-on-surface">₹2,850</span>
+<span class="block font-label-sm text-label-sm text-secondary">₹1,425 ea</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="py-2.5 flex items-start justify-between gap-2">
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Heavy Duty Clutch Pressure Plate</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary">PART #CP-380-HD</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Qty: 1 Set</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md font-semibold text-on-surface">₹18,400</span>
+<span class="block font-label-sm text-label-sm text-secondary">₹18,400 unit</span>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="py-2.5 flex items-start justify-between gap-2">
+<div class="flex-1">
+<h3 class="font-body-md text-body-md font-semibold text-on-surface">Transmission Gasket &amp; Seal Kit</h3>
+<div class="flex items-center gap-2 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary">PART #GSK-TR-402</span>
+<span class="inline-block w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Qty: 1 Kit</span>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md font-semibold text-on-surface">₹3,600</span>
+<span class="block font-label-sm text-label-sm text-secondary">₹3,600 kit</span>
+</div>
+</div>
+</div>
+<!-- Subtotal Footer Strip -->
+<div class="mt-2 pt-space-sm border-t border-outline-variant flex justify-between items-center bg-surface-container-low p-2 rounded">
+<span class="font-body-md text-body-md font-medium text-secondary">Subtotal Parts</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">₹39,130</span>
+</div>
+</section>
+<!-- Cost Breakdown Summary Card -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md space-y-3">
+<div class="flex items-center justify-between pb-2 border-b border-outline-variant">
+<h2 class="font-title-md text-title-md text-on-surface">Cost Breakdown Summary</h2>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-[#157347] bg-[#E8F5E9] px-2 py-0.5 rounded border border-[#A3D9A5]">
+<span class="material-symbols-outlined text-[13px]" style="font-variation-settings: 'FILL' 1;">lock</span>
+            Paid via Depot Account
+          </span>
+</div>
+<div class="space-y-2 text-body-md">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Parts Subtotal</span>
+<span class="font-label-md text-label-md text-on-surface">₹39,130</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<div>
+<span>Labour Charges</span>
+<span class="block font-label-sm text-label-sm text-secondary">18.5 Tech Hours @ ₹800/hr</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">₹14,800</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span>Consumables &amp; Environmental Fee</span>
+<span class="font-label-md text-label-md text-on-surface">₹1,450</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant pb-2 border-b border-outline-variant">
+<span>Tax (GST 18%)</span>
+<span class="font-label-md text-label-md text-on-surface">₹9,968</span>
+</div>
+</div>
+<!-- Total Cost Highlight Tile -->
+<div class="bg-surface-container-high rounded-lg p-3 border border-outline-variant flex items-center justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase font-semibold block">Total Service Cost</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Inclusive of all local depot levies</span>
+</div>
+<div class="text-right">
+<span class="font-headline-md text-headline-md text-primary font-bold tracking-tight block">₹65,348</span>
+<span class="font-label-sm text-label-sm text-secondary">Ledger #TXN-24-998</span>
+</div>
+</div>
+</section>
+<!-- Photo Documentation Grids (Horizontal Carousels) -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant p-space-md space-y-4">
+<div class="flex items-center justify-between pb-1 border-b border-outline-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">photo_camera</span>
+<h2 class="font-title-md text-title-md text-on-surface">Depot Photo Inspection</h2>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">7 Records</span>
+</div>
+<!-- Before Service Category -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface">Before Service</span>
+<span class="font-label-sm text-label-sm text-secondary">2 photos</span>
+</div>
+<div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+<!-- Photo 1 -->
+<div class="w-36 flex-shrink-0 bg-surface-container-low rounded-lg border border-outline-variant overflow-hidden">
+<div class="h-24 w-full bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="A detailed mechanical diagnostic photo of a heavily worn heavy-duty commercial vehicle clutch plate covered in metal shavings and dark soot inside a stark industrial maintenance depot. Sharp overhead industrial workshop fluorescent lighting illuminates structural fatigue cracks on the steel diaphragm springs. The visual style follows high-clarity technical documentation with cold neutral blues and muted metallic tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCv8cwjApbcsiF3tsofE6IN7rCKSrYr-x76Dqvhc41n5afwhv5HYGP62qHZv2DZ60KUjh1iqfI1sh05qdPRh3q71Thd4isc7a40p9tiu27nv9YaevBJ4uZDe41WdbtPKwK68H2f-MtytKgUWXfCr2NQtwzl3DiiwB6Bw7qN2MlQeCsA_cIlFf2mK5LMkjmbZiUXHDQB-LUT46u2EffP6EQbTaYm6_Q3jDI5Qm1mo3kYFsHRG4FlS-JoHPiOwQ3RN27XRpprph0PUGRs"/>
+<span class="absolute bottom-1 left-1 px-1 py-0.5 bg-inverse-surface/80 text-inverse-on-surface rounded text-[9px] font-label-sm">CAM-01</span>
+</div>
+<div class="p-1.5">
+<span class="font-body-sm text-body-sm text-on-surface font-medium block truncate">Worn clutch plate</span>
+<span class="font-label-sm text-label-sm text-secondary block">08:15 AM</span>
+</div>
+</div>
+<!-- Photo 2 -->
+<div class="w-36 flex-shrink-0 bg-surface-container-low rounded-lg border border-outline-variant overflow-hidden">
+<div class="h-24 w-full bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="Close up photographic inspection of a clogged diesel bus fuel filter element filled with thick dark fuel sludge and contaminants on an aluminum workbench. Cold technical light reveals heavy particulates and carbon sediment inside the filter pleats in an enterprise depot setting. The palette uses deep industrial navy, slate gray, and amber grease highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOGZyymGruD6ZVVklGxMcDqSVzhJnPghJ0dutx0vq1EYVdevDdN9ZuCgRrGnYZTo4hslDOOeEgejAfy8F3-oUymFH7xK9XgbrZgZcOUeocCUurESGWjNUsKmOZLTTakKyMdQB-QzluhLjW-wuf0kCvMllivQPwK8oeAmONZE7O6otgaDUEkAizIzSfHP7EgtYEs68Tqaadbyx-EIweyKpTUJ6uCRF_XQWH76NGt2otF3wjpfQlmH6A451YP5HvSfsZRTTBF9jXjrdE"/>
+<span class="absolute bottom-1 left-1 px-1 py-0.5 bg-inverse-surface/80 text-inverse-on-surface rounded text-[9px] font-label-sm">CAM-02</span>
+</div>
+<div class="p-1.5">
+<span class="font-body-sm text-body-sm text-on-surface font-medium block truncate">Old filter sludge</span>
+<span class="font-label-sm text-label-sm text-secondary block">08:24 AM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- After Service Category -->
+<div class="space-y-1.5 pt-2 border-t border-outline-variant">
+<div class="flex justify-between items-center">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface">After Service</span>
+<span class="font-label-sm text-label-sm text-secondary">2 photos</span>
+</div>
+<div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+<!-- Photo 3 -->
+<div class="w-36 flex-shrink-0 bg-surface-container-low rounded-lg border border-outline-variant overflow-hidden">
+<div class="h-24 w-full bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="Precision technical photography showing a newly installed heavy commercial transmission clutch assembly securely torqued onto an engine flywheel in a clean maintenance bay. Crisp daylight illumination highlights pristine metallic chrome and freshly greased splines, conveying disciplined engineering quality and clean mechanical alignment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBykkUzesQUY2bhoIP60Fg3QY0mNKAuhuhtE8kv7QB3MQfIeX-cww_P3pMd_nMhdhmZR137U2SGLO-d-BzPGzwWW_RrhdyW_wpzqG6KZKpiMa-mRp7s3UPDBE6MrCTvo0gmjFJRThtVA6cF63rmBG8LUvNa0Ww2DyfBOatAjfnz1csJOdUpno2p5DfmzE2eVxOuHKY7nwP4uBrciVWWIakZNrHY1Sa3TE7ghNyL9q6eI_oGYiXMmjS4WgaMBEmNSa6Eeay_EIHHuuAN"/>
+<span class="absolute bottom-1 left-1 px-1 py-0.5 bg-inverse-surface/80 text-inverse-on-surface rounded text-[9px] font-label-sm">CAM-03</span>
+</div>
+<div class="p-1.5">
+<span class="font-body-sm text-body-sm text-on-surface font-medium block truncate">New assembly fitted</span>
+<span class="font-label-sm text-label-sm text-secondary block">03:40 PM</span>
+</div>
+</div>
+<!-- Photo 4 -->
+<div class="w-36 flex-shrink-0 bg-surface-container-low rounded-lg border border-outline-variant overflow-hidden">
+<div class="h-24 w-full bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="A clean industrial photograph focusing on an engine oil dipstick displaying fresh golden-amber synthetic lubricant precisely at the maximum fill mark against clean engine block casing. The clean white LED garage lighting reflects off the polished steel rod, emphasizing professional inspection adherence and fleet maintenance compliance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB54XHjG5jPFvns72FnBxHJtqSLi4dLNRtHt6MqgglgenJCFRYLMRQ70hb5jLGL_WeMu6B50ghOE8lj0i24DK11zAKHzxsQlxaV419ztg-VZeHXfzsbJ63LDGN7DE5dSTAtNFlX8iWvrRBd4OopIa44mNjzATQO7hz1_hQmNxDEzTdW-WRvY-TCluLp-XkbhGBfOcQ9r4qxGWXiZAxZ4vyHBkS5esDXar0x5zYyB6sqqT-zgsBPY7lBjEdSy2eYVqiimZyyM5krCROD"/>
+<span class="absolute bottom-1 left-1 px-1 py-0.5 bg-inverse-surface/80 text-inverse-on-surface rounded text-[9px] font-label-sm">CAM-04</span>
+</div>
+<div class="p-1.5">
+<span class="font-body-sm text-body-sm text-on-surface font-medium block truncate">Fresh oil level mark</span>
+<span class="font-label-sm text-label-sm text-secondary block">04:10 PM</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Parts Replaced Category -->
+<div class="space-y-1.5 pt-2 border-t border-outline-variant">
+<div class="flex justify-between items-center">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface">Parts Replaced</span>
+<span class="font-label-sm text-label-sm text-secondary">2 photos</span>
+</div>
+<div class="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+<!-- Photo 5 -->
+<div class="w-36 flex-shrink-0 bg-surface-container-low rounded-lg border border-outline-variant overflow-hidden">
+<div class="h-24 w-full bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="Macro industrial engineering shot of a fractured bearing race with pitted steel surfaces resting in an inspection tray under high-intensity workbench lamps. The focused lighting reveals microscopic metal spalling and wear tracks with precise sharpness, presented in a calm utilitarian palette of steel grey and dark fleet blue." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9Wac3fYK_G23qcVSxKXxXxH55BKVZQY8JVvZ_w6PwHkgoVYSvcvKjPwozuXwPbc2JADysfiYCbpPQGZEfWEHAWIdZ3F8_ayyQ3BFeigVQSNJQM_LSIv12y-ZyzgT1wn-UOmRLeMrB9bIbdOwYn0TiUssxSWmIea44Br6sO_mdXm7skdubapVuF_Zs3gNhoPp-KWawmMn4k0XJ3kvcsEqFrTnHEDCcpO7uuOWizZiPY8pmbTIKuibbE3iCY4HVKr5xNhAJW-Wqbz_2"/>
+<span class="absolute bottom-1 left-1 px-1 py-0.5 bg-inverse-surface/80 text-inverse-on-surface rounded text-[9px] font-label-sm">CAM-05</span>
+</div>
+<div class="p-1.5">
+<span class="font-body-sm text-body-sm text-on-surface font-medium block truncate">Damaged bearing race</span>
+<span class="font-label-sm text-label-sm text-secondary block">Discarded</span>
+</div>
+</div>
+<!-- Photo 6 -->
+<div class="w-36 flex-shrink-0 bg-surface-container-low rounded-lg border border-outline-variant overflow-hidden">
+<div class="h-24 w-full bg-surface-container relative">
+<img class="w-full h-full object-cover" data-alt="Technical depot documentation capture of a brittle cracked transmission rubber gasket segment placed alongside a digital vernier caliper on a blue workbench. Direct overhead LED lighting highlights the structural fissure and degraded elastomer material for fleet quality audit reporting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUlJZfI6pCl_QNTRmXmK3qwfGjPVYdy6fhvSnn34I_PabtMwQzvTPUTDEU1Tu-prJKMc3_F__O1LE6nEa7t2MsKyQFtrFP0rQNvo_E_9_U_nzL9hqE6XCMyWgG2Skc4UQ0P09aHQ41jO67lMUZcDbPPpAIEFYFgpwtnfSnLCwkbB2UF5uwognbGF1Jf96pOr5MyPyFv78g-0NpnNGG5eMupZEbVdpc2aIH4nMBn6grEuaTseR3kDB8aQU2AYBbYZrIqHfPxTgAdWmI"/>
+<span class="absolute bottom-1 left-1 px-1 py-0.5 bg-inverse-surface/80 text-inverse-on-surface rounded text-[9px] font-label-sm">CAM-06</span>
+</div>
+<div class="p-1.5">
+<span class="font-body-sm text-body-sm text-on-surface font-medium block truncate">Cracked gasket</span>
+<span class="font-label-sm text-label-sm text-secondary block">Discarded</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Invoice & Bill Category -->
+<div class="space-y-1.5 pt-2 border-t border-outline-variant">
+<div class="flex justify-between items-center">
+<span class="font-title-sm text-title-sm font-semibold text-on-surface">Invoice &amp; Bill</span>
+<span class="font-label-sm text-label-sm text-secondary">1 document</span>
+</div>
+<div class="bg-surface-container-low rounded-lg border border-outline-variant p-2 flex items-center justify-between hover:bg-surface-container transition-colors cursor-pointer">
+<div class="flex items-center gap-2.5">
+<div class="w-10 h-12 bg-surface-container-lowest border border-outline-variant rounded flex flex-col items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="font-label-sm text-[8px] leading-tight font-bold">PDF</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-body-md text-body-md font-semibold text-on-surface">Invoice Bill Receipt</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-primary border border-outline-variant font-medium">INV-2024-0891</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary block mt-0.5">Official Depot Stamped Copy • 2.4 MB</span>
+</div>
+</div>
+<div class="flex items-center text-primary">
+<span class="font-label-sm text-label-sm font-medium mr-1">View</span>
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Sticky Action Bar & Sign-Off Banner -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] z-50 bg-surface-container-lowest border-t border-outline-variant p-space-md space-y-2">
+<!-- Admin Verification Text -->
+<div class="flex items-center justify-center gap-1.5 text-secondary font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[14px] text-[#157347]" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>Logged by Lead Supervisor <strong>Rajesh S.</strong> • Verified</span>
+</div>
+<!-- Action Button (Secondary / Outlined style according to design tokens) -->
+<button class="w-full h-11 bg-surface-container-lowest text-primary border border-primary font-title-sm text-title-sm font-semibold rounded-[10px] flex items-center justify-center gap-2 hover:bg-surface-container transition-colors active:opacity-85" type="button">
+<span class="material-symbols-outlined text-[18px]">download</span>
+        Download PDF Work Order
+      </button>
+</div>
+</div>
+</body></html>

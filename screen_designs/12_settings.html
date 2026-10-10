@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings - Fleet Maintenance</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Hanken Grotesk & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,300..900;1,300..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-fixed": "#131c28",
+            "inverse-on-surface": "#edf0ff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#141b2b",
+            "primary-fixed-dim": "#a0c9ff",
+            "surface-container-high": "#e1e8fd",
+            "tertiary-fixed-dim": "#b1c5ff",
+            "outline-variant": "#c2c7d1",
+            "tertiary-container": "#0044a7",
+            "surface-bright": "#f9f9ff",
+            "on-tertiary-fixed": "#001847",
+            "inverse-primary": "#a0c9ff",
+            "secondary-fixed": "#dae3f4",
+            "primary": "#00355f",
+            "on-secondary-fixed-variant": "#3e4755",
+            "on-surface-variant": "#42474f",
+            "on-primary-fixed": "#001c37",
+            "secondary-container": "#dae3f4",
+            "primary-container": "#0f4c81",
+            "on-tertiary-container": "#9fb9ff",
+            "surface-container-low": "#f1f3ff",
+            "error-container": "#ffdad6",
+            "background": "#f9f9ff",
+            "secondary-fixed-dim": "#bec7d7",
+            "outline": "#727780",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed-variant": "#07497d",
+            "on-tertiary-fixed-variant": "#0040a0",
+            "surface": "#f9f9ff",
+            "on-secondary-container": "#5c6573",
+            "surface-tint": "#2d6197",
+            "on-background": "#141b2b",
+            "surface-container": "#e9edff",
+            "secondary": "#565f6d",
+            "on-primary-container": "#8ebdf9",
+            "surface-dim": "#d3daef",
+            "on-tertiary": "#ffffff",
+            "tertiary": "#002f79",
+            "tertiary-fixed": "#dae2ff",
+            "surface-variant": "#dce2f7",
+            "primary-fixed": "#d2e4ff",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#dce2f7",
+            "on-error-container": "#93000a",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "inverse-surface": "#293040"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1rem",
+            "space-xs": "0.25rem",
+            "gutter": "0.75rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Hanken Grotesk"],
+            "body-lg": ["Hanken Grotesk"],
+            "title-md": ["Hanken Grotesk"],
+            "label-lg": ["JetBrains Mono"],
+            "body-sm": ["Hanken Grotesk"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Hanken Grotesk"],
+            "headline-lg": ["Hanken Grotesk"],
+            "label-md": ["JetBrains Mono"],
+            "title-sm": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "body-lg": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "title-md": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+            "label-lg": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "body-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}],
+            "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "title-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+            "headline-md": ["22px", {"lineHeight": "28px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    body {
+      background-color: #F6F7F9;
+      color: #141b2b;
+      -webkit-font-smoothing: antialiased;
+    }
+    /* Switch toggle transition */
+    .toggle-checkbox:checked {
+      right: 2px;
+      left: auto;
+      background-color: #ffffff;
+    }
+    .toggle-checkbox:checked + .toggle-label {
+      background-color: #0f4c81;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen bg-surface flex justify-center p-0 m-0">
+<!-- Mobile Portrait Shell (390px x 844px context) -->
+<div class="w-full max-w-[412px] min-h-screen bg-surface flex flex-col pb-12 antialiased selection:bg-secondary-container">
+<!-- TopAppBar adhering to Shared Component JSON Tokens -->
+<header class="bg-surface sticky top-0 z-40 w-full border-b border-outline-variant/50">
+<div class="flex justify-between items-center w-full px-space-lg h-14 mx-auto">
+<div class="flex items-center gap-3">
+<button aria-label="Go Back" class="text-primary p-1.5 -ml-1.5 rounded-lg hover:bg-surface-container transition-colors active:opacity-80 flex items-center justify-center" type="button">
+<span class="material-symbols-outlined text-[22px]">arrow_back</span>
+</button>
+<div class="flex flex-col">
+<h1 class="font-title-md text-title-md font-semibold text-primary tracking-tight">Settings</h1>
+<span class="font-label-sm text-label-sm text-secondary -mt-0.5">DEPOT ID: BLR-SR-04</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<button aria-label="Depot Switcher" class="relative flex items-center justify-center w-8 h-8 rounded-lg bg-surface-container text-primary font-label-md text-label-md font-bold border border-outline-variant/60 hover:bg-surface-container-high transition-colors" type="button">
+<span>RS</span>
+<span class="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#157347] border border-white"></span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Container with strict 4pt vertical rhythm & 16px margins -->
+<main class="flex-1 px-space-lg py-space-md space-y-space-lg">
+<!-- SECTION 1: ACCOUNT -->
+<section class="space-y-space-xs">
+<div class="px-space-xs flex items-center justify-between">
+<h2 class="font-label-md text-label-md text-secondary uppercase tracking-wider">Account</h2>
+<span class="font-label-sm text-label-sm text-primary-container bg-secondary-container/60 px-1.5 py-0.5 rounded border border-outline-variant/30 font-medium">SUPERVISOR</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl overflow-hidden divide-y divide-outline-variant/40">
+<!-- Profile Card -->
+<div class="p-space-md flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150 cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-lg bg-primary-container text-white flex items-center justify-center font-label-md text-label-md font-bold tracking-tight shrink-0 shadow-none">
+                RS
+              </div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate leading-tight">Rajesh Sharma</span>
+<span class="font-label-sm text-label-sm text-secondary truncate mt-0.5">admin@demo.com</span>
+<span class="font-label-sm text-label-sm text-secondary-fixed-dim/90 text-secondary mt-0.5 tracking-tight font-medium">+91 98450 12345</span>
+</div>
+</div>
+<div class="shrink-0 pl-2 text-secondary flex items-center">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</div>
+<!-- Change Password -->
+<div class="px-space-md py-space-sm flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150 cursor-pointer">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium leading-tight">Change password</span>
+<span class="font-label-sm text-label-sm text-secondary mt-0.5">Last changed 42 days ago</span>
+</div>
+</div>
+<div class="shrink-0 text-secondary flex items-center">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: PREFERENCES -->
+<section class="space-y-space-xs">
+<div class="px-space-xs">
+<h2 class="font-label-md text-label-md text-secondary uppercase tracking-wider">Preferences</h2>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl overflow-hidden divide-y divide-outline-variant/40">
+<!-- Appearance Tile -->
+<div class="px-space-md py-3 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">palette</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface font-medium">Appearance</span>
+</div>
+<!-- Segmented Badge Pill Selection -->
+<div class="inline-flex items-center bg-surface-container-low p-0.5 rounded-lg border border-outline-variant/50 text-[11px] font-title-sm">
+<button class="px-2 py-0.5 text-secondary hover:text-on-surface rounded font-medium transition-colors">System</button>
+<button class="px-2.5 py-0.5 bg-surface-container-lowest text-primary font-semibold rounded shadow-none border border-outline-variant/40">Light</button>
+<button class="px-2 py-0.5 text-secondary hover:text-on-surface rounded font-medium transition-colors">Dark</button>
+</div>
+</div>
+<!-- Language Tile -->
+<div class="px-space-md py-space-sm flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150 cursor-pointer">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">language</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium leading-tight">Language</span>
+<span class="font-body-sm text-body-sm text-secondary mt-0.5">Hindi, Kannada coming soon</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 shrink-0">
+<span class="font-label-md text-label-md text-primary font-semibold bg-surface-container px-2 py-0.5 rounded border border-outline-variant/40">English (IN)</span>
+<span class="material-symbols-outlined text-secondary text-[20px]">chevron_right</span>
+</div>
+</div>
+<!-- Units & Formatting -->
+<div class="px-space-md py-space-sm flex items-center justify-between hover:bg-surface-container-low transition-colors duration-150 cursor-pointer">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">straighten</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium leading-tight">Units &amp; Format</span>
+<span class="font-label-sm text-label-sm text-secondary mt-0.5">Metric (km, ₹, dd MMM yyyy)</span>
+</div>
+</div>
+<div class="shrink-0 text-secondary">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: NOTIFICATIONS -->
+<section class="space-y-space-xs">
+<div class="px-space-xs flex items-center justify-between">
+<h2 class="font-label-md text-label-md text-secondary uppercase tracking-wider">Notifications</h2>
+<span class="font-label-sm text-label-sm text-[#157347] font-medium bg-[#E8F5E9] px-1.5 py-0.2 rounded border border-[#A3D9A5]">ENABLED</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl overflow-hidden divide-y divide-outline-variant/40">
+<!-- Master Push Notifications -->
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">notifications</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Push Notifications</span>
+<span class="font-body-sm text-body-sm text-secondary">Depot priority maintenance alerts</span>
+</div>
+</div>
+<!-- Standard Toggle Switch ON -->
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-6 bg-secondary-fixed-dim peer-checked:bg-primary-container rounded-full peer-focus:outline-none transition-colors duration-200"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 transform peer-checked:translate-x-4"></div>
+</label>
+</div>
+<!-- Service Reminders with Lead Time Pill -->
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0 pr-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">build</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md text-on-surface font-medium truncate">Service Reminders</span>
+</div>
+<div class="mt-1 flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">Trigger:</span>
+<span class="font-label-sm text-label-sm bg-surface-container text-primary-container font-semibold px-2 py-0.5 rounded border border-outline-variant/50">1 week before</span>
+</div>
+</div>
+</div>
+<!-- Switch ON -->
+<label class="relative inline-flex items-center cursor-pointer select-none shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-6 bg-secondary-fixed-dim peer-checked:bg-primary-container rounded-full peer-focus:outline-none transition-colors duration-200"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 transform peer-checked:translate-x-4"></div>
+</label>
+</div>
+<!-- Document Expiry Alerts -->
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0 pr-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">description</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-md text-on-surface font-medium truncate">Document Expiry Alerts</span>
+<div class="mt-1 flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">Lead time:</span>
+<span class="font-label-sm text-label-sm bg-surface-container text-primary-container font-semibold px-2 py-0.5 rounded border border-outline-variant/50">15 days before</span>
+</div>
+</div>
+</div>
+<!-- Switch ON -->
+<label class="relative inline-flex items-center cursor-pointer select-none shrink-0">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-6 bg-secondary-fixed-dim peer-checked:bg-primary-container rounded-full peer-focus:outline-none transition-colors duration-200"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 transform peer-checked:translate-x-4"></div>
+</label>
+</div>
+<!-- Notification Channels (Email) -->
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">mail</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Email Summary &amp; Digests</span>
+<span class="font-body-sm text-body-sm text-secondary">06:00 AM Daily Shift Handover</span>
+</div>
+</div>
+<!-- Switch ON -->
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-6 bg-secondary-fixed-dim peer-checked:bg-primary-container rounded-full peer-focus:outline-none transition-colors duration-200"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 transform peer-checked:translate-x-4"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- SECTION 4: SECURITY -->
+<section class="space-y-space-xs">
+<div class="px-space-xs">
+<h2 class="font-label-md text-label-md text-secondary uppercase tracking-wider">Security</h2>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl overflow-hidden divide-y divide-outline-variant/40">
+<!-- Biometric Lock -->
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">fingerprint</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Biometric App Lock</span>
+<span class="font-body-sm text-body-sm text-secondary">FaceID / Fingerprint at Launch</span>
+</div>
+</div>
+<!-- Switch OFF/Unchecked -->
+<label class="relative inline-flex items-center cursor-pointer select-none">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-10 h-6 bg-secondary-fixed-dim peer-checked:bg-primary-container rounded-full peer-focus:outline-none transition-colors duration-200"></div>
+<div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 transform peer-checked:translate-x-4"></div>
+</label>
+</div>
+<!-- Active Sessions -->
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-8 h-8 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">devices</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md text-on-surface font-medium">Active Sessions</span>
+<span class="inline-flex items-center gap-1 text-[11px] font-label-sm font-semibold text-[#157347]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#157347]"></span> Active Now
+                  </span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary truncate mt-0.5">This device (Android 14 • Pixel 7)</span>
+</div>
+</div>
+<div class="shrink-0 text-secondary">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</div>
+</div>
+<!-- Sign Out All Devices (Destructive) -->
+<button class="w-full px-space-md py-3 flex items-center gap-3 text-left hover:bg-error-container/20 transition-colors duration-150 active:bg-error-container/40" type="button">
+<div class="w-8 h-8 rounded-lg bg-error-container/50 text-[#B42318] flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">logout</span>
+</div>
+<div class="flex flex-col">
+<span class="font-title-sm text-title-sm text-[#B42318] font-semibold leading-tight">Sign out of all sessions</span>
+<span class="font-body-sm text-body-sm text-secondary mt-0.5">Terminates active web and mobile depot tokens</span>
+</div>
+</button>
+</div>
+</section>
+<!-- SECTION 5: COMPANY & DEPOT (ADMIN ONLY) -->
+<section class="space-y-space-xs">
+<div class="px-space-xs flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<h2 class="font-label-md text-label-md text-secondary uppercase tracking-wider">Company &amp; Depot</h2>
+<span class="material-symbols-outlined text-secondary text-[14px]">lock</span>
+</div>
+<span class="font-label-sm text-label-sm text-primary font-medium bg-surface-container px-1.5 py-0.2 rounded border border-outline-variant/40">Admin Only</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-space-md flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-9 h-9 rounded-lg bg-surface-container text-primary flex items-center justify-center shrink-0 border border-outline-variant/50">
+<span class="material-symbols-outlined text-[20px]">directions_bus</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-title-sm text-title-sm text-on-surface font-semibold truncate leading-tight">SRS Travels • South Hub</span>
+<div class="flex items-center gap-2 mt-1">
+<span class="font-label-sm text-label-sm text-[#157347] bg-[#E8F5E9] border border-[#A3D9A5] px-1.5 py-0.2 rounded font-medium">3 Depots Active</span>
+<span class="font-label-sm text-label-sm text-secondary">• 148 Fleet Units</span>
+</div>
+</div>
+</div>
+<button class="shrink-0 text-primary hover:bg-surface-container p-1 rounded-lg transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</section>
+<!-- SECTION 6: ABOUT & SYSTEM INFO -->
+<section class="space-y-space-xs pt-1">
+<div class="px-space-xs">
+<h2 class="font-label-md text-label-md text-secondary uppercase tracking-wider">About</h2>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant/60 rounded-xl overflow-hidden divide-y divide-outline-variant/40">
+<div class="px-space-md py-space-sm flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">Application Version</span>
+<span class="font-label-sm text-label-sm text-secondary mt-0.5">FleetTrack v3.14.2 (Industrial Build #8420)</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-surface-container px-2 py-0.5 rounded border border-outline-variant/50 font-medium">STABLE</span>
+</div>
+<a class="px-space-md py-space-sm flex items-center justify-between hover:bg-surface-container-low transition-colors block" href="#">
+<span class="font-body-md text-body-md text-on-surface">Terms of Enterprise Service</span>
+<span class="material-symbols-outlined text-secondary text-[18px]">open_in_new</span>
+</a>
+<a class="px-space-md py-space-sm flex items-center justify-between hover:bg-surface-container-low transition-colors block" href="#">
+<span class="font-body-md text-body-md text-on-surface">Depot Data &amp; Privacy Policy</span>
+<span class="material-symbols-outlined text-secondary text-[18px]">open_in_new</span>
+</a>
+<a class="px-space-md py-space-sm flex items-center justify-between hover:bg-surface-container-low transition-colors block" href="#">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md text-on-surface">Help &amp; Workshop Support</span>
+<span class="font-label-sm text-label-sm text-primary font-medium">24/7 Dispatch</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-[20px]">chevron_right</span>
+</a>
+</div>
+</section>
+<!-- LOG OUT ACTION BUTTON (PROMINENT OUTLINE RED) -->
+<div class="pt-2 pb-4">
+<button class="w-full h-11 border border-[#B42318] text-[#B42318] bg-surface-container-lowest rounded-[10px] font-title-sm text-title-sm font-semibold flex items-center justify-center gap-2 active:bg-[#FEECEB] transition-colors duration-150" type="button">
+<span class="material-symbols-outlined text-[19px]">power_settings_new</span>
+<span>Log Out</span>
+</button>
+<p class="text-center font-label-sm text-label-sm text-secondary mt-2.5">
+          Depot Terminal Session Node: BLR-SR-KRN-04
+        </p>
+</div>
+</main>
+</div>
+</body></html>

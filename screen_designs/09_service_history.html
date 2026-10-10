@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Maintenance &amp; Bills - Fleet Depot</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container": "#e9edff",
+            "on-surface": "#141b2b",
+            "outline-variant": "#c2c7d1",
+            "on-secondary-fixed": "#131c28",
+            "background": "#f9f9ff",
+            "inverse-on-surface": "#edf0ff",
+            "surface-container-high": "#e1e8fd",
+            "primary-container": "#0f4c81",
+            "primary-fixed": "#d2e4ff",
+            "surface-container-low": "#f1f3ff",
+            "primary": "#00355f",
+            "on-tertiary-fixed": "#001847",
+            "on-error": "#ffffff",
+            "surface-tint": "#2d6197",
+            "on-primary": "#ffffff",
+            "secondary-fixed": "#dae3f4",
+            "on-secondary-fixed-variant": "#3e4755",
+            "secondary-fixed-dim": "#bec7d7",
+            "on-primary-fixed": "#001c37",
+            "on-error-container": "#93000a",
+            "inverse-surface": "#293040",
+            "surface-container-lowest": "#ffffff",
+            "on-primary-container": "#8ebdf9",
+            "on-tertiary-fixed-variant": "#0040a0",
+            "inverse-primary": "#a0c9ff",
+            "error-container": "#ffdad6",
+            "outline": "#727780",
+            "on-tertiary": "#ffffff",
+            "secondary": "#565f6d",
+            "on-primary-fixed-variant": "#07497d",
+            "tertiary-fixed-dim": "#b1c5ff",
+            "surface-container-highest": "#dce2f7",
+            "surface-bright": "#f9f9ff",
+            "on-secondary-container": "#5c6573",
+            "on-secondary": "#ffffff",
+            "tertiary-fixed": "#dae2ff",
+            "surface": "#f9f9ff",
+            "on-tertiary-container": "#9fb9ff",
+            "surface-dim": "#d3daef",
+            "secondary-container": "#dae3f4",
+            "tertiary-container": "#0044a7",
+            "on-surface-variant": "#42474f",
+            "error": "#ba1a1a",
+            "surface-variant": "#dce2f7",
+            "tertiary": "#002f79",
+            "primary-fixed-dim": "#a0c9ff",
+            "on-background": "#141b2b"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-sm": "0.5rem",
+            "space-xl": "1.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1rem",
+            "gutter": "0.75rem",
+            "margin": "1rem",
+            "space-xs": "0.25rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Hanken Grotesk"],
+            "headline-lg": ["Hanken Grotesk"],
+            "title-md": ["Hanken Grotesk"],
+            "label-md": ["JetBrains Mono"],
+            "body-sm": ["Hanken Grotesk"],
+            "title-sm": ["Hanken Grotesk"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"],
+            "body-lg": ["Hanken Grotesk"],
+            "label-lg": ["JetBrains Mono"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+            "title-md": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "body-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "title-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}],
+            "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-md": ["22px", {"lineHeight": "28px", "fontWeight": "600"}],
+            "body-lg": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "label-lg": ["13px", {"lineHeight": "16px", "fontWeight": "500"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F6F7F9] text-on-surface antialiased flex justify-center selection:bg-surface-container selection:text-primary min-h-screen">
+<!-- Mobile Viewport Frame (390 x 844) -->
+<div class="w-full max-w-[390px] min-h-[844px] bg-[#F6F7F9] flex flex-col relative pb-[136px] border-x border-[#E2E5EA]">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 bg-surface-container-lowest border-b border-[#E2E5EA] px-space-lg h-14 flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<button aria-label="Menu" class="w-9 h-9 flex items-center justify-center text-primary hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[22px]">menu</span>
+</button>
+<div class="flex flex-col">
+<span class="font-title-md text-title-md font-bold text-on-surface tracking-tight">Maintenance &amp; Bills</span>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Depot South-04</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<button aria-label="Notifications" class="relative w-9 h-9 flex items-center justify-center text-secondary hover:text-primary hover:bg-surface-container-low rounded-lg transition-colors">
+<span class="material-symbols-outlined text-[22px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error border-2 border-surface-container-lowest"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-semibold border border-primary ml-1">
+          RK
+        </div>
+</div>
+</header>
+<!-- Sub-Header / Dual Tabs Segmented Bar -->
+<section class="bg-surface-container-lowest border-b border-[#E2E5EA] px-space-lg pt-space-sm pb-space-sm">
+<div class="grid grid-cols-2 p-1 bg-[#EEF0F3] rounded-[10px] border border-[#E2E5EA]">
+<!-- Inactive Tab -->
+<button class="py-2 text-center rounded-[8px] font-title-sm text-title-sm text-secondary hover:text-on-surface transition-colors flex items-center justify-center gap-1.5">
+<span>Service History</span>
+</button>
+<!-- Active Tab (Bills) -->
+<button class="py-2 text-center rounded-[8px] bg-primary-container text-on-primary font-title-sm text-title-sm font-semibold flex items-center justify-center gap-1.5 transition-all">
+<span>Bills</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/20 text-on-primary font-medium tracking-tight">(24)</span>
+</button>
+</div>
+</section>
+<!-- Operational Filter & Search Section -->
+<section class="bg-[#F6F7F9] border-b border-[#E2E5EA] px-space-lg py-space-md space-y-space-md">
+<!-- Search Input Field -->
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-secondary text-[20px] pointer-events-none">search</span>
+<input class="w-full h-[40px] pl-10 pr-9 bg-surface-container-lowest text-on-surface placeholder:text-secondary font-body-md text-body-md rounded-[10px] border border-[#E2E5EA] focus:border-primary-container focus:ring-0 transition-colors" placeholder="Search vendor, bill no., bus registration..." type="text"/>
+<button aria-label="Scan barcode" class="absolute right-2.5 text-secondary hover:text-on-surface p-1 flex items-center">
+<span class="material-symbols-outlined text-[18px]">barcode_scanner</span>
+</button>
+</div>
+<!-- Filter Chips Row (Horizontally Scrollable) -->
+<div class="flex items-center gap-space-sm overflow-x-auto custom-scrollbar -mx-space-lg px-space-lg py-0.5">
+<!-- Active Filter -->
+<button class="shrink-0 h-[26px] px-2.5 rounded-[6px] bg-primary text-on-primary font-body-sm text-body-sm font-semibold border border-primary flex items-center gap-1">
+<span>All</span>
+<span class="font-label-sm text-label-sm opacity-90">(24)</span>
+</button>
+<button class="shrink-0 h-[26px] px-2.5 rounded-[6px] bg-surface-container-lowest text-on-surface-variant font-body-sm text-body-sm border border-[#E2E5EA] hover:border-secondary flex items-center gap-1 transition-colors">
+<span>This Month</span>
+<span class="font-label-sm text-label-sm text-secondary">(8)</span>
+</button>
+<button class="shrink-0 h-[26px] px-2.5 rounded-[6px] bg-[#FFF4E5] text-[#B26A00] font-body-sm text-body-sm font-medium border border-[#FFD599] flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-[#B26A00]"></span>
+<span>Pending Approval</span>
+<span class="font-label-sm text-label-sm font-bold">(3)</span>
+</button>
+<button class="shrink-0 h-[26px] px-2.5 rounded-[6px] bg-surface-container-lowest text-on-surface-variant font-body-sm text-body-sm border border-[#E2E5EA] hover:border-secondary flex items-center gap-1 transition-colors">
+<span>Paid</span>
+<span class="font-label-sm text-label-sm text-secondary">(21)</span>
+</button>
+<button class="shrink-0 h-[26px] px-2.5 rounded-[6px] bg-surface-container-lowest text-on-surface font-body-sm text-body-sm border border-[#E2E5EA] flex items-center gap-1 ml-auto">
+<span class="material-symbols-outlined text-[16px] text-secondary">sort</span>
+<span>Latest</span>
+</button>
+</div>
+</section>
+<!-- Main Content: Active Bills List -->
+<main class="px-space-lg py-space-md space-y-space-md">
+<!-- Card 1 -->
+<article class="bg-surface-container-lowest border border-[#E2E5EA] rounded-[12px] p-space-md flex flex-col gap-2.5">
+<div class="flex items-start justify-between gap-space-md">
+<!-- Thumbnail & Identity -->
+<div class="flex gap-2.5">
+<div class="w-10 h-10 rounded-[8px] bg-[#EEF0F3] border border-[#E2E5EA] flex items-center justify-center shrink-0 text-primary-container">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-title-sm text-title-sm font-semibold text-on-surface line-clamp-1 leading-snug">
+                Sri Lakshmi Auto Spares &amp; Garage
+              </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">INV-SL-9821</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-body-sm text-body-sm text-secondary">18 May 2024</span>
+</div>
+</div>
+</div>
+<!-- Amount & Status -->
+<div class="flex flex-col items-end shrink-0">
+<span class="font-label-lg text-label-lg font-bold text-on-surface tracking-tight">₹15,847</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-[4px] bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-label-sm text-label-sm font-semibold mt-1">
+              PAID
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-[#EEF0F3] flex items-center justify-between">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#EEF0F3] text-on-surface font-label-sm text-label-sm font-semibold border border-[#E2E5EA]">
+              TS 09 UB 4521
+            </span>
+<span class="font-body-sm text-body-sm text-secondary">Ashok Leyland</span>
+</div>
+<span class="font-body-sm text-body-sm font-medium text-primary-container truncate max-w-[150px] text-right">
+            Brake System Overhaul
+          </span>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-surface-container-lowest border border-[#E2E5EA] rounded-[12px] p-space-md flex flex-col gap-2.5">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex gap-2.5">
+<div class="w-10 h-10 rounded-[8px] bg-[#EEF0F3] border border-[#E2E5EA] flex items-center justify-center shrink-0 text-primary-container">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-title-sm text-title-sm font-semibold text-on-surface line-clamp-1 leading-snug">
+                Castrol Fleet Care Hub
+              </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">CFL-4402</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-body-sm text-body-sm text-secondary">14 May 2024</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="font-label-lg text-label-lg font-bold text-on-surface tracking-tight">₹14,280</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-[4px] bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-label-sm text-label-sm font-semibold mt-1">
+              PAID
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-[#EEF0F3] flex items-center justify-between">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#EEF0F3] text-on-surface font-label-sm text-label-sm font-semibold border border-[#E2E5EA]">
+              KA 01 MJ 8820
+            </span>
+<span class="font-body-sm text-body-sm text-secondary">Tata Starbus</span>
+</div>
+<span class="font-body-sm text-body-sm font-medium text-primary-container truncate max-w-[150px] text-right">
+            Engine Oil &amp; Filter Service
+          </span>
+</div>
+</article>
+<!-- Card 3 (Warning / Under Review) -->
+<article class="bg-surface-container-lowest border border-[#FFD599] rounded-[12px] p-space-md flex flex-col gap-2.5">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex gap-2.5">
+<div class="relative w-10 h-10 rounded-[8px] bg-[#FFF4E5] border border-[#FFD599] flex items-center justify-center shrink-0 text-[#B26A00]">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+<span class="material-symbols-outlined text-[13px] absolute -top-1 -right-1 text-[#B26A00] bg-surface-container-lowest rounded-full" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-title-sm text-title-sm font-semibold text-on-surface line-clamp-1 leading-snug">
+                National Tyre &amp; Retreading Depot
+              </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">NTR-2024-118</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-body-sm text-body-sm text-secondary">08 May 2024</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="font-label-lg text-label-lg font-bold text-on-surface tracking-tight">₹38,500</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-[4px] bg-[#FFF4E5] text-[#B26A00] border border-[#FFD599] font-label-sm text-label-sm font-semibold mt-1">
+              UNDER REVIEW
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-[#EEF0F3] flex items-center justify-between">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#EEF0F3] text-on-surface font-label-sm text-label-sm font-semibold border border-[#E2E5EA]">
+              MH 14 TC 7712
+            </span>
+<span class="font-body-sm text-body-sm text-secondary">Eicher Skyline</span>
+</div>
+<span class="font-body-sm text-body-sm font-medium text-primary-container truncate max-w-[150px] text-right">
+            Rear Radial Tyres (x2)
+          </span>
+</div>
+</article>
+<!-- Card 4 -->
+<article class="bg-surface-container-lowest border border-[#E2E5EA] rounded-[12px] p-space-md flex flex-col gap-2.5">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex gap-2.5">
+<div class="w-10 h-10 rounded-[8px] bg-[#EEF0F3] border border-[#E2E5EA] flex items-center justify-center shrink-0 text-primary-container">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-title-sm text-title-sm font-semibold text-on-surface line-clamp-1 leading-snug">
+                Bosch Electricals &amp; Battery Bay
+              </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">BOS-7719</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-body-sm text-body-sm text-secondary">29 Apr 2024</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="font-label-lg text-label-lg font-bold text-on-surface tracking-tight">₹22,900</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-[4px] bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-label-sm text-label-sm font-semibold mt-1">
+              PAID
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-[#EEF0F3] flex items-center justify-between">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#EEF0F3] text-on-surface font-label-sm text-label-sm font-semibold border border-[#E2E5EA]">
+              DL 01 AA 9022
+            </span>
+<span class="font-body-sm text-body-sm text-secondary">Volvo 9600</span>
+</div>
+<span class="font-body-sm text-body-sm font-medium text-primary-container truncate max-w-[150px] text-right">
+            Alternator &amp; Battery
+          </span>
+</div>
+</article>
+<!-- Card 5 -->
+<article class="bg-surface-container-lowest border border-[#E2E5EA] rounded-[12px] p-space-md flex flex-col gap-2.5">
+<div class="flex items-start justify-between gap-space-md">
+<div class="flex gap-2.5">
+<div class="w-10 h-10 rounded-[8px] bg-[#EEF0F3] border border-[#E2E5EA] flex items-center justify-center shrink-0 text-primary-container">
+<span class="material-symbols-outlined text-[20px]">receipt_long</span>
+</div>
+<div class="flex flex-col">
+<h2 class="font-title-sm text-title-sm font-semibold text-on-surface line-clamp-1 leading-snug">
+                Bharat Petroleum Fleet Depot
+              </h2>
+<div class="flex items-center gap-1.5 mt-0.5">
+<span class="font-label-sm text-label-sm text-secondary font-medium">BPCL-00918</span>
+<span class="text-outline-variant text-[10px]">•</span>
+<span class="font-body-sm text-body-sm text-secondary">25 Apr 2024</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end shrink-0">
+<span class="font-label-lg text-label-lg font-bold text-on-surface tracking-tight">₹4,750</span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded-[4px] bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5] font-label-sm text-label-sm font-semibold mt-1">
+              PAID
+            </span>
+</div>
+</div>
+<div class="pt-2 border-t border-[#EEF0F3] flex items-center justify-between">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center px-2 py-0.5 rounded-[6px] bg-[#EEF0F3] text-on-surface font-label-sm text-label-sm font-semibold border border-[#E2E5EA]">
+              KA 05 AF 3104
+            </span>
+<span class="font-body-sm text-body-sm text-secondary">Tata Marcopolo</span>
+</div>
+<span class="font-body-sm text-body-sm font-medium text-primary-container truncate max-w-[150px] text-right">
+            DEF &amp; Coolant Refill
+          </span>
+</div>
+</article>
+</main>
+<!-- Monthly Total Summary Sticky Bar -->
+<div class="fixed bottom-[56px] left-0 right-0 max-w-[390px] mx-auto z-30 bg-[#EEF0F3] border-t border-b border-[#E2E5EA] px-space-lg py-2.5 flex items-center justify-between shadow-none">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-secondary">May 2024 Spend</span>
+<div class="flex items-baseline gap-1.5">
+<span class="font-label-lg text-label-lg font-bold text-on-surface">₹68,627</span>
+<span class="font-label-sm text-label-sm text-secondary">(8 invoices)</span>
+</div>
+</div>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-[8px] bg-surface-container-lowest border border-[#E2E5EA] text-primary hover:border-primary font-title-sm text-title-sm font-semibold transition-colors">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Export Report</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar (Docked Shared Component) -->
+<!-- JSON Schema adherence: Labels: Fleet, Services, Bills, Analytics; active index strictly on 'Bills' -->
+<nav class="fixed bottom-0 left-0 right-0 max-w-[390px] mx-auto z-40 bg-surface dark:bg-inverse-surface border-t border-outline-variant dark:border-outline flex justify-around items-center px-space-sm py-space-xs h-[56px]">
+<!-- Fleet (Inactive) -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-sm flex-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[22px]">directions_bus</span>
+<span class="mt-0.5 text-[11px] font-body-sm font-medium">Fleet</span>
+</button>
+<!-- Services / Repairs (Inactive) -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-sm flex-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[22px]">build</span>
+<span class="mt-0.5 text-[11px] font-body-sm font-medium">Services</span>
+</button>
+<!-- Bills (ACTIVE Tab - Exact mapping per JSON & Hierarchy) -->
+<button class="flex flex-col items-center justify-center text-primary dark:text-inverse-primary font-label-sm font-medium flex-1 active:scale-95 duration-100 relative">
+<div class="w-10 h-7 rounded-full bg-primary-container text-on-primary flex items-center justify-center mb-0.5">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+</div>
+<span class="text-[11px] font-body-sm font-semibold text-primary">Bills</span>
+</button>
+<!-- Analytics (Inactive) -->
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-label-sm flex-1 hover:text-primary dark:hover:text-inverse-primary transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-[22px]">monitoring</span>
+<span class="mt-0.5 text-[11px] font-body-sm font-medium">Analytics</span>
+</button>
+</nav>
+</div>
+</body></html>

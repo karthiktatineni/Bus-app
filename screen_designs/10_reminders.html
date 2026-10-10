@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reminders - FleetTrack Maintenance</title>
+<!-- Google Fonts: Hanken Grotesk & JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-secondary-fixed": "#131c28",
+            "inverse-on-surface": "#edf0ff",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#141b2b",
+            "primary-fixed-dim": "#a0c9ff",
+            "surface-container-high": "#e1e8fd",
+            "tertiary-fixed-dim": "#b1c5ff",
+            "outline-variant": "#c2c7d1",
+            "tertiary-container": "#0044a7",
+            "surface-bright": "#f9f9ff",
+            "on-tertiary-fixed": "#001847",
+            "inverse-primary": "#a0c9ff",
+            "secondary-fixed": "#dae3f4",
+            "primary": "#00355f",
+            "on-secondary-fixed-variant": "#3e4755",
+            "on-surface-variant": "#42474f",
+            "on-primary-fixed": "#001c37",
+            "secondary-container": "#dae3f4",
+            "primary-container": "#0f4c81",
+            "on-tertiary-container": "#9fb9ff",
+            "surface-container-low": "#f1f3ff",
+            "error-container": "#ffdad6",
+            "background": "#f9f9ff",
+            "secondary-fixed-dim": "#bec7d7",
+            "outline": "#727780",
+            "on-secondary": "#ffffff",
+            "on-primary-fixed-variant": "#07497d",
+            "on-tertiary-fixed-variant": "#0040a0",
+            "surface": "#f9f9ff",
+            "on-secondary-container": "#5c6573",
+            "surface-tint": "#2d6197",
+            "on-background": "#141b2b",
+            "surface-container": "#e9edff",
+            "secondary": "#565f6d",
+            "on-primary-container": "#8ebdf9",
+            "surface-dim": "#d3daef",
+            "on-tertiary": "#ffffff",
+            "tertiary": "#002f79",
+            "tertiary-fixed": "#dae2ff",
+            "surface-variant": "#dce2f7",
+            "primary-fixed": "#d2e4ff",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#dce2f7",
+            "on-error-container": "#93000a",
+            "error": "#ba1a1a",
+            "on-error": "#ffffff",
+            "inverse-surface": "#293040"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-xl": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-md": "0.75rem",
+            "space-lg": "1rem",
+            "space-xs": "0.25rem",
+            "gutter": "0.75rem",
+            "margin": "1rem"
+          },
+          "fontFamily": {
+            "headline-sm": ["Hanken Grotesk"],
+            "body-lg": ["Hanken Grotesk"],
+            "title-md": ["Hanken Grotesk"],
+            "label-lg": ["JetBrains Mono"],
+            "body-sm": ["Hanken Grotesk"],
+            "label-sm": ["JetBrains Mono"],
+            "body-md": ["Hanken Grotesk"],
+            "headline-lg": ["Hanken Grotesk"],
+            "label-md": ["JetBrains Mono"],
+            "title-sm": ["Hanken Grotesk"],
+            "headline-md": ["Hanken Grotesk"]
+          },
+          "fontSize": {
+            "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+            "body-lg": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+            "title-md": ["16px", {"lineHeight": "22px", "fontWeight": "600"}],
+            "label-lg": ["13px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "body-sm": ["11px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "label-sm": ["10px", {"lineHeight": "14px", "fontWeight": "500"}],
+            "body-md": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+            "headline-lg": ["28px", {"lineHeight": "34px", "fontWeight": "700"}],
+            "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+            "title-sm": ["14px", {"lineHeight": "20px", "fontWeight": "600"}],
+            "headline-md": ["22px", {"lineHeight": "28px", "fontWeight": "600"}]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Hardware industrial touch feedback */
+    button:active {
+      transform: scale(0.98);
+    }
+    /* Scrollbar hidden for app-like native feel */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased flex justify-center selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Mobile Viewport Shell (390 x 844) with Desktop Centering -->
+<div class="w-full max-w-[390px] min-h-screen bg-[#F6F7F9] border-x border-outline-variant flex flex-col relative pb-20">
+<!-- Top App Bar (FleetTrack Contextual Bar with Back Action & Trailing Filter) -->
+<header class="sticky top-0 z-40 bg-surface-container-lowest border-b border-outline-variant px-space-md py-space-sm flex items-center justify-between h-14">
+<div class="flex items-center gap-space-sm">
+<button aria-label="Go Back" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-surface-container text-primary transition-colors duration-150">
+<span class="material-symbols-outlined text-[20px]">arrow_back</span>
+</button>
+<div>
+<h1 class="font-title-md text-title-md font-semibold text-primary tracking-tight">Reminders</h1>
+<p class="font-body-sm text-body-sm text-secondary leading-none">Depot South-4 • Scheduled Tasks</p>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button aria-label="Filter Reminders" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container text-secondary transition-colors">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</button>
+<button aria-label="Notifications" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container text-secondary transition-colors relative">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+</header>
+<!-- Operational Metrics Summary Bar (4-Column Bento Tiles) -->
+<section class="p-space-md bg-surface-container-lowest border-b border-outline-variant">
+<div class="grid grid-cols-4 gap-space-xs">
+<!-- Tile 1: All Active -->
+<button class="flex flex-col p-2 rounded-lg bg-[#EEF0F3] border border-outline-variant text-left transition-colors hover:border-primary">
+<span class="font-label-sm text-label-sm text-secondary">ACTIVE</span>
+<span class="font-label-lg text-label-lg font-semibold text-primary mt-0.5">09</span>
+<span class="font-body-sm text-[10px] text-secondary-container text-secondary leading-tight mt-0.5">Tracked</span>
+</button>
+<!-- Tile 2: Overdue (Critical) -->
+<button class="flex flex-col p-2 rounded-lg bg-[#FEECEB] border border-[#FECDCA] text-left transition-colors hover:brightness-95">
+<span class="font-label-sm text-label-sm text-[#B42318] font-semibold">OVERDUE</span>
+<span class="font-label-lg text-label-lg font-bold text-[#B42318] mt-0.5">02</span>
+<span class="font-body-sm text-[10px] text-[#B42318] leading-tight mt-0.5">Urgent</span>
+</button>
+<!-- Tile 3: This Week -->
+<button class="flex flex-col p-2 rounded-lg bg-[#FFF4E5] border border-[#FFD599] text-left transition-colors hover:brightness-95">
+<span class="font-label-sm text-label-sm text-[#B26A00] font-semibold">THIS WK</span>
+<span class="font-label-lg text-label-lg font-bold text-[#B26A00] mt-0.5">03</span>
+<span class="font-body-sm text-[10px] text-[#B26A00] leading-tight mt-0.5">&lt; 7 Days</span>
+</button>
+<!-- Tile 4: Later -->
+<button class="flex flex-col p-2 rounded-lg bg-surface-container-low border border-outline-variant text-left transition-colors hover:border-primary">
+<span class="font-label-sm text-label-sm text-secondary">LATER</span>
+<span class="font-label-lg text-label-lg font-semibold text-on-surface mt-0.5">04</span>
+<span class="font-body-sm text-[10px] text-secondary leading-tight mt-0.5">Upcoming</span>
+</button>
+</div>
+<!-- Quick Fast-Filter Chips Carousel -->
+<div class="flex items-center gap-space-xs mt-3 overflow-x-auto pb-0.5 no-scrollbar">
+<button class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-primary text-on-primary shrink-0">
+<span class="material-symbols-outlined text-[14px]">checklist</span>
+          All Types (9)
+        </button>
+<button class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#FFFFFF] border border-outline-variant text-on-surface hover:bg-surface-container shrink-0">
+<span class="material-symbols-outlined text-[14px] text-secondary">build</span>
+          Mechanical (5)
+        </button>
+<button class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-[#FFFFFF] border border-outline-variant text-on-surface hover:bg-surface-container shrink-0">
+<span class="material-symbols-outlined text-[14px] text-secondary">description</span>
+          Compliance &amp; FC (4)
+        </button>
+</div>
+</section>
+<!-- Main Content Canvas (Grouped Chronological Task Reminders) -->
+<main class="flex-1 px-space-md py-space-md space-y-space-lg">
+<!-- GROUP 1: OVERDUE -->
+<section class="space-y-space-xs">
+<!-- Section Header with Badging -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#B42318] inline-block"></span>
+<h2 class="font-title-sm text-title-sm font-bold text-[#B42318] tracking-tight">Overdue</h2>
+<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FEECEB] text-[#B42318] border border-[#FECDCA]">
+              2 CRITICAL
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Depot Priority 1</span>
+</div>
+<!-- Overdue Card 1: Engine Oil Change -->
+<article class="bg-surface-container-lowest border border-[#FECDCA] rounded-xl p-space-md transition-all active:bg-[#FFF8F8]">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#FEECEB] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface tracking-tight">TS 09 UB 4521</span>
+<p class="font-body-sm text-body-sm text-secondary">Ashok Leyland 12M Viking • Bay 03</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#FEECEB] text-[#B42318] border border-[#FECDCA]">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+              -14 Days
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Engine Oil &amp; Filter Change</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">speed</span>
+                  1,84,000 km
+                </span>
+<span class="flex items-center gap-1 text-[#B42318] font-medium">
+<span class="material-symbols-outlined text-[14px]">event_busy</span>
+                  Due: 10 May 2024
+                </span>
+</div>
+<button class="h-7 px-2.5 rounded-lg bg-[#B42318] text-[#FFFFFF] font-title-sm text-[11px] font-semibold flex items-center gap-1 active:opacity-90">
+                Create WO
+                <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Overdue Card 2: PUC Expiry -->
+<article class="bg-surface-container-lowest border border-[#FECDCA] rounded-xl p-space-md transition-all active:bg-[#FFF8F8]">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#FEECEB] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface tracking-tight">KA 01 MJ 8820</span>
+<p class="font-body-sm text-body-sm text-secondary">Tata Starbus Ultra • Route 335-E</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#FEECEB] text-[#B42318] border border-[#FECDCA]">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+              Expired
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Pollution Certificate (PUC) Expiry</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">verified</span>
+                  RTO Bangalore
+                </span>
+<span class="flex items-center gap-1 text-[#B42318] font-medium">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                  Due: 18 May 2024
+                </span>
+</div>
+<button class="h-7 px-2.5 rounded-lg bg-[#FFFFFF] border border-outline-variant text-primary font-title-sm text-[11px] font-semibold flex items-center gap-1 hover:bg-surface-container">
+                Renew
+                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+</div>
+</div>
+</article>
+</section>
+<!-- GROUP 2: THIS WEEK -->
+<section class="space-y-space-xs">
+<!-- Section Header -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#B26A00] inline-block"></span>
+<h2 class="font-title-sm text-title-sm font-bold text-on-surface tracking-tight">This week</h2>
+<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#FFF4E5] text-[#B26A00] border border-[#FFD599]">
+              3 TASKS
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Next 7 Days</span>
+</div>
+<!-- This Week Item 1: Brake Shoe Inspection -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">MH 14 TC 7712</span>
+<p class="font-body-sm text-body-sm text-secondary">Eicher Skyline Pro • Bay 01</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#FFF4E5] text-[#B26A00] border border-[#FFD599]">
+<span class="material-symbols-outlined text-[13px]">alarm</span>
+              In 2 days
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Front Brake Shoe Inspection</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">speed</span>
+                  1,42,100 km
+                </span>
+<span class="flex items-center gap-1 text-[#B26A00] font-medium">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                  25 May 2024
+                </span>
+</div>
+<button class="h-7 px-2.5 rounded-lg bg-[#FFFFFF] border border-[#0F4C81] text-[#0F4C81] font-title-sm text-[11px] font-semibold flex items-center gap-1 hover:bg-surface-container">
+                Schedule
+              </button>
+</div>
+</div>
+</article>
+<!-- This Week Item 2: Brake Fluid Flush -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">DL 01 AA 9022</span>
+<p class="font-body-sm text-body-sm text-secondary">BharatBenz 1624 • Bay 04</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-surface-container text-secondary border border-outline-variant">
+              In 4 days
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Brake Fluid Flush &amp; Bleed</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">water_drop</span>
+                  DOT 4 Synthetic
+                </span>
+<span class="flex items-center gap-1 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                  27 May 2024
+                </span>
+</div>
+<button class="w-7 h-7 flex items-center justify-center rounded-lg border border-outline-variant hover:bg-surface-container text-secondary">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</article>
+<!-- This Week Item 3: Fitness Certificate Renewal -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">KA 05 AF 3104</span>
+<p class="font-body-sm text-body-sm text-secondary">Ashok Leyland 12M • Depot Central</p>
+</div>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-[#E8F5E9] text-[#157347] border border-[#A3D9A5]">
+<span class="material-symbols-outlined text-[13px]">gavel</span>
+              Compliance
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Fitness Certificate (FC) Renewal</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">description</span>
+                  RTO Inspection
+                </span>
+<span class="flex items-center gap-1 text-on-surface font-medium">
+<span class="material-symbols-outlined text-[14px]">event</span>
+                  28 May 2024
+                </span>
+</div>
+<button class="h-7 px-2.5 rounded-lg bg-[#FFFFFF] border border-outline-variant text-primary font-title-sm text-[11px] font-semibold flex items-center gap-1 hover:bg-surface-container">
+                View Docs
+              </button>
+</div>
+</div>
+</article>
+</section>
+<!-- GROUP 3: NEXT WEEK -->
+<section class="space-y-space-xs">
+<!-- Section Header -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-secondary inline-block"></span>
+<h2 class="font-title-sm text-title-sm font-bold text-on-surface tracking-tight">Next week</h2>
+<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-container text-secondary border border-outline-variant">
+              2 TASKS
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Early June</span>
+</div>
+<!-- Next Week Item 1: Clutch Plate -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">MH 12 RN 3104</span>
+<p class="font-body-sm text-body-sm text-secondary">Tata LPO 1618 • Bay 02</p>
+</div>
+<span class="font-label-md text-label-md text-secondary font-medium">
+              02 Jun 2024
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Clutch Plate Calibration</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">speed</span>
+                  1,60,000 km
+                </span>
+<span class="text-secondary font-normal">Transmission Dept</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+</div>
+</article>
+<!-- Next Week Item 2: Air Filter & HVAC -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">TS 08 UB 9901</span>
+<p class="font-body-sm text-body-sm text-secondary">Volvo 9600 Multi-Axle</p>
+</div>
+<span class="font-label-md text-label-md text-secondary font-medium">
+              05 Jun 2024
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Air Filter &amp; HVAC Sanitization</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">ac_unit</span>
+                  AC Cabin Service
+                </span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+</div>
+</article>
+</section>
+<!-- GROUP 4: LATER -->
+<section class="space-y-space-xs pb-4">
+<!-- Section Header -->
+<div class="flex items-center justify-between pb-1">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-outline-variant inline-block"></span>
+<h2 class="font-title-sm text-title-sm font-bold text-on-surface tracking-tight">Later</h2>
+<span class="inline-flex items-center justify-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-container text-secondary border border-outline-variant">
+              2 TASKS
+            </span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary">Mid-Late June</span>
+</div>
+<!-- Later Item 1: Commercial Insurance -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">KA 04 MB 6789</span>
+<p class="font-body-sm text-body-sm text-secondary">Tata Marcopolo • Depot Airport</p>
+</div>
+<span class="font-label-md text-label-md text-secondary">
+              18 Jun 2024
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Commercial Insurance Expiry</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">security</span>
+                  New India Assurance
+                </span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+</div>
+</article>
+<!-- Later Item 2: Tyre Rotation -->
+<article class="bg-surface-container-lowest border border-outline-variant rounded-xl p-space-md transition-all active:bg-surface-container-low">
+<div class="flex items-start justify-between gap-space-sm border-b border-[#E2E5EA] pb-space-xs mb-space-xs">
+<div class="space-y-0.5">
+<span class="font-label-lg text-label-lg font-semibold text-on-surface">DL 01 AA 9022</span>
+<p class="font-body-sm text-body-sm text-secondary">BharatBenz 1624 • Bay 04</p>
+</div>
+<span class="font-label-md text-label-md text-secondary">
+              25 Jun 2024
+            </span>
+</div>
+<div class="space-y-1">
+<h3 class="font-title-sm text-title-sm text-on-surface font-semibold">Tyre Rotation &amp; Alignment</h3>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-3 font-label-md text-label-md text-secondary">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-outline">sync</span>
+                  6-Wheel Cross Pattern
+                </span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">chevron_right</span>
+</div>
+</div>
+</article>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Docked full-width bottom, 4 destinations from JSON: Fleet, Services, Bills, Analytics) -->
+<!-- 'Services' / Maintenance tasks represents the closest domain for Work Order & Service Reminders -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-space-sm py-space-xs bg-surface border-t border-outline-variant max-w-[390px] mx-auto left-0 right-0">
+<!-- Destination 1: Fleet -->
+<button class="flex flex-col items-center justify-center text-secondary font-label-sm hover:text-primary transition-colors duration-150 py-1 flex-1">
+<span class="material-symbols-outlined text-[22px]">directions_bus</span>
+<span class="text-[10px] mt-0.5">Fleet</span>
+</button>
+<!-- Destination 2: Services (Active for Reminders & Maintenance Schedules) -->
+<button class="flex flex-col items-center justify-center text-primary font-label-sm font-medium hover:text-primary transition-colors duration-150 py-1 flex-1">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">build</span>
+<span class="text-[10px] mt-0.5 font-semibold">Services</span>
+</button>
+<!-- Destination 3: Bills -->
+<button class="flex flex-col items-center justify-center text-secondary font-label-sm hover:text-primary transition-colors duration-150 py-1 flex-1">
+<span class="material-symbols-outlined text-[22px]">receipt_long</span>
+<span class="text-[10px] mt-0.5">Bills</span>
+</button>
+<!-- Destination 4: Analytics -->
+<button class="flex flex-col items-center justify-center text-secondary font-label-sm hover:text-primary transition-colors duration-150 py-1 flex-1">
+<span class="material-symbols-outlined text-[22px]">monitoring</span>
+<span class="text-[10px] mt-0.5">Analytics</span>
+</button>
+</nav>
+</div>
+</body></html>

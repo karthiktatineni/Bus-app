@@ -1,0 +1,10 @@
+.env*
+!.env.example
+*.keystore
+key.properties
+*.p12
+*.mobileprovision
+service_role*.json
+/supabase/.temp/
+build/
+.dart_tool/

@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+      
+      - name: Check for pubspec.yaml
+        id: check_pubspec
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Setup Flutter
+        if: steps.check_pubspec.outputs.exists == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          
+      - name: Install dependencies
+        if: steps.check_pubspec.outputs.exists == 'true'
+        run: flutter pub get
+        
+      - name: Dependency Audit
+        if: steps.check_pubspec.outputs.exists == 'true'
+        run: flutter pub outdated --mode=security
+        
+      - name: Analyze
+        if: steps.check_pubspec.outputs.exists == 'true'
+        run: flutter analyze
+        
+      - name: Run tests
+        if: steps.check_pubspec.outputs.exists == 'true'
+        run: flutter test
+        
+      - name: Backend SQL/RLS tests
+        run: echo "Run Supabase DB tests here"
+        
+      - name: Build Debug APK
+        if: steps.check_pubspec.outputs.exists == 'true'
+        run: flutter build apk --debug

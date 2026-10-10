@@ -1,0 +1,4 @@
+/backend/ @backend-team
+/supabase/migrations/ @backend-team
+/.github/workflows/ @security-team
+/docs/HARDENING_AND_OPERATIONS.md @security-team

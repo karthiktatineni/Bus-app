@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="22ac2a4d-e0ce-4434-a44e-37761473ba85" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/AGENT_PROMPT.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ARCHITECTURE.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/07975011626b499699467cd905e700c6.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/07975011626b499699467cd905e700c6_screenshot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/5b8d663eb3ce45c0a5033c31b1385f96.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/5b8d663eb3ce45c0a5033c31b1385f96_screenshot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/6cc8c8dfca034d56bcc707936b61f601.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/6cc8c8dfca034d56bcc707936b61f601_screenshot.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/c861c16ce1994f0c9dcc4df505f8d68f.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screen_designs/c861c16ce1994f0c9dcc4df505f8d68f_screenshot.png" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 1
+}]]></component>
+  <component name="ProjectId" id="3KUeeXXmjrsgNuQprsBjLdzyY78" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/karth/Desktop/Bus"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="22ac2a4d-e0ce-4434-a44e-37761473ba85" name="Changes" comment="" />
+      <created>1791616671294</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1791616671294</updated>
+    </task>
+    <servers />
+  </component>
+</project>
