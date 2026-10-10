@@ -12,3 +12,9 @@
 - **Docs location**: Moved `README.md` back to repo root. All other `.md` docs will remain in `docs/` and paths are updated.
 - **Hardening & Operations**: Extended MASTER_AGENT_PROMPT.md. Created private Git workflow files (.gitignore, CODEOWNERS, CI, PR Template) and added 8 required agent skills.
 - **Typography**: Chosen fonts are Hanken Grotesk (primary) and JetBrains Mono (data) as per `DESIGN.md`. These will be bundled locally as assets (`pubspec.yaml` assets) to ensure offline availability and prevent network latency issues.
+- **Milestone 1 App Identity**:
+  - App Name: `bus_app` (working name in `pubspec.yaml`).
+  - Org ID: `com.fleetpulse` (provisional working org ID; to be finalized by operator before Phase 4/5 Firebase & Supabase registrations).
+  - Android Application ID: `com.fleetpulse.bus_app`.
+  - iOS Bundle ID: `com.fleetpulse.busApp`.
+  - CI pinned to Flutter version: `3.47.3`.
