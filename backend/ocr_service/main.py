@@ -1106,7 +1106,7 @@ async def scan_bill(request: Request):
             # Large phone photos make repeated Tesseract passes expensive on
             # Render's small instances. Bound pixels while retaining enough
             # resolution for printed invoice text.
-            max_dimension = 1100
+            max_dimension = 900
             if max(image.size) > max_dimension:
                 scale = max_dimension / max(image.size)
                 image = image.resize(
@@ -1124,12 +1124,18 @@ async def scan_bill(request: Request):
             # Start with the common full-page invoice layout. Retry sparse
             # receipts only when the first result is unreadable; avoid eagerly
             # preparing/rotating several full-size images on every request.
-            attempts = [(sharpened, "--oem 3 --psm 6", 18)]
+            # Render's small CPU instances can need more than 18 seconds for
+            # a full-page phone photo. The old 18s + 8s per-pass limits caused
+            # ordinary invoices to be killed and returned as HTTP 408. Keep
+            # the input bounded, but allow a real processing window that fits
+            # inside the mobile client's 90s request timeout and Render's
+            # request lifetime.
+            attempts = [(sharpened, "--oem 3 --psm 6", 45)]
             best_text = ""
             timed_out = 0
             for index in range(2):
                 if index == 1:
-                    attempts.append((enhanced, "--oem 3 --psm 11", 8))
+                    attempts.append((enhanced, "--oem 3 --psm 11", 20))
                 candidate, config, timeout_seconds = attempts[index]
                 try:
                     text = pytesseract.image_to_string(candidate, config=config, timeout=timeout_seconds)

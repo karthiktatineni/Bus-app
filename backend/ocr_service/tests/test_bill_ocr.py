@@ -231,8 +231,8 @@ def test_bill_ocr_tries_alternate_invoice_layout_before_rejecting(monkeypatch):
     assert response.status_code == 200
     assert response.json()["grand_total"] == 3250.0
     assert calls == [
-        ("--oem 3 --psm 6", 18),
-        ("--oem 3 --psm 11", 8),
+        ("--oem 3 --psm 6", 45),
+        ("--oem 3 --psm 11", 20),
     ]
 
 
@@ -274,7 +274,7 @@ def test_bill_ocr_retries_sparse_layout_without_unbounded_rotations(monkeypatch)
     assert [call[1] for call in calls] == [
         "--oem 3 --psm 6", "--oem 3 --psm 11"
     ]
-    assert all(call[2] <= 18 for call in calls)
+    assert all(call[2] <= 45 for call in calls)
 
 
 def test_bill_ocr_reports_engine_timeout_as_408_not_unreadable_image(monkeypatch):
