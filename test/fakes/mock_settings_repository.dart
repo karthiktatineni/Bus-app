@@ -1,7 +1,7 @@
-import '../../../mock/mock_delay.dart';
-import '../domain/user_settings.dart';
-import '../domain/company_settings.dart';
-import '../domain/settings_repository.dart';
+import 'package:bus_app/features/settings/domain/user_settings.dart';
+import 'package:bus_app/features/settings/domain/company_settings.dart';
+import 'package:bus_app/features/settings/domain/settings_repository.dart';
+import 'mock_delay.dart';
 
 class MockSettingsRepository implements SettingsRepository {
   UserSettings _userSettings = const UserSettings();

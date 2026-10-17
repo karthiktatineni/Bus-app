@@ -9,6 +9,14 @@ enum VehicleStatus {
   final String label;
   const VehicleStatus(this.label);
 
+  /// Canonical value used by the Supabase vehicles.status constraint.
+  String get dbValue => switch (this) {
+        VehicleStatus.active => 'active',
+        VehicleStatus.dueSoon => 'due_soon',
+        VehicleStatus.overdue => 'overdue',
+        VehicleStatus.inWorkshop => 'in_workshop',
+      };
+
   /// Accept both Dart enum names and the database's snake_case values.
   static VehicleStatus fromStorage(Object? value) {
     final normalized = value?.toString().replaceAll('_', '').toLowerCase();

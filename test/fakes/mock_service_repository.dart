@@ -1,11 +1,11 @@
-import '../../../core/errors/app_exception.dart';
-import '../../../core/utils/date_utils.dart';
-import '../../../mock/mock_data.dart';
-import '../../../mock/mock_delay.dart';
-import '../domain/service_record.dart';
-import '../domain/maintenance_task.dart';
-import '../domain/service_schedule.dart';
-import '../domain/service_repository.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
+import 'package:bus_app/core/utils/date_utils.dart';
+import 'package:bus_app/features/services/domain/service_record.dart';
+import 'package:bus_app/features/services/domain/maintenance_task.dart';
+import 'package:bus_app/features/services/domain/service_schedule.dart';
+import 'package:bus_app/features/services/domain/service_repository.dart';
+import 'mock_data.dart';
+import 'mock_delay.dart';
 
 class MockServiceRepository implements ServiceRepository {
   final List<ServiceRecord> _services = MockData.generateServiceRecords();

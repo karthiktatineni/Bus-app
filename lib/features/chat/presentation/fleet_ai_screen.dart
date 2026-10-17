@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -18,6 +19,7 @@ class FleetAiScreen extends ConsumerStatefulWidget {
 }
 
 class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
+  static const _storage = FlutterSecureStorage();
   static const _backendUrl = String.fromEnvironment(
     'FLEET_BACKEND_URL',
     defaultValue: String.fromEnvironment(
@@ -29,11 +31,82 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
   final _scrollController = ScrollController();
   final List<({String text, bool user, List<String> sources})> _messages = [];
   bool _sending = false;
+  bool _historyLoaded = false;
+  String? _historyUserId;
   static const _suggestions = [
     'Which buses are overdue for service?',
     'Which fitness certificates expire in 30 days?',
     'How much did we spend in the last 30 days?',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _restoreHistory();
+  }
+
+  Future<void> _restoreHistory() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      if (mounted) setState(() => _historyLoaded = true);
+      return;
+    }
+    _historyUserId = userId;
+    try {
+      final saved = await _storage.read(key: 'fleet_ai_history_$userId');
+      if (!mounted || saved == null) return;
+      final rows = jsonDecode(saved);
+      if (rows is! List) return;
+      final restored = <({String text, bool user, List<String> sources})>[];
+      for (final row in rows.take(50)) {
+        if (row is! Map || row['text'] is! String || row['user'] is! bool) {
+          continue;
+        }
+        restored.add((
+          text: (row['text'] as String).substring(
+              0, (row['text'] as String).length.clamp(0, 4000).toInt()),
+          user: row['user'] as bool,
+          sources: (row['sources'] is List ? row['sources'] as List : const [])
+              .whereType<String>()
+              .take(8)
+              .toList(),
+        ));
+      }
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(restored);
+      });
+    } catch (_) {
+      // Chat still works when secure storage is unavailable on a platform.
+    } finally {
+      if (mounted) setState(() => _historyLoaded = true);
+    }
+  }
+
+  Future<void> _saveHistory() async {
+    final userId =
+        _historyUserId ?? Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    _historyUserId = userId;
+    try {
+      final rows = _messages.length <= 50
+          ? _messages
+          : _messages.sublist(_messages.length - 50);
+      await _storage.write(
+        key: 'fleet_ai_history_$userId',
+        value: jsonEncode(rows
+            .map((message) => {
+                  'text': message.text,
+                  'user': message.user,
+                  'sources': message.sources,
+                })
+            .toList()),
+      );
+    } catch (_) {
+      // Do not fail a chat request because local persistence failed.
+    }
+  }
 
   @override
   void dispose() {
@@ -44,12 +117,20 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
 
   Future<void> _send([String? prompt]) async {
     final text = (prompt ?? _controller.text).trim();
-    if (text.isEmpty || _sending) return;
+    if (text.isEmpty || _sending || !_historyLoaded) return;
     _controller.clear();
+    final history = _messages
+        .where((message) =>
+            !message.text.startsWith('Fleet AI took too long') &&
+            !message.text.startsWith('Fleet AI could not connect') &&
+            !message.text.startsWith('Fleet AI backend error') &&
+            !message.text.startsWith('Fleet AI request failed'))
+        .toList(growable: false);
     setState(() {
       _messages.add((text: text, user: true, sources: const []));
       _sending = true;
     });
+    await _saveHistory();
     try {
       final accessToken =
           Supabase.instance.client.auth.currentSession?.accessToken;
@@ -64,7 +145,17 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
               'Authorization': 'Bearer $accessToken',
               'Content-Type': 'application/json',
             },
-            body: jsonEncode({'message': text}),
+            body: jsonEncode({
+              'message': text,
+              'history': history
+                  .skip(history.length > 12 ? history.length - 12 : 0)
+                  .take(12)
+                  .map((message) => {
+                        'role': message.user ? 'user' : 'assistant',
+                        'content': message.text,
+                      })
+                  .toList(),
+            }),
           )
           .timeout(const Duration(seconds: 60));
       if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -84,12 +175,14 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
             user: false,
             sources: sources,
           )));
+      await _saveHistory();
     } on _FleetAssistantException catch (error) {
       setState(() => _messages.add((
             text: error.message,
             user: false,
             sources: const [],
           )));
+      await _saveHistory();
     } on TimeoutException {
       setState(() => _messages.add((
             text:
@@ -97,6 +190,7 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
             user: false,
             sources: const [],
           )));
+      await _saveHistory();
     } on SocketException {
       setState(() => _messages.add((
             text:
@@ -104,6 +198,7 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
             user: false,
             sources: const [],
           )));
+      await _saveHistory();
     } on FormatException {
       setState(() => _messages.add((
             text:
@@ -111,6 +206,7 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
             user: false,
             sources: const [],
           )));
+      await _saveHistory();
     } catch (_) {
       setState(() => _messages.add((
             text:
@@ -257,7 +353,8 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
                               border: OutlineInputBorder()))),
                   const SizedBox(width: 8),
                   IconButton.filled(
-                      onPressed: _sending ? null : () => _send(),
+                      onPressed:
+                          _sending || !_historyLoaded ? null : () => _send(),
                       icon: const Icon(Icons.send))
                 ]))),
       ]));

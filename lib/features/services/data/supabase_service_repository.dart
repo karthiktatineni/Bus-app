@@ -232,6 +232,7 @@ class SupabaseServiceRepository implements ServiceRepository {
           'due_date': task.dueDate?.toIso8601String().split('T').first,
           'due_km': task.dueKm,
           'schedule_id': task.scheduleId,
+          'service_record_id': task.serviceRecordId,
           'created_by': _client.auth.currentUser!.id,
         })
         .select()
@@ -358,6 +359,7 @@ class SupabaseServiceRepository implements ServiceRepository {
       completedAt: row['completed_at'] != null
           ? DateTime.parse(row['completed_at'] as String)
           : null,
+      serviceRecordId: row['service_record_id'] as String?,
     );
   }
 

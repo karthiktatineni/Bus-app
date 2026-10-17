@@ -98,7 +98,7 @@ class SupabaseVehicleRepository implements VehicleRepository {
           'odometer_km': v.odometerKm,
           'depot': v.depot,
           'purchase_date': v.purchaseDate.toIso8601String().split('T').first,
-          'status': v.status.name,
+          'status': v.status.dbValue,
           'created_by': _client.auth.currentUser!.id,
         })
         .select()
@@ -156,7 +156,7 @@ class SupabaseVehicleRepository implements VehicleRepository {
           'odometer_km': v.odometerKm,
           'depot': v.depot,
           'purchase_date': v.purchaseDate.toIso8601String().split('T').first,
-          'status': v.status.name,
+          'status': v.status.dbValue,
         })
         .eq('id', v.id)
         .select()

@@ -1,5 +1,5 @@
-import '../../../mock/mock_delay.dart';
-import '../domain/ocr_service.dart';
+import 'package:bus_app/features/bills/domain/ocr_service.dart';
+import 'mock_delay.dart';
 
 class MockOcrService implements OcrService {
   @override

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -37,6 +38,7 @@ class RenderCloudOcrService implements OcrService {
         'file',
         imagePath,
         filename: p.basename(imagePath),
+        contentType: MediaType('image', 'jpeg'),
       ));
     final accessToken =
         Supabase.instance.client.auth.currentSession?.accessToken;
@@ -48,7 +50,17 @@ class RenderCloudOcrService implements OcrService {
         await _client.send(request).timeout(const Duration(seconds: 60));
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HttpException('Bill scanning failed (${response.statusCode}).');
+      var detail = '';
+      try {
+        final error = jsonDecode(response.body);
+        if (error is Map<String, dynamic> && error['detail'] is String) {
+          detail = ': ${error['detail']}';
+        }
+      } catch (_) {
+        // Keep the status code when the server response is not JSON.
+      }
+      throw HttpException(
+          'Bill scanning failed (${response.statusCode})$detail.');
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final rawDate = payload['bill_date'] as String?;

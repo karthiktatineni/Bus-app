@@ -27,16 +27,17 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
   bool _isLoading = false;
 
   late TextEditingController _regController;
+  late TextEditingController _makeController;
   late TextEditingController _modelController;
   late TextEditingController _yearController;
+  late TextEditingController _depotController;
+  late TextEditingController _fuelController;
   late TextEditingController _chassisController;
   late TextEditingController _engineController;
   late TextEditingController _seatsController;
   late TextEditingController _odometerController;
 
-  String _selectedMake = 'Ashok Leyland';
-  String _selectedDepot = 'Bengaluru Central';
-  String _selectedFuel = 'Diesel';
+  DateTime? _purchaseDate;
   VehicleStatus _selectedStatus = VehicleStatus.active;
   final List<String> _pendingPhotos = [];
   final List<String> _existingPhotos = [];
@@ -47,12 +48,15 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
   void initState() {
     super.initState();
     _regController = TextEditingController();
+    _makeController = TextEditingController();
     _modelController = TextEditingController();
-    _yearController = TextEditingController(text: '2023');
+    _yearController = TextEditingController();
+    _depotController = TextEditingController();
+    _fuelController = TextEditingController();
     _chassisController = TextEditingController();
     _engineController = TextEditingController();
-    _seatsController = TextEditingController(text: '42');
-    _odometerController = TextEditingController(text: '12500');
+    _seatsController = TextEditingController();
+    _odometerController = TextEditingController();
 
     if (widget.vehicleId != null) {
       _loadVehicleData();
@@ -65,15 +69,16 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
     if (mounted) {
       setState(() {
         _regController.text = vehicle.registrationNo;
+        _makeController.text = vehicle.make;
         _modelController.text = vehicle.model;
         _yearController.text = vehicle.year.toString();
         _chassisController.text = vehicle.chassisNo;
         _engineController.text = vehicle.engineNo;
         _seatsController.text = vehicle.seats.toString();
         _odometerController.text = vehicle.odometerKm.toString();
-        _selectedMake = vehicle.make;
-        _selectedDepot = vehicle.depot;
-        _selectedFuel = vehicle.fuelType;
+        _depotController.text = vehicle.depot;
+        _fuelController.text = vehicle.fuelType;
+        _purchaseDate = vehicle.purchaseDate;
         _selectedStatus = vehicle.status;
         _existingPhotos
           ..clear()
@@ -216,8 +221,11 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
   @override
   void dispose() {
     _regController.dispose();
+    _makeController.dispose();
     _modelController.dispose();
     _yearController.dispose();
+    _depotController.dispose();
+    _fuelController.dispose();
     _chassisController.dispose();
     _engineController.dispose();
     _seatsController.dispose();
@@ -251,24 +259,34 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
     return shouldLeave ?? false;
   }
 
+  String? _requiredField(String? value) =>
+      value == null || value.trim().isEmpty ? 'Required' : null;
+
   Future<void> _saveVehicle() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
+    if (_purchaseDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter the vehicle purchase date.')),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
     final vehicle = Vehicle(
       id: widget.vehicleId ?? 'veh_${DateTime.now().millisecondsSinceEpoch}',
       registrationNo: _regController.text.trim().toUpperCase(),
-      make: _selectedMake,
+      make: _makeController.text.trim(),
       model: _modelController.text.trim(),
-      year: int.tryParse(_yearController.text.trim()) ?? 2023,
+      year: int.parse(_yearController.text.trim()),
       chassisNo: _chassisController.text.trim().toUpperCase(),
       engineNo: _engineController.text.trim().toUpperCase(),
-      seats: int.tryParse(_seatsController.text.trim()) ?? 42,
-      fuelType: _selectedFuel,
-      odometerKm: int.tryParse(_odometerController.text.trim()) ?? 12500,
-      depot: _selectedDepot,
-      purchaseDate: DateTime(2023, 1, 1),
+      seats: int.parse(_seatsController.text.trim()),
+      fuelType: _fuelController.text.trim(),
+      odometerKm: int.parse(_odometerController.text.trim()),
+      depot: _depotController.text.trim(),
+      purchaseDate: _purchaseDate!,
       status: _selectedStatus,
       photos: List.unmodifiable(_pendingPhotos),
       documents: List.unmodifiable(_pendingDocuments),
@@ -308,31 +326,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.vehicleId != null;
-    final makes = <String>[
-      'Ashok Leyland',
-      'Tata Motors',
-      'Eicher',
-      'Volvo',
-      'BharatBenz',
-    ];
-    final depots = <String>[
-      'Bengaluru Central',
-      'Hyderabad East Depot',
-      'Pune Industrial Bay',
-      'Chennai Hub',
-    ];
-    final fuels = <String>['Diesel', 'CNG', 'Electric (EV)'];
-    // Existing fleet records may contain values outside the starter options.
-    // Keep them selectable while editing instead of crashing the whole screen.
-    if (_selectedMake.isNotEmpty && !makes.contains(_selectedMake)) {
-      makes.insert(0, _selectedMake);
-    }
-    if (_selectedDepot.isNotEmpty && !depots.contains(_selectedDepot)) {
-      depots.insert(0, _selectedDepot);
-    }
-    if (_selectedFuel.isNotEmpty && !fuels.contains(_selectedFuel)) {
-      fuels.insert(0, _selectedFuel);
-    }
 
     return PopScope(
       canPop: !_isDirty,
@@ -390,7 +383,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         textCapitalization: TextCapitalization.characters,
                         decoration: const InputDecoration(
                           labelText: 'Registration Number *',
-                          hintText: 'TS 09 UB 4521',
                         ),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) {
@@ -403,20 +395,11 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: DropdownButtonFormField<String>(
-                              isExpanded: true,
-                              initialValue: _selectedMake,
+                            child: TextFormField(
+                              controller: _makeController,
                               decoration:
                                   const InputDecoration(labelText: 'Make *'),
-                              items: makes
-                                  .map((m) => DropdownMenuItem(
-                                      value: m, child: Text(m)))
-                                  .toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _selectedMake = val);
-                                }
-                              },
+                              validator: _requiredField,
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -426,7 +409,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: 'Mfg Year *',
-                                hintText: '2023',
                               ),
                               validator: (val) {
                                 if (val == null || val.trim().isEmpty) {
@@ -434,8 +416,8 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                                 }
                                 final year = int.tryParse(val.trim());
                                 if (year == null ||
-                                    year < 2000 ||
-                                    year > 2026) {
+                                    year < 1900 ||
+                                    year > DateTime.now().year) {
                                   return 'Invalid year';
                                 }
                                 return null;
@@ -449,28 +431,15 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         controller: _modelController,
                         decoration: const InputDecoration(
                           labelText: 'Model Variant *',
-                          hintText: 'Viking 180HP BS6 Wheelbase 5334',
                         ),
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Model variant is required';
-                          }
-                          return null;
-                        },
+                        validator: _requiredField,
                       ),
                       const SizedBox(height: 12),
-                      DropdownButtonFormField<String>(
-                        isExpanded: true,
-                        initialValue: _selectedDepot,
+                      TextFormField(
+                        controller: _depotController,
                         decoration: const InputDecoration(
                             labelText: 'Assigned Depot *'),
-                        items: depots
-                            .map((d) =>
-                                DropdownMenuItem(value: d, child: Text(d)))
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) setState(() => _selectedDepot = val);
-                        },
+                        validator: _requiredField,
                       ),
                     ],
                   ),
@@ -513,7 +482,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         textCapitalization: TextCapitalization.characters,
                         decoration: const InputDecoration(
                           labelText: 'Chassis VIN *',
-                          hintText: 'MB1A3C2D4E5F67890',
                         ),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) {
@@ -528,7 +496,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         textCapitalization: TextCapitalization.characters,
                         decoration: const InputDecoration(
                           labelText: 'Engine Number *',
-                          hintText: 'H4E3D2C1B98765',
                         ),
                         validator: (val) {
                           if (val == null || val.trim().isEmpty) {
@@ -546,11 +513,11 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                               keyboardType: TextInputType.number,
                               decoration: const InputDecoration(
                                 labelText: 'Seating Capacity *',
-                                hintText: '42',
                               ),
                               validator: (val) {
-                                if (val == null || val.trim().isEmpty) {
-                                  return 'Required';
+                                final seats = int.tryParse(val?.trim() ?? '');
+                                if (seats == null || seats <= 0) {
+                                  return 'Enter a valid seat count';
                                 }
                                 return null;
                               },
@@ -558,20 +525,11 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: DropdownButtonFormField<String>(
-                              isExpanded: true,
-                              initialValue: _selectedFuel,
+                            child: TextFormField(
+                              controller: _fuelController,
                               decoration: const InputDecoration(
                                   labelText: 'Fuel System *'),
-                              items: fuels
-                                  .map((f) => DropdownMenuItem(
-                                      value: f, child: Text(f)))
-                                  .toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _selectedFuel = val);
-                                }
-                              },
+                              validator: _requiredField,
                             ),
                           ),
                         ],
@@ -582,15 +540,36 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
                           labelText: 'Odometer (km) *',
-                          hintText: '12500',
                           suffixText: 'KM',
                         ),
                         validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Odometer reading is required';
+                          final odometer = int.tryParse(val?.trim() ?? '');
+                          if (odometer == null || odometer < 0) {
+                            return 'Enter a valid odometer reading';
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final selected = await showDatePicker(
+                            context: context,
+                            initialDate: _purchaseDate ?? DateTime.now(),
+                            firstDate: DateTime(1900),
+                            lastDate: DateTime.now(),
+                          );
+                          if (selected != null) {
+                            setState(() {
+                              _purchaseDate = selected;
+                              _isDirty = true;
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.event_outlined),
+                        label: Text(_purchaseDate == null
+                            ? 'Set purchase date *'
+                            : 'Purchase date: ${MaterialLocalizations.of(context).formatMediumDate(_purchaseDate!)}'),
                       ),
                     ],
                   ),

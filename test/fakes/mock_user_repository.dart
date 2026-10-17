@@ -1,8 +1,8 @@
-import '../../../core/errors/app_exception.dart';
-import '../../../mock/mock_data.dart';
-import '../../../mock/mock_delay.dart';
-import '../../auth/domain/app_user.dart';
-import '../domain/user_repository.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
+import 'package:bus_app/features/auth/domain/app_user.dart';
+import 'package:bus_app/features/users/domain/user_repository.dart';
+import 'mock_data.dart';
+import 'mock_delay.dart';
 
 class MockUserRepository implements UserRepository {
   final List<AppUser> _users = MockData.generateUsers();

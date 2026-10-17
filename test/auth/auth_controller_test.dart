@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bus_app/features/auth/providers.dart';
-import 'package:bus_app/mock/mock_delay.dart';
-import 'package:bus_app/features/auth/data/mock_auth_repository.dart';
+import '../fakes/mock_delay.dart';
+import '../fakes/mock_auth_repository.dart';
 
 ProviderContainer createContainer() => ProviderContainer(overrides: [
       authRepositoryProvider.overrideWithValue(

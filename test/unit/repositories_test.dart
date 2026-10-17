@@ -1,16 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bus_app/core/errors/app_exception.dart';
 import 'package:bus_app/features/auth/domain/app_user.dart';
-import 'package:bus_app/features/auth/data/mock_auth_repository.dart';
+import '../fakes/mock_auth_repository.dart';
 import 'package:bus_app/features/vehicles/domain/vehicle.dart';
 import 'package:bus_app/features/vehicles/domain/vehicle_status.dart';
-import 'package:bus_app/features/vehicles/data/mock_vehicle_repository.dart';
-import 'package:bus_app/features/services/data/mock_service_repository.dart';
-import 'package:bus_app/features/bills/data/mock_bill_repository.dart';
-import 'package:bus_app/features/bills/data/mock_ocr_service.dart';
-import 'package:bus_app/features/users/data/mock_user_repository.dart';
-import 'package:bus_app/features/settings/data/mock_settings_repository.dart';
-import 'package:bus_app/mock/mock_delay.dart';
+import '../fakes/mock_vehicle_repository.dart';
+import '../fakes/mock_service_repository.dart';
+import '../fakes/mock_bill_repository.dart';
+import '../fakes/mock_ocr_service.dart';
+import '../fakes/mock_user_repository.dart';
+import '../fakes/mock_settings_repository.dart';
+import '../fakes/mock_delay.dart';
 
 void main() {
   setUpAll(() {

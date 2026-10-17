@@ -6,11 +6,11 @@ Updated 17 October 2026.
 
 1. Open **Vehicles** and select the bus.
 2. Open **Service history** and tap **Add service record**. The bus is already selected.
-3. In **Details**, enter the service type, date, odometer, workshop/vendor, mechanic and work performed/findings.
-4. In **Parts**, add each replaced part and its quantity and unit cost. Enter labour. The app shows its estimated total (including the current 18% tax calculation).
+3. In **Details**, enter the service type, date, odometer, workshop/vendor, mechanic, work performed/findings, and the next service task and due date. The next due odometer is optional.
+4. In **Parts**, add only the replaced parts, quantities and unit costs, then enter labour. Blank part rows are ignored. The app records these amounts but does not calculate a bill total or add GST.
 5. In **Photos**, attach before, after and replaced-part images as available.
-6. In **Bill & Save**, take a bill photo or choose one from the gallery. The app sends the image to the authenticated Render OCR endpoint, shows the extracted vendor, bill number, date and total, and lets the user review/edit the fields.
-7. Tap **Review & Save**. The service record, parts and service photos are saved to Supabase. If a bill image or bill fields were supplied, the invoice image and OCR fields are saved as a bill linked to that service and vehicle. The manually entered replacement parts are also copied to the bill item list.
+6. In **Bill & Save**, take a bill photo or choose one from the gallery. The app sends the compressed JPEG to the authenticated Render OCR endpoint, shows the extracted vendor, bill number, date and total, and lets the user review/edit the fields. If OCR misses the amount, enter it from the bill.
+7. Add at least one service photo, upload a bill image, and enter the total printed on the bill, then tap **Review & Save**. Both attachments, the bill total, and the next-service task/date are required. The entered bill amount is saved as the service/bill total; no GST or total is calculated by the app. The next due task is written to `maintenance_tasks` and linked to the saved service record.
 
 ## Data and connection architecture
 
@@ -36,6 +36,7 @@ flowchart LR
 | Before/after/part photos and captions | `service_photos`; original image files in private `service-photos` bucket |
 | Invoice vendor, bill no/date, tax, total, OCR confidence and linked service | `bills` |
 | User-entered invoice line items (mirrors parts recorded in the service form) | `bill_items` |
+| Next service due reminder, linked to the current service record | `maintenance_tasks` |
 | Original invoice photo | Private `bills` bucket |
 
 All database rows carry company scope and remain subject to Supabase row-level security and private-storage policies. The Flutter client sends the active Supabase access token to Render; the OCR API verifies it with Supabase Auth before processing the image. OCR caching, when Redis is available, is scoped by the verified user and the image digest.
@@ -44,8 +45,8 @@ All database rows carry company scope and remain subject to Supabase row-level s
 
 - OCR reads the uploaded bill image on Render using Tesseract. The client does not silently treat a scanned value as authoritative: extracted vendor, invoice number and amount remain editable, with a confidence indicator.
 - The current OCR response extracts vendor, invoice number, bill date, grand total, GSTIN and raw text lines. The service entry screen currently exposes vendor, invoice number, date and total for correction.
-- OCR does **not** reliably identify individual replacement parts or quantities. Enter parts in the Parts step; those entries are saved as service parts and bill items.
-- A bill can still be saved with its image when OCR misses text. The workshop name (or “Unknown vendor”) and service total are used as fallbacks; verify these values on the saved bill.
+- OCR does **not** identify individual replacement parts or quantities. Enter only the parts actually replaced in the Parts step; the app does not invent default parts. Those explicit entries are saved as service parts and bill items.
+- A bill can still be saved with its image when OCR misses text, provided the user enters the total manually. Vendor can fall back to the workshop name (or “Unknown vendor”).
 - A service record is saved before its linked bill because the bill needs the generated service ID. If the bill upload/save fails after the service save, the app reports the partial success and the service should not be submitted again; add the bill from the Bills area instead.
 - OCR requires a signed-in Supabase session, a reachable Render service, and a supported image. The endpoint enforces a 12 MB upload limit and rejects unsupported or text-free images.
 

@@ -35,6 +35,9 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
   final _workshopController = TextEditingController();
   final _mechanicController = TextEditingController();
   final _notesController = TextEditingController();
+  final _nextServiceTitleController = TextEditingController();
+  final _nextDueKmController = TextEditingController();
+  DateTime? _nextDueDate;
 
   // Step 2: Parts & Costs
   final _labourCostController = TextEditingController();
@@ -67,6 +70,8 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     _workshopController.dispose();
     _mechanicController.dispose();
     _notesController.dispose();
+    _nextServiceTitleController.dispose();
+    _nextDueKmController.dispose();
     _labourCostController.dispose();
     _vendorController.dispose();
     _billNoController.dispose();
@@ -74,12 +79,8 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     super.dispose();
   }
 
-  int get _partsTotal => _parts.fold<int>(
-      0, (sum, p) => sum + ((p['cost'] as int) * (p['qty'] as int)));
-  int get _labourTotal => int.tryParse(_labourCostController.text.trim()) ?? 0;
-  int get _subtotal => _partsTotal + _labourTotal;
-  int get _tax => (_subtotal * 0.18).round();
-  int get _grandTotal => _subtotal + _tax;
+  double get _labourTotal =>
+      double.tryParse(_labourCostController.text.trim()) ?? 0;
 
   Future<void> _scanBill() async {
     final media = ref.read(mediaServiceProvider);
@@ -109,10 +110,11 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     if (path == null || !mounted) return;
     setState(() {
       _isScanningBill = true;
-      _billImagePath = path;
     });
     try {
       final imagePath = await media.compressImage(path);
+      if (!mounted) return;
+      setState(() => _billImagePath = imagePath);
       final result = await ref.read(ocrServiceProvider).scanBill(imagePath);
       if (!mounted) return;
       setState(() {
@@ -143,6 +145,55 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
   }
 
   Future<void> _submitService() async {
+    if (_isLoading) return;
+
+    final nextServiceTitle = _nextServiceTitleController.text.trim();
+    final nextDueKm = int.tryParse(_nextDueKmController.text.trim());
+    if (nextServiceTitle.isEmpty || _nextDueDate == null) {
+      setState(() => _currentStep = 0);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter the next service task and its due date.'),
+        ),
+      );
+      return;
+    }
+
+    final hasServicePhoto = _photos.values.any((photos) => photos.isNotEmpty);
+    if (!hasServicePhoto) {
+      setState(() => _currentStep = 2);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Add at least one service photo to continue.')),
+      );
+      return;
+    }
+    if (_billImagePath == null) {
+      setState(() => _currentStep = 3);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Upload a bill photo to continue.')),
+      );
+      return;
+    }
+    final billTotal = double.tryParse(_billTotalController.text.trim());
+    if (billTotal == null || billTotal <= 0) {
+      setState(() => _currentStep = 3);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Enter the total amount shown on the bill.')),
+      );
+      return;
+    }
+    final billVendor = _vendorController.text.trim();
+    if (billVendor.isEmpty) {
+      setState(() => _currentStep = 3);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Enter the vendor name shown on the bill.')),
+      );
+      return;
+    }
+
     if (_selectedVehicleId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a vehicle')),
@@ -153,6 +204,9 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
 
     setState(() => _isLoading = true);
 
+    final enteredParts = _parts
+        .where((part) => (part['name'] as String).trim().isNotEmpty)
+        .toList(growable: false);
     final record = ServiceRecord(
       id: const Uuid().v4(),
       vehicleId: _selectedVehicleId!,
@@ -162,20 +216,20 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       workshop: _workshopController.text.trim(),
       mechanic: _mechanicController.text.trim(),
       notes: _notesController.text.trim(),
-      parts: _parts.map((part) {
+      parts: enteredParts.map((part) {
         final quantity = part['qty'] as int;
-        final unitCost = part['cost'] as int;
+        final unitCost = part['cost'] as double;
         return ServicePart(
           id: const Uuid().v4(),
           name: part['name'] as String,
           quantity: quantity,
-          costPerUnit: unitCost.toDouble(),
-          totalCost: (quantity * unitCost).toDouble(),
+          costPerUnit: unitCost,
+          totalCost: quantity * unitCost,
         );
       }).toList(),
       labourCost: _labourTotal.toDouble(),
-      tax: _tax.toDouble(),
-      total: _grandTotal.toDouble(),
+      tax: 0,
+      total: billTotal,
       photos: _photos.entries
           .expand((entry) => entry.value.map((path) => ServicePhoto(
                 id: const Uuid().v4(),
@@ -188,52 +242,59 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     final serviceRepo = ref.read(serviceRepositoryProvider);
     try {
       final saved = await serviceRepo.create(record);
-      final billTotal = double.tryParse(_billTotalController.text.trim());
-      final hasBill = _billImagePath != null ||
-          _vendorController.text.trim().isNotEmpty ||
-          _billNoController.text.trim().isNotEmpty ||
-          billTotal != null;
-      if (hasBill) {
-        try {
-          await ref.read(billRepositoryProvider).create(Bill(
-                id: const Uuid().v4(),
-                vehicleId: saved.vehicleId,
-                serviceId: saved.id,
-                vendor: _vendorController.text.trim().isEmpty
-                    ? (_workshopController.text.trim().isEmpty
-                        ? 'Unknown vendor'
-                        : _workshopController.text.trim())
-                    : _vendorController.text.trim(),
-                billNo: _billNoController.text.trim(),
-                billDate: _billDate ?? DateTime.now(),
-                items: _parts
-                    .where((part) => (part['name'] as String).trim().isNotEmpty)
-                    .map((part) {
-                  final quantity = part['qty'] as int;
-                  final unitCost = (part['cost'] as int).toDouble();
-                  return BillItem(
-                    name: (part['name'] as String).trim(),
-                    quantity: quantity,
-                    unitCost: unitCost,
-                    total: unitCost * quantity,
-                  );
-                }).toList(),
-                tax: saved.tax,
-                total: billTotal ?? saved.total,
-                imageUrl: _billImagePath,
-                ocrConfidence: _ocrConfidence,
-              ));
-        } catch (error) {
-          if (!mounted) return;
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(
-                'Service record saved, but the bill could not be saved: $error. Open the service record and add the bill again.'),
-            duration: const Duration(seconds: 7),
-          ));
-          context.pop();
-          return;
-        }
+      try {
+        await ref.read(billRepositoryProvider).create(Bill(
+              id: const Uuid().v4(),
+              vehicleId: saved.vehicleId,
+              serviceId: saved.id,
+              vendor: billVendor,
+              billNo: _billNoController.text.trim(),
+              billDate: _billDate ?? DateTime.now(),
+              items: enteredParts.map((part) {
+                final quantity = part['qty'] as int;
+                final unitCost = part['cost'] as double;
+                return BillItem(
+                  name: (part['name'] as String).trim(),
+                  quantity: quantity,
+                  unitCost: unitCost,
+                  total: unitCost * quantity,
+                );
+              }).toList(),
+              tax: 0,
+              total: billTotal,
+              imageUrl: _billImagePath,
+              ocrConfidence: _ocrConfidence,
+            ));
+      } catch (error) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Service record saved, but the bill could not be saved: $error. Open the service record and add the bill again.'),
+          duration: const Duration(seconds: 7),
+        ));
+        context.pop();
+        return;
+      }
+      try {
+        await ref.read(serviceRepositoryProvider).createTask(MaintenanceTask(
+              id: const Uuid().v4(),
+              vehicleId: saved.vehicleId,
+              title: nextServiceTitle,
+              dueDate: _nextDueDate,
+              dueKm: nextDueKm,
+              serviceRecordId: saved.id,
+            ));
+      } catch (error) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+              'Service and bill saved, but the next-service reminder could not be saved: $error.'),
+          duration: const Duration(seconds: 7),
+        ));
+        context.pop();
+        return;
       }
     } catch (error) {
       if (mounted) {
@@ -438,6 +499,44 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                         alignLabelWithHint: true,
                       ),
                     ),
+                    const SizedBox(height: 16),
+                    const Text('Next service due',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _nextServiceTitleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Next service / maintenance task *',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final selected = await showDatePicker(
+                          context: context,
+                          initialDate: _nextDueDate ??
+                              _serviceDate.add(const Duration(days: 90)),
+                          firstDate: _serviceDate,
+                          lastDate: DateTime(2100),
+                        );
+                        if (selected != null) {
+                          setState(() => _nextDueDate = selected);
+                        }
+                      },
+                      icon: const Icon(Icons.event_outlined),
+                      label: Text(_nextDueDate == null
+                          ? 'Set next due date *'
+                          : 'Due ${DateFormat('dd MMM yyyy').format(_nextDueDate!)}'),
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _nextDueKmController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Next due odometer (optional)',
+                        suffixText: 'km',
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -462,11 +561,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                           label: const Text('Add Part'),
                           onPressed: () {
                             setState(() {
-                              _parts.add({
-                                'name': 'New Part / Seal',
-                                'qty': 1,
-                                'cost': 850
-                              });
+                              _parts.add({'name': '', 'qty': 1, 'cost': 0.0});
                             });
                           },
                         ),
@@ -483,8 +578,10 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                               flex: 3,
                               child: TextFormField(
                                 initialValue: p['name'] as String,
-                                decoration:
-                                    const InputDecoration(isDense: true),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  hintText: 'Part name',
+                                ),
                                 onChanged: (val) => p['name'] = val,
                               ),
                             ),
@@ -504,12 +601,14 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                             Expanded(
                               flex: 2,
                               child: TextFormField(
-                                initialValue: p['cost'].toString(),
-                                keyboardType: TextInputType.number,
+                                initialValue: (p['cost'] as double).toString(),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 decoration: const InputDecoration(
                                     isDense: true, prefixText: '₹'),
-                                onChanged: (val) => setState(
-                                    () => p['cost'] = int.tryParse(val) ?? 0),
+                                onChanged: (val) => setState(() =>
+                                    p['cost'] = double.tryParse(val) ?? 0),
                               ),
                             ),
                             IconButton(
@@ -525,7 +624,8 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _labourCostController,
-                      keyboardType: TextInputType.number,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
                           labelText: 'Labour Charges (₹)'),
                       onChanged: (_) => setState(() {}),
@@ -540,59 +640,8 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                             .withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Parts Total:'),
-                              Text(
-                                  '₹${NumberFormat('#,###').format(_partsTotal)}',
-                                  style: const TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Labour:'),
-                              Text(
-                                  '₹${NumberFormat('#,###').format(_labourTotal)}',
-                                  style: const TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('GST (18%):'),
-                              Text('₹${NumberFormat('#,###').format(_tax)}',
-                                  style: const TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const Divider(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text('Grand Total:',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                              Text(
-                                  '₹${NumberFormat('#,###').format(_grandTotal)}',
-                                  style: const TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: AppTheme.primaryColor)),
-                            ],
-                          ),
-                        ],
+                      child: const Text(
+                        'Part and labour amounts are saved as entered. Enter the total printed on the bill in the next step; FleetPulse does not calculate the bill total or add GST.',
                       ),
                     ),
                   ],
@@ -611,6 +660,11 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                     const Text('Inspection Photos',
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 14)),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Add at least one service photo. Parts are entered manually; OCR does not identify replaced parts.',
+                      style: TextStyle(fontSize: 11),
+                    ),
                     const SizedBox(height: 10),
                     _photoRow('Before Service', PhotoType.before),
                     const SizedBox(height: 8),
@@ -716,10 +770,13 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _billTotalController,
-                      keyboardType: TextInputType.number,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
                       decoration: const InputDecoration(
-                        labelText: 'Billed Amount (₹)',
+                        labelText: 'Total bill amount (₹) *',
                         prefixText: '₹',
+                        helperText:
+                            'Enter the amount printed on the bill. Review the OCR value or type it manually.',
                       ),
                     ),
                     const SizedBox(height: 12),

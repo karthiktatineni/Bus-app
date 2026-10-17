@@ -1,5 +1,5 @@
 import 'dart:math';
-import '../core/errors/app_exception.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
 
 class MockDelay {
   static final Random _random = Random();

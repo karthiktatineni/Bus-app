@@ -46,6 +46,13 @@ void main() {
       expect(VehicleStatus.fromStorage('unexpected'), VehicleStatus.active);
     });
 
+    test('vehicle statuses serialize to database snake_case values', () {
+      expect(VehicleStatus.active.dbValue, 'active');
+      expect(VehicleStatus.dueSoon.dbValue, 'due_soon');
+      expect(VehicleStatus.overdue.dbValue, 'overdue');
+      expect(VehicleStatus.inWorkshop.dbValue, 'in_workshop');
+    });
+
     test('Vehicle serialization and copyWith', () {
       final now = DateTime.now();
       final doc = VehicleDocument(

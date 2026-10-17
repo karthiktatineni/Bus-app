@@ -1,13 +1,13 @@
-import '../features/auth/domain/app_user.dart';
-import '../features/vehicles/domain/vehicle.dart';
-import '../features/vehicles/domain/vehicle_document.dart';
-import '../features/vehicles/domain/vehicle_status.dart';
-import '../features/services/domain/service_record.dart';
-import '../features/services/domain/maintenance_task.dart';
-import '../features/services/domain/service_schedule.dart';
-import '../features/bills/domain/bill.dart';
-import '../features/settings/domain/user_settings.dart';
-import '../features/settings/domain/company_settings.dart';
+import 'package:bus_app/features/auth/domain/app_user.dart';
+import 'package:bus_app/features/vehicles/domain/vehicle.dart';
+import 'package:bus_app/features/vehicles/domain/vehicle_document.dart';
+import 'package:bus_app/features/vehicles/domain/vehicle_status.dart';
+import 'package:bus_app/features/services/domain/service_record.dart';
+import 'package:bus_app/features/services/domain/maintenance_task.dart';
+import 'package:bus_app/features/services/domain/service_schedule.dart';
+import 'package:bus_app/features/bills/domain/bill.dart';
+import 'package:bus_app/features/settings/domain/user_settings.dart';
+import 'package:bus_app/features/settings/domain/company_settings.dart';
 
 class MockData {
   static final DateTime now = DateTime.now();

@@ -38,6 +38,8 @@ class ServiceDetailScreen extends ConsumerWidget {
             body: const Center(child: Text('Service record not found')),
           );
         }
+        final partsTotal =
+            record.parts.fold<double>(0, (sum, part) => sum + part.totalCost);
 
         return Scaffold(
           appBar: AppBar(
@@ -75,7 +77,7 @@ class ServiceDetailScreen extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
-                              'VERIFIED & LOGGED',
+                              'SERVICE RECORD',
                               style: TextStyle(
                                 fontFamily: 'JetBrainsMono',
                                 fontSize: 10,
@@ -173,15 +175,16 @@ class ServiceDetailScreen extends ConsumerWidget {
                               fontSize: 14, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
                       _costRow('Labour Charges',
-                          '₹${NumberFormat('#,###').format(record.labourCost)}'),
+                          '₹${NumberFormat('#,##0.00').format(record.labourCost)}'),
                       _costRow('Parts & Consumables',
-                          '₹${NumberFormat('#,###').format(record.total - record.labourCost - record.tax)}'),
-                      _costRow('Taxes (GST 18%)',
-                          '₹${NumberFormat('#,###').format(record.tax)}'),
+                          '₹${NumberFormat('#,##0.00').format(partsTotal)}'),
+                      if (record.tax > 0)
+                        _costRow('Tax',
+                            '₹${NumberFormat('#,##0.00').format(record.tax)}'),
                       const Divider(height: 16),
                       _costRow(
-                        'Grand Total',
-                        '₹${NumberFormat('#,###').format(record.total)}',
+                        'Bill total',
+                        '₹${NumberFormat('#,##0.00').format(record.total)}',
                         isBold: true,
                         color: AppTheme.primaryColor,
                       ),
@@ -202,50 +205,43 @@ class ServiceDetailScreen extends ConsumerWidget {
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      Table(
-                        columnWidths: const {
-                          0: FlexColumnWidth(3),
-                          1: FlexColumnWidth(1),
-                          2: FlexColumnWidth(2),
-                        },
-                        children: [
-                          TableRow(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.4),
+                      if (record.parts.isEmpty)
+                        const Text('No replaced parts recorded.')
+                      else
+                        Table(
+                          columnWidths: const {
+                            0: FlexColumnWidth(3),
+                            1: FlexColumnWidth(1),
+                            2: FlexColumnWidth(2),
+                          },
+                          children: [
+                            TableRow(
+                              decoration: BoxDecoration(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(alpha: 0.4),
+                              ),
+                              children: [
+                                _tableCell('Part Name', isHeader: true),
+                                _tableCell('Qty', isHeader: true),
+                                _tableCell('Cost',
+                                    isHeader: true, align: TextAlign.right),
+                              ],
                             ),
-                            children: [
-                              _tableCell('Part Name', isHeader: true),
-                              _tableCell('Qty', isHeader: true),
-                              _tableCell('Cost',
-                                  isHeader: true, align: TextAlign.right),
-                            ],
-                          ),
-                          TableRow(
-                            children: [
-                              _tableCell('Engine Oil (15W40) 20L'),
-                              _tableCell('1'),
-                              _tableCell('₹4,200', align: TextAlign.right),
-                            ],
-                          ),
-                          TableRow(
-                            children: [
-                              _tableCell('Spin-on Oil Filter'),
-                              _tableCell('2'),
-                              _tableCell('₹1,100', align: TextAlign.right),
-                            ],
-                          ),
-                          TableRow(
-                            children: [
-                              _tableCell('Coolant Premix 5L'),
-                              _tableCell('1'),
-                              _tableCell('₹950', align: TextAlign.right),
-                            ],
-                          ),
-                        ],
-                      ),
+                            for (final part in record.parts)
+                              TableRow(
+                                children: [
+                                  _tableCell(part.name),
+                                  _tableCell(part.quantity.toString()),
+                                  _tableCell(
+                                    '₹${NumberFormat('#,##0.00').format(part.totalCost)}',
+                                    align: TextAlign.right,
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -452,13 +448,9 @@ class ServiceDetailScreen extends ConsumerWidget {
         ),
       );
     }
-    return Image.asset(
-      url,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const ColoredBox(
-        color: AppTheme.surfaceMuted,
-        child: Icon(Icons.image_outlined),
-      ),
+    return const ColoredBox(
+      color: AppTheme.surfaceMuted,
+      child: Icon(Icons.broken_image_outlined),
     );
   }
 

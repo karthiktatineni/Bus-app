@@ -1,8 +1,8 @@
-import '../../../core/errors/app_exception.dart';
-import '../../../mock/mock_data.dart';
-import '../../../mock/mock_delay.dart';
-import '../domain/vehicle.dart';
-import '../domain/vehicle_repository.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
+import 'package:bus_app/features/vehicles/domain/vehicle.dart';
+import 'package:bus_app/features/vehicles/domain/vehicle_repository.dart';
+import 'mock_data.dart';
+import 'mock_delay.dart';
 
 class MockVehicleRepository implements VehicleRepository {
   final List<Vehicle> _vehicles = MockData.generateVehicles();

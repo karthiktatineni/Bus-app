@@ -26,6 +26,7 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 - [ ] Test OCR against representative bills and verify results persist to the signed-in company.
 - [ ] Complete one signed-in service + bill OCR + parts + photos save/reopen on the OnePlus or client test account; confirm private image display.
 - [ ] Run live CRUD/media tests for bus docs/photos, service photos, bill images, and role permissions.
+- [ ] On the OnePlus, verify signed-in bill OCR accepts the JPEG, saves the invoice, and stores only explicitly entered parts plus the next due reminder.
 - [ ] Test tenant isolation with at least two staging companies/accounts.
 - [ ] Ingest authorized manuals into the RAG corpus; verify citations, tenant scoping, retrieval, and abstention. Current corpus has 0 chunks.
 - [ ] Configure protected Android release signing and build a release APK before customer distribution.

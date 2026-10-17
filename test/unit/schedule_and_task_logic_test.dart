@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bus_app/features/services/domain/service_schedule.dart';
-import 'package:bus_app/features/notifications/data/mock_notification_repository.dart';
-import 'package:bus_app/mock/mock_delay.dart';
+import '../fakes/mock_notification_repository.dart';
+import '../fakes/mock_delay.dart';
 
 void main() {
   setUp(() {

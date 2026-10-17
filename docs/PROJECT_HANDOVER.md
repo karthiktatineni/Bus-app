@@ -34,7 +34,7 @@ Updated 17 October 2026.
 5. Test photo/document upload, display, and deletion with admin and staff accounts against live RLS/Storage.
 6. Set up protected Android release signing for customer distribution. The root APK is debug-signed and suitable for evaluation only.
 
-OCR extracts likely vendor, invoice number, date and total; it does not reliably infer parts/quantities. Enter replacement parts in the Parts step and review all OCR values. The service workflow is locally covered by Flutter tests, but a signed-in live service/bill/image save still needs acceptance on the connected account.
+OCR extracts vendor, invoice number, date and total when readable; it does not identify replacement parts. Parts begin empty and only names entered by the user are saved. To save a service record, attach at least one service photo and a bill image, enter/review the bill total, and specify the next maintenance task and due date. The app does not add GST or calculate the bill total. The service workflow is locally covered by Flutter tests, but a signed-in live service/bill/image save still needs acceptance on the connected account.
 
 ## Build and device notes
 

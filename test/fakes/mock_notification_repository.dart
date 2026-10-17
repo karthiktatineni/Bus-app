@@ -1,7 +1,7 @@
-import '../../../core/errors/app_exception.dart';
-import '../../../mock/mock_delay.dart';
-import '../domain/app_notification.dart';
-import '../domain/notification_repository.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
+import 'package:bus_app/features/notifications/domain/app_notification.dart';
+import 'package:bus_app/features/notifications/domain/notification_repository.dart';
+import 'mock_delay.dart';
 
 class MockNotificationRepository implements NotificationRepository {
   final List<AppNotification> _notifications = [];

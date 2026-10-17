@@ -1,8 +1,8 @@
-import '../../../core/errors/app_exception.dart';
-import '../../../mock/mock_data.dart';
-import '../../../mock/mock_delay.dart';
-import '../domain/app_user.dart';
-import '../domain/auth_repository.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
+import 'package:bus_app/features/auth/domain/app_user.dart';
+import 'package:bus_app/features/auth/domain/auth_repository.dart';
+import 'mock_data.dart';
+import 'mock_delay.dart';
 
 class MockAuthRepository implements AuthRepository {
   final List<AppUser> _users = MockData.generateUsers();

@@ -1,8 +1,8 @@
-import '../../../core/errors/app_exception.dart';
-import '../../../mock/mock_data.dart';
-import '../../../mock/mock_delay.dart';
-import '../domain/bill.dart';
-import '../domain/bill_repository.dart';
+import 'package:bus_app/core/errors/app_exception.dart';
+import 'package:bus_app/features/bills/domain/bill.dart';
+import 'package:bus_app/features/bills/domain/bill_repository.dart';
+import 'mock_data.dart';
+import 'mock_delay.dart';
 
 class MockBillRepository implements BillRepository {
   late final List<Bill> _bills;
