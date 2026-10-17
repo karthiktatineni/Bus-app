@@ -13,8 +13,12 @@ class FleetAiAppOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isServiceEntryForm = currentPath == '/services/add' ||
+        RegExp(r'^/services/[^/]+/edit$').hasMatch(currentPath);
     final showLauncher =
-        currentPath != '/fleet-ai' && MediaQuery.viewInsetsOf(context).bottom == 0;
+        currentPath != '/fleet-ai' &&
+        !isServiceEntryForm &&
+        MediaQuery.viewInsetsOf(context).bottom == 0;
     return Stack(
       fit: StackFit.expand,
       children: [

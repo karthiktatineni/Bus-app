@@ -17,7 +17,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
-from PIL import Image, ImageOps
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, UnidentifiedImageError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, REGISTRY, generate_latest
 from fastapi.responses import Response
 from starlette.datastructures import UploadFile as StarletteUploadFile
@@ -306,6 +306,345 @@ async def verify_supabase_user(client: httpx.AsyncClient, base_url: str, anon_ke
     return user
 
 
+def _supabase_error_text(payload) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    return " ".join(
+        str(payload.get(key, ""))
+        for key in ("message", "msg", "error", "error_description", "details")
+    ).lower()
+
+
+async def supabase_admin_request(
+    client: httpx.AsyncClient,
+    base_url: str,
+    service_key: str,
+    path: str,
+    method: str = "GET",
+    payload=None,
+    params=None,
+    prefer: str | None = None,
+):
+    """Call Supabase Auth/PostgREST with the server-only service-role key."""
+    operation = path.split("?")[0].rstrip("/").split("/")[-1] or "admin"
+    started = asyncio.get_running_loop().time()
+    headers = {
+        "apikey": service_key,
+        "Authorization": f"Bearer {service_key}",
+        "Content-Type": "application/json",
+    }
+    if prefer:
+        headers["Prefer"] = prefer
+    try:
+        response = await client.request(
+            method,
+            f"{base_url}/{path.lstrip('/')}",
+            headers=headers,
+            json=payload,
+            params=params,
+        )
+    except httpx.TimeoutException as exc:
+        UPSTREAM_DURATION.labels("supabase_admin", operation).observe(
+            asyncio.get_running_loop().time() - started
+        )
+        record_upstream("supabase_admin", operation, "timeout")
+        raise HTTPException(status_code=502, detail="Supabase user management timed out.") from exc
+    except httpx.RequestError as exc:
+        UPSTREAM_DURATION.labels("supabase_admin", operation).observe(
+            asyncio.get_running_loop().time() - started
+        )
+        record_upstream("supabase_admin", operation, "error")
+        raise HTTPException(status_code=502, detail="Supabase user management is unavailable.") from exc
+
+    UPSTREAM_DURATION.labels("supabase_admin", operation).observe(
+        asyncio.get_running_loop().time() - started
+    )
+    try:
+        result = response.json() if response.content else None
+    except ValueError:
+        result = None
+    if response.is_error:
+        record_upstream("supabase_admin", operation, "error", str(response.status_code))
+        error_text = _supabase_error_text(result)
+        if response.status_code in (400, 409, 422) and any(
+            marker in error_text
+            for marker in ("already registered", "already exists", "duplicate key", "already been taken")
+        ):
+            raise HTTPException(status_code=409, detail="An account with this email already exists.")
+        if response.status_code in (400, 422) and "password" in error_text:
+            raise HTTPException(
+                status_code=400,
+                detail="Supabase rejected this password. Choose a different password that meets the project password policy.",
+            )
+        if "rpc_transfer_user_storage_ownership" in error_text or (
+            "function" in error_text and "does not exist" in error_text
+        ):
+            raise HTTPException(
+                status_code=503,
+                detail="Apply the latest Supabase user-deletion migration before deleting accounts.",
+            )
+        logger.warning(
+            "Supabase admin request failed resource=%s status=%d",
+            path,
+            response.status_code,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail=f"Supabase could not complete the user management request (HTTP {response.status_code}).",
+        )
+    record_upstream("supabase_admin", operation, "success", str(response.status_code))
+    return result
+
+
+def _validate_user_fields(body: dict, *, require_password: bool):
+    name = body.get("name")
+    email = body.get("email")
+    password = body.get("password", "")
+    role = body.get("role")
+    phone = body.get("phone", "")
+    if not isinstance(name, str) or not name.strip() or len(name.strip()) > 120:
+        raise HTTPException(status_code=400, detail="Enter a name up to 120 characters.")
+    if not isinstance(email, str) or not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email.strip()):
+        raise HTTPException(status_code=400, detail="Enter a valid email address.")
+    if not isinstance(password, str) or (require_password and len(password) < 12) or (
+        not require_password and password and len(password) < 12
+    ):
+        raise HTTPException(status_code=400, detail="Password must contain at least 12 characters.")
+    if role not in {"admin", "staff"}:
+        raise HTTPException(status_code=400, detail="Role must be admin or staff.")
+    if not isinstance(phone, str) or len(phone) > 40:
+        raise HTTPException(status_code=400, detail="Phone must be 40 characters or fewer.")
+    return name.strip(), email.strip().lower(), password, role, phone.strip()
+
+
+@app.post("/admin/users")
+async def manage_company_user(request: Request):
+    authorization = request.headers.get("authorization", "")
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Sign in as a company administrator.")
+    token = authorization.removeprefix("Bearer ").strip()
+    supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+    anon_key = os.getenv("SUPABASE_ANON_KEY", "")
+    service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
+    if not supabase_url or not anon_key or not service_key:
+        raise HTTPException(status_code=503, detail="Server-side Supabase user management is not configured.")
+    try:
+        body = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Request body must be valid JSON.") from exc
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object.")
+    action = body.get("action")
+    if action not in {"create", "update", "remove"}:
+        raise HTTPException(status_code=400, detail="Action must be create, update, or remove.")
+
+    timeout = httpx.Timeout(20.0, connect=5.0)
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        actor = await verify_supabase_user(client, supabase_url, anon_key, token)
+        actor_profiles = await supabase_admin_request(
+            client,
+            f"{supabase_url}/rest/v1",
+            service_key,
+            "profiles",
+            params={
+                "id": f"eq.{actor['id']}",
+                "select": "id,company_id,role,status",
+                "limit": "1",
+            },
+        )
+        if (
+            not isinstance(actor_profiles, list)
+            or not actor_profiles
+            or actor_profiles[0].get("role") != "admin"
+            or actor_profiles[0].get("status") != "active"
+        ):
+            raise HTTPException(status_code=403, detail="Only an active company administrator can manage users.")
+        actor_profile = actor_profiles[0]
+        company_id = actor_profile.get("company_id")
+        if not company_id:
+            raise HTTPException(status_code=403, detail="The administrator is not assigned to a company.")
+
+        if action == "create":
+            name, email, password, role, phone = _validate_user_fields(body, require_password=True)
+            created = await supabase_admin_request(
+                client,
+                supabase_url,
+                service_key,
+                "auth/v1/admin/users",
+                method="POST",
+                payload={
+                    "email": email,
+                    "password": password,
+                    "email_confirm": True,
+                    "user_metadata": {"name": name},
+                },
+            )
+            auth_user = created.get("user", created) if isinstance(created, dict) else None
+            user_id = auth_user.get("id") if isinstance(auth_user, dict) else None
+            if not isinstance(user_id, str):
+                raise HTTPException(status_code=502, detail="Supabase created no user id.")
+            try:
+                await supabase_admin_request(
+                    client,
+                    f"{supabase_url}/rest/v1",
+                    service_key,
+                    "profiles",
+                    method="POST",
+                    payload={
+                        "id": user_id,
+                        "company_id": company_id,
+                        "name": name,
+                        "email": email,
+                        "phone": phone,
+                        "role": role,
+                        "status": "active",
+                    },
+                    prefer="return=minimal",
+                )
+            except Exception:
+                try:
+                    await supabase_admin_request(
+                        client, supabase_url, service_key, f"auth/v1/admin/users/{user_id}", method="DELETE"
+                    )
+                except Exception:
+                    logger.exception("Failed to roll back Auth user after profile creation failure")
+                raise
+            return JSONResponse(status_code=201, content={"id": user_id, "status": "active"})
+
+        target_id = body.get("id")
+        if not isinstance(target_id, str) or not target_id:
+            raise HTTPException(status_code=400, detail="A user id is required.")
+        if action == "remove" and target_id == actor["id"]:
+            raise HTTPException(status_code=400, detail="You cannot delete your own account.")
+
+        targets = await supabase_admin_request(
+            client,
+            f"{supabase_url}/rest/v1",
+            service_key,
+            "profiles",
+            params={
+                "id": f"eq.{target_id}",
+                "company_id": f"eq.{company_id}",
+                "select": "id,company_id,name,email,phone,role,status",
+                "limit": "1",
+            },
+        )
+        if not isinstance(targets, list) or not targets:
+            raise HTTPException(status_code=404, detail="That user was not found in your company.")
+        target = targets[0]
+
+        if action == "update":
+            name, email, password, role, phone = _validate_user_fields(body, require_password=False)
+            status = body.get("status", target.get("status"))
+            if status not in {"active", "disabled"}:
+                raise HTTPException(status_code=400, detail="Account status must be active or disabled.")
+            if target.get("role") == "admin" and target.get("status") == "active" and (
+                role != "admin" or status != "active"
+            ):
+                admins = await supabase_admin_request(
+                    client,
+                    f"{supabase_url}/rest/v1",
+                    service_key,
+                    "profiles",
+                    params={
+                        "company_id": f"eq.{company_id}",
+                        "role": "eq.admin",
+                        "status": "eq.active",
+                        "select": "id",
+                    },
+                )
+                if len(admins or []) <= 1:
+                    raise HTTPException(status_code=409, detail="The company must keep at least one active administrator.")
+
+            updated_profile = {
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "role": role,
+                "status": status,
+                "updated_at": datetime.now().astimezone().isoformat(),
+            }
+            await supabase_admin_request(
+                client,
+                f"{supabase_url}/rest/v1",
+                service_key,
+                "profiles",
+                method="PATCH",
+                params={"id": f"eq.{target_id}", "company_id": f"eq.{company_id}"},
+                payload=updated_profile,
+                prefer="return=minimal",
+            )
+            auth_update = {"user_metadata": {"name": name}}
+            if email != target.get("email"):
+                auth_update["email"] = email
+            if password:
+                auth_update["password"] = password
+            try:
+                await supabase_admin_request(
+                    client,
+                    supabase_url,
+                    service_key,
+                    f"auth/v1/admin/users/{target_id}",
+                    method="PUT",
+                    payload=auth_update,
+                )
+            except Exception:
+                try:
+                    await supabase_admin_request(
+                        client,
+                        f"{supabase_url}/rest/v1",
+                        service_key,
+                        "profiles",
+                        method="PATCH",
+                        params={"id": f"eq.{target_id}", "company_id": f"eq.{company_id}"},
+                        payload={
+                            "name": target["name"],
+                            "email": target["email"],
+                            "phone": target.get("phone") or "",
+                            "role": target["role"],
+                            "status": target["status"],
+                        },
+                        prefer="return=minimal",
+                    )
+                except Exception:
+                    logger.exception("Failed to roll back profile after Auth user update failure")
+                raise
+            return {"id": target_id, "status": status}
+
+        if target.get("role") == "admin" and target.get("status") == "active":
+            admins = await supabase_admin_request(
+                client,
+                f"{supabase_url}/rest/v1",
+                service_key,
+                "profiles",
+                params={
+                    "company_id": f"eq.{company_id}",
+                    "role": "eq.admin",
+                    "status": "eq.active",
+                    "select": "id",
+                },
+            )
+            if len(admins or []) <= 1:
+                raise HTTPException(status_code=409, detail="The company must keep at least one active administrator.")
+
+        await supabase_admin_request(
+            client,
+            f"{supabase_url}/rest/v1",
+            service_key,
+            "rpc/rpc_transfer_user_storage_ownership",
+            method="POST",
+            payload={"p_user_id": target_id, "p_new_owner_id": actor["id"]},
+        )
+        await supabase_admin_request(
+            client,
+            supabase_url,
+            service_key,
+            f"auth/v1/admin/users/{target_id}",
+            method="DELETE",
+        )
+        return {"id": target_id, "status": "deleted"}
+
+
 async def create_embedding(client: httpx.AsyncClient, prompt: str, api_key: str):
     started = asyncio.get_running_loop().time()
     try:
@@ -528,12 +867,18 @@ async def health():
     except Exception:
         checks["ocr_engine"] = "unavailable"
     checks["nvidia_api"] = "configured" if os.getenv("NVIDIA_NIM_API_KEY") else "not_configured"
+    checks["user_management"] = (
+        "configured"
+        if os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        else "not_configured"
+    )
 
     degraded = (
         checks["redis"] == "unavailable"
         or checks["supabase_auth"] != "ok"
         or checks["ocr_engine"] != "ok"
         or checks["nvidia_api"] != "configured"
+        or checks["user_management"] != "configured"
     )
     return {
         "status": "degraded" if degraded else "ok",
@@ -733,26 +1078,44 @@ async def scan_bill(request: Request):
             oriented = ImageOps.exif_transpose(source)
             oriented.load()
             image = ImageOps.autocontrast(ImageOps.grayscale(oriented.convert("RGB")))
-            if image.width < 1600:
-                scale = min(2.0, 1600 / image.width)
+            if image.width < 2000:
+                scale = min(2.0, 2000 / image.width)
                 new_size = (int(image.width * scale), int(image.height * scale))
                 if new_size[0] * new_size[1] <= 25_000_000:
                     image = image.resize(new_size, Image.Resampling.LANCZOS)
 
-            # Bills have varied layouts. Try a block layout first, then sparse
-            # receipt text, then a contrast-normalized thresholded pass.
+            # Receipts and photographed invoices need different segmentation
+            # and contrast handling. Only OCR the uploaded pixels; never infer
+            # fields or parts that are not present in the document.
+            enhanced = ImageEnhance.Contrast(image).enhance(1.5)
+            sharpened = enhanced.filter(
+                ImageFilter.UnsharpMask(radius=1.2, percent=140, threshold=3)
+            )
+            thresholded = enhanced.point(lambda pixel: 255 if pixel > 180 else 0)
             attempts = [
-                (image, "--oem 3 --psm 6"),
+                (sharpened, "--oem 3 --psm 6"),
                 (image, "--oem 3 --psm 11"),
-                (image.point(lambda pixel: 255 if pixel > 175 else 0), "--oem 3 --psm 6"),
+                (image, "--oem 3 --psm 4"),
+                (thresholded, "--oem 3 --psm 6"),
+                (ImageOps.invert(thresholded), "--oem 3 --psm 11"),
             ]
             best_text = ""
+            timed_out = 0
             for candidate, config in attempts:
-                text = pytesseract.image_to_string(candidate, config=config, timeout=15)
+                try:
+                    text = pytesseract.image_to_string(candidate, config=config, timeout=8)
+                except RuntimeError as exc:
+                    # pytesseract 0.3.13 reports subprocess timeouts as RuntimeError.
+                    if "Tesseract process timeout" not in str(exc):
+                        raise
+                    timed_out += 1
+                    continue
                 if len(text.strip()) > len(best_text.strip()):
                     best_text = text
                 if len(best_text.strip()) >= 24:
                     break
+            if not best_text.strip() and timed_out == len(attempts):
+                raise TimeoutError("All OCR layout attempts timed out.")
             return best_text
 
     try:
@@ -761,10 +1124,20 @@ async def scan_bill(request: Request):
         if str(exc) == "image_dimensions_exceeded":
             raise HTTPException(status_code=413, detail="Image dimensions exceed the 25 megapixel limit.") from exc
         raise HTTPException(status_code=415, detail="Upload a supported JPEG, PNG, WebP, TIFF, or BMP image.") from exc
+    except TimeoutError as exc:
+        logger.warning("Bill OCR timed out image_bytes=%d", len(raw))
+        raise HTTPException(status_code=408, detail="Bill image processing timed out. Try a smaller image.") from exc
+    except UnidentifiedImageError as exc:
+        raise HTTPException(status_code=415, detail="Upload a supported JPEG, PNG, WebP, TIFF, or BMP image.") from exc
+    except pytesseract.pytesseract.TesseractNotFoundError as exc:
+        logger.exception("Tesseract OCR engine is unavailable")
+        raise HTTPException(status_code=503, detail="The bill OCR engine is unavailable. Try again later.") from exc
+    except pytesseract.pytesseract.TesseractError as exc:
+        logger.exception("Tesseract OCR engine failed")
+        raise HTTPException(status_code=503, detail="The bill OCR engine could not process this image. Try again later.") from exc
     except Exception as exc:
-        if exc.__class__.__name__ == "TimeoutError":
-            raise HTTPException(status_code=408, detail="Bill image processing timed out. Try a smaller image.") from exc
-        raise HTTPException(status_code=422, detail="Could not read the uploaded bill image.") from exc
+        logger.exception("Unexpected bill OCR processing failure image_bytes=%d", len(raw))
+        raise HTTPException(status_code=500, detail="Bill OCR processing failed unexpectedly. Try again or enter the bill details manually.") from exc
     if not text.strip():
         logger.info(
             "Bill OCR found no readable text image_bytes=%d content_type=%s",

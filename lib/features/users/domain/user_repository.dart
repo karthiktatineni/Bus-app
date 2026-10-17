@@ -3,7 +3,7 @@ import '../../auth/domain/app_user.dart';
 abstract class UserRepository {
   Future<List<AppUser>> list();
   Future<AppUser> get(String id);
-  Future<AppUser> invite({
+  Future<AppUser> create({
     required String name,
     required String email,
     required String password,

@@ -1,11 +1,22 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../auth/domain/app_user.dart';
 import '../domain/user_repository.dart';
 
 class SupabaseUserRepository implements UserRepository {
-  SupabaseUserRepository(this._client);
+  SupabaseUserRepository(this._client, {http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client(),
+        _backendUrl = const String.fromEnvironment(
+          'FLEET_BACKEND_URL',
+          defaultValue: 'https://fleetpulse-ocr.onrender.com',
+        ).replaceFirst(RegExp(r'/+$'), '');
+
   final SupabaseClient _client;
+  final http.Client _httpClient;
+  final String _backendUrl;
 
   @override
   Future<List<AppUser>> list() async {
@@ -18,13 +29,13 @@ class SupabaseUserRepository implements UserRepository {
       _fromRow(await _client.from('profiles').select().eq('id', id).single());
 
   @override
-  Future<AppUser> invite(
+  Future<AppUser> create(
       {required String name,
       required String email,
       required String password,
       required UserRole role,
       required String phone}) async {
-    final result = await _client.functions.invoke('manage-user', body: {
+    final result = await _adminRequest({
       'action': 'create',
       'name': name,
       'email': email,
@@ -32,16 +43,13 @@ class SupabaseUserRepository implements UserRepository {
       'phone': phone,
       'role': role.name,
     });
-    if (result.status < 200 || result.status >= 300) {
-      throw StateError('User invitation failed.');
-    }
-    final id = (result.data as Map<String, dynamic>)['id'] as String;
+    final id = result['id'] as String;
     return get(id);
   }
 
   @override
   Future<AppUser> update(AppUser user, {String? password}) async {
-    final result = await _client.functions.invoke('manage-user', body: {
+    final result = await _adminRequest({
       'action': 'update',
       'id': user.id,
       'name': user.name,
@@ -50,22 +58,47 @@ class SupabaseUserRepository implements UserRepository {
       'role': user.role.name,
       if (password != null && password.isNotEmpty) 'password': password,
     });
-    if (result.status < 200 || result.status >= 300) {
-      throw StateError('User update failed.');
-    }
-    final id = (result.data as Map<String, dynamic>)['id'] as String;
+    final id = result['id'] as String;
     return get(id);
   }
 
   @override
   Future<void> remove(String id) async {
-    final result = await _client.functions.invoke('manage-user', body: {
+    await _adminRequest({
       'action': 'remove',
       'id': id,
     });
-    if (result.status < 200 || result.status >= 300) {
-      throw StateError('User removal failed.');
+  }
+
+  Future<Map<String, dynamic>> _adminRequest(Map<String, dynamic> body) async {
+    final accessToken = _client.auth.currentSession?.accessToken;
+    if (accessToken == null) {
+      throw StateError('Sign in as a company administrator to manage users.');
     }
+    final response = await _httpClient
+        .post(
+          Uri.parse('$_backendUrl/admin/users'),
+          headers: {
+            'Authorization': 'Bearer $accessToken',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 30));
+    Map<String, dynamic> payload = const {};
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) payload = decoded;
+    } on FormatException {
+      // Use the HTTP status if the service returned a non-JSON response.
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final detail = payload['detail'];
+      throw StateError(detail is String && detail.isNotEmpty
+          ? detail
+          : 'User management request failed (HTTP ${response.statusCode}).');
+    }
+    return payload;
   }
 
   AppUser _fromRow(Map<String, dynamic> row) => AppUser(

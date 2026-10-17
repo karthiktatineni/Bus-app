@@ -173,19 +173,20 @@ void main() {
   });
 
   group('MockUserRepository & MockSettingsRepository Tests', () {
-    test('user repository listing, invitation, and failing path', () async {
+    test('user repository listing, account creation, and failing path',
+        () async {
       final userRepo = MockUserRepository();
       final users = await userRepo.list();
       expect(users.length, 5);
 
-      final invited = await userRepo.invite(
+      final created = await userRepo.create(
         name: 'New Staff',
         email: 'staff.new@fleetpulse.com',
         password: 'FleetPulseTest!2026',
         role: UserRole.staff,
         phone: '+91 99887 76655',
       );
-      expect(invited.status, UserStatus.active);
+      expect(created.status, UserStatus.active);
 
       expect(
         () => userRepo.get('fail-id'),

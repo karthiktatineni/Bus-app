@@ -28,7 +28,7 @@ class MockUserRepository implements UserRepository {
   }
 
   @override
-  Future<AppUser> invite({
+  Future<AppUser> create({
     required String name,
     required String email,
     required String password,
@@ -38,7 +38,7 @@ class MockUserRepository implements UserRepository {
     if (email.contains('fail')) {
       await MockDelay.simulate(
           shouldFail: true,
-          failureMessage: 'Simulated invitation email dispatch failure.');
+          failureMessage: 'Simulated account creation failure.');
     }
 
     await MockDelay.simulate();

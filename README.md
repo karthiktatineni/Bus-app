@@ -7,8 +7,8 @@ Flutter fleet maintenance app with Supabase Auth, PostgreSQL, private Storage, a
 1. Install Flutter, Android Studio (Android SDK), Python 3, and Docker.
 2. Run `flutter pub get`.
 3. Configure the Supabase project and apply the ordered SQL files in `supabase/migrations/` using the Supabase CLI or SQL editor.
-4. Deploy `manage-user` and `bootstrap-company` from `supabase/functions/`; set `BOOTSTRAP_SECRET` in Supabase. Never place a service-role key in Flutter or source control.
-5. Create the Render Blueprint from `backend/ocr_service/render.yaml`. It provisions the Render Key Value cache and wires its private URL into the existing backend service. Set the Render service variables `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `NVIDIA_NIM_API_KEY`.
+4. Deploy `bootstrap-company` from `supabase/functions/` only when provisioning a new company and its first admin; set `BOOTSTRAP_SECRET` in Supabase for that one-time operation. Admins create and permanently delete company users through the authenticated Render backend; no user-management Edge Function or invitation email is used.
+5. Create the Render Blueprint from `backend/ocr_service/render.yaml`. It provisions the Render Key Value cache and wires its private URL into the backend. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `NVIDIA_NIM_API_KEY` in the Render service settings. The service-role key is server-only: never put it in Flutter, a build define, `.env` used for Flutter, or source control.
 6. The backend exposes a dependency health report at `/health` and Prometheus-format request, dependency, and Redis cache metrics at `/metrics`. The Blueprint generates a private `METRICS_BEARER_TOKEN`; use that value from Render's environment settings when scraping `/metrics`. Never put it in Flutter or source control.
 7. Start the app with public client configuration supplied at build time:
 
@@ -25,7 +25,7 @@ Flutter reads its Supabase settings from `--dart-define`; it does not load `.env
 
 ## Data and setup
 
-Use `bootstrap-company` once to create the company and send the initial administrator invitation. The invited user becomes active after confirming their email. For RAG, place authorized maintenance references (`.md` or `.txt`) in a local corpus folder, set the ingestion environment variables, and run `python backend/knowledge/ingest.py PATH_TO_CORPUS`. Set `FLEET_KNOWLEDGE_COMPANY_ID` to scope company-specific references; leave it unset only for genuinely shared general manuals. The model abstains when retrieval evidence is weak or unavailable. `docs/HUMAN_TASKS.md` lists external setup actions and `docs/ACCEPTANCE_TEST.md` describes the live acceptance flow.
+Use `bootstrap-company` once to create the company and initial admin. Admin-created users are created directly as confirmed Supabase Auth accounts with the password supplied in the app; no invite is emailed. Apply `20261017180000_user_auth_hard_delete.sql` before using permanent user deletion; it preserves historical attribution and uploaded files. For RAG, place authorized maintenance references (`.md` or `.txt`) in a local corpus folder, set the ingestion environment variables, and run `python backend/knowledge/ingest.py PATH_TO_CORPUS`. Set `FLEET_KNOWLEDGE_COMPANY_ID` to scope company-specific references; leave it unset only for genuinely shared general manuals. The model abstains when retrieval evidence is weak or unavailable. `docs/HUMAN_TASKS.md` lists external setup actions and `docs/ACCEPTANCE_TEST.md` describes the live acceptance flow.
 
 For an end-to-end checklist and step-by-step environment handover, see `docs/WORKING_CHECKLIST.md`, `docs/PROJECT_STATE.md`, and `docs/PROJECT_HANDOVER.md`.
 

@@ -287,7 +287,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                                   try {
                                     await ref
                                         .read(userRepositoryProvider)
-                                        .invite(
+                                        .create(
                                           name: nameController.text.trim(),
                                           email: emailController.text.trim(),
                                           password: passwordController.text,
@@ -454,9 +454,10 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                       final confirmed = await showDialog<bool>(
                         context: ctx,
                         builder: (confirmContext) => AlertDialog(
-                          title: const Text('Remove user?'),
-                          content:
-                              Text('Disable ${user.name}’s FleetPulse access?'),
+                          title: const Text('Delete user permanently?'),
+                          content: Text(
+                            'Delete ${user.name} from Supabase Auth and remove their sign-in access? Their uploaded files will stay with the company.',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () =>
@@ -468,7 +469,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                                   backgroundColor: AppTheme.danger),
                               onPressed: () =>
                                   Navigator.pop(confirmContext, true),
-                              child: const Text('Disable access'),
+                              child: const Text('Delete user'),
                             ),
                           ],
                         ),
@@ -486,7 +487,8 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                           setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                                content: Text('User access disabled.')),
+                                content:
+                                    Text('User account permanently deleted.')),
                           );
                         }
                       } catch (error) {
@@ -496,7 +498,7 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                         });
                       }
                     },
-              child: const Text('Remove'),
+              child: const Text('Delete user'),
             ),
             FilledButton(
               onPressed: isSaving

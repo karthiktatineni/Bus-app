@@ -179,6 +179,78 @@ def test_bill_ocr_retries_sparse_receipt_layout_when_first_pass_finds_no_text(mo
     assert calls == ["--oem 3 --psm 6", "--oem 3 --psm 11"]
 
 
+def test_bill_ocr_tries_alternate_invoice_layout_before_rejecting(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "public-test-key")
+    monkeypatch.setattr(main.app.state, "redis", None)
+
+    async def verify_user(_client, _url, _key, _token):
+        return {"id": "test-user"}
+
+    calls = []
+
+    def recognize(_image, *, config, timeout):
+        calls.append((config, timeout))
+        if config == "--oem 3 --psm 4":
+            return "Invoice\nWorkshop: Westside Fleet\nGrand Total Rs. 3,250.00"
+        return ""
+
+    monkeypatch.setattr(main, "verify_supabase_user", verify_user)
+    monkeypatch.setattr(main.pytesseract, "image_to_string", recognize)
+    image_buffer = io.BytesIO()
+    Image.new("RGB", (120, 160), "white").save(image_buffer, format="JPEG")
+
+    async def run_request():
+        transport = httpx.ASGITransport(app=main.app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            return await client.post(
+                "/ocr/scan-bill",
+                headers={"Authorization": "Bearer signed-in-test-token"},
+                files={"file": ("invoice.jpg", image_buffer.getvalue(), "image/jpeg")},
+            )
+
+    response = asyncio.run(run_request())
+
+    assert response.status_code == 200
+    assert response.json()["grand_total"] == 3250.0
+    assert calls == [
+        ("--oem 3 --psm 6", 8),
+        ("--oem 3 --psm 11", 8),
+        ("--oem 3 --psm 4", 8),
+    ]
+
+
+def test_bill_ocr_reports_engine_timeout_as_408_not_unreadable_image(monkeypatch):
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "public-test-key")
+    monkeypatch.setattr(main.app.state, "redis", None)
+
+    async def verify_user(_client, _url, _key, _token):
+        return {"id": "test-user"}
+
+    def timeout(_image, *, config, timeout):
+        raise RuntimeError("Tesseract process timeout")
+
+    monkeypatch.setattr(main, "verify_supabase_user", verify_user)
+    monkeypatch.setattr(main.pytesseract, "image_to_string", timeout)
+    image_buffer = io.BytesIO()
+    Image.new("RGB", (120, 160), "white").save(image_buffer, format="JPEG")
+
+    async def run_request():
+        transport = httpx.ASGITransport(app=main.app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            return await client.post(
+                "/ocr/scan-bill",
+                headers={"Authorization": "Bearer signed-in-test-token"},
+                files={"file": ("invoice.jpg", image_buffer.getvalue(), "image/jpeg")},
+            )
+
+    response = asyncio.run(run_request())
+
+    assert response.status_code == 408
+    assert "timed out" in response.json()["detail"].lower()
+
+
 def test_bill_ocr_returns_actionable_error_for_missing_multipart_file(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "public-test-key")

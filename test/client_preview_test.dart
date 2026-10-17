@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:bus_app/core/theme/app_theme.dart';
+import 'package:bus_app/core/widgets/fleet_ai_launcher.dart';
 import 'package:bus_app/features/auth/providers.dart';
 import 'package:bus_app/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:bus_app/features/services/presentation/service_history_screen.dart';
@@ -18,6 +19,21 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Client preview interactions', () {
+    testWidgets('Fleet AI launcher is hidden on service add and edit forms',
+        (tester) async {
+      for (final path in ['/services/add', '/services/service-123/edit']) {
+        await tester.pumpWidget(MaterialApp(
+          home: FleetAiAppOverlay(
+            currentPath: path,
+            child: const Scaffold(body: Text('Service form')),
+          ),
+        ));
+        expect(find.text('Service form'), findsOneWidget);
+        expect(find.byTooltip('Ask AI questions'), findsNothing);
+        expect(tester.takeException(), isNull);
+      }
+    });
+
     testWidgets('dashboard and fleet lists fit a narrow phone viewport',
         (tester) async {
       tester.view.physicalSize = const Size(320, 720);
