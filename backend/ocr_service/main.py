@@ -140,6 +140,7 @@ ITEM_ROW = re.compile(
     r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)\s*$",
     re.I,
 )
+TABLE_NUMBER = re.compile(r"(?<![A-Za-z])\d[\d,]*(?:\.\d{1,2})?(?![A-Za-z])")
 MECHANIC = re.compile(
     r"(?im)^\s*(?:mechanic|technician|serviced\s+by|service\s+advisor|attended\s+by)\s*[:#-]\s*(.{2,80})\s*$"
 )
@@ -276,10 +277,29 @@ async def supabase_request(client: httpx.AsyncClient, base_url: str, anon_key: s
     UPSTREAM_DURATION.labels("supabase", operation).observe(asyncio.get_running_loop().time() - started)
     if response.is_error:
         record_upstream("supabase", operation, "error", str(response.status_code))
-        logger.warning("Supabase request failed resource=%s status=%d", path, response.status_code)
+        # PostgREST's code/message identify RPC signature, schema-cache, and
+        # argument errors. Record only its structured error fields (never the
+        # request body, JWT, or user data) so a generic mobile 502 is debuggable.
+        error_payload = {}
+        try:
+            parsed_error = response.json()
+            if isinstance(parsed_error, dict):
+                error_payload = parsed_error
+        except ValueError:
+            pass
+        error_code = str(error_payload.get("code", "unknown"))[:40]
+        error_message = re.sub(r"\s+", " ", str(error_payload.get("message", "")))[:240]
+        error_hint = re.sub(r"\s+", " ", str(error_payload.get("hint", "")))[:160]
+        logger.warning(
+            "Supabase request failed resource=%s status=%d code=%s message=%s hint=%s",
+            path, response.status_code, error_code, error_message, error_hint,
+        )
+        reason = f", PostgREST {error_code}" if error_code != "unknown" else ""
         raise HTTPException(
             status_code=502,
-            detail=f"Supabase rejected the assistant query (HTTP {response.status_code}).",
+            detail=(
+                f"Supabase query {operation} failed (HTTP {response.status_code}{reason})."
+            ),
         )
     record_upstream("supabase", operation, "success", str(response.status_code))
     try:
@@ -820,6 +840,13 @@ def extract(text: str):
     for line in lines:
         if re.search(r"\b(total|tax|gst|cgst|sgst|igst|subtotal|discount|balance|invoice|bill no|amount payable)\b", line, re.I):
             continue
+        table_item = _parse_invoice_table_row(line)
+        if table_item:
+            if re.search(r"\b(labou?r|technician|mechanic|service\s+charge|work\s+charge|inspection)\b", table_item["name"], re.I):
+                labor_total = (labor_total or 0.0) + table_item["total"]
+            else:
+                items.append(table_item)
+            continue
         item_match = ITEM_ROW.fullmatch(line)
         if not item_match:
             continue
@@ -846,6 +873,42 @@ def extract(text: str):
             "vehicle_registration": registration_match.group(1).strip() if registration_match else None,
             "service_description": service_match.group(1).strip() if service_match else None,
             "labor_total": labor_total}
+
+
+def _parse_invoice_table_row(line: str):
+    """Parse tabular invoice rows using the final Qty/Rate/Amount columns.
+
+    This avoids treating S.No, HSN, or numbers embedded in descriptions as Qty.
+    The line must have a leading row serial and a trailing unit-rate/amount pair.
+    """
+    matches = list(TABLE_NUMBER.finditer(line))
+    if len(matches) < 4 or not re.match(r"^\s*\d{1,3}\s+", line):
+        return None
+    try:
+        quantity_match, rate_match, amount_match = matches[-3:]
+        quantity = float(quantity_match.group().replace(",", ""))
+        rate = float(rate_match.group().replace(",", ""))
+        amount = float(amount_match.group().replace(",", ""))
+    except (ValueError, IndexError):
+        return None
+    if quantity <= 0 or quantity > 10000 or rate <= 0 or amount <= 0:
+        return None
+    # Amount is the final column; Qty is the third numeric value from the end.
+    # Discounted/tax-adjusted line amounts need not equal Qty × Rate. If the
+    # printed values do not reconcile, require a textual unit between Qty and
+    # Rate so numeric grades in the description cannot masquerade as columns.
+    quantity_to_rate = line[quantity_match.end():rate_match.start()]
+    if (abs(quantity * rate - amount) > max(1.0, amount * 0.02)
+            and not re.search(r"[A-Za-z]", quantity_to_rate)):
+        return None
+    description = line[:quantity_match.start()].strip()
+    description = re.sub(r"^\s*\d{1,3}\s+", "", description)
+    # HSN/SAC is the final description token in common printed invoice tables.
+    description = re.sub(r"\s+\d{4,8}\s*$", "", description).strip(" .:-")
+    if len(description) < 3:
+        return None
+    return {"name": description, "quantity": int(quantity) if quantity.is_integer() else quantity,
+            "total": amount}
 
 
 def _normalize_evidence(value: str) -> str:
@@ -889,22 +952,29 @@ def _verified_ai_items(value, raw_lines: list[str]):
             token not in normalized_source.split() for token in normalized_name.split()
         ):
             continue
-        try:
-            quantity = int(candidate.get("quantity"))
-        except (TypeError, ValueError, OverflowError):
-            continue
-        amount = _parse_ai_amount(candidate.get("total"))
-        if amount is None:
-            continue
+        table_item = _parse_invoice_table_row(line)
+        if table_item:
+            # The source row's table columns are authoritative. Never let the
+            # model substitute S.No, HSN, or unit rate for Qty or Amount.
+            quantity = table_item["quantity"]
+            amount = table_item["total"]
+        else:
+            try:
+                quantity = int(candidate.get("quantity"))
+            except (TypeError, ValueError, OverflowError):
+                continue
+            amount = _parse_ai_amount(candidate.get("total"))
+            if amount is None:
+                continue
+            source_numbers = {
+                float(number.replace(",", ""))
+                for number in re.findall(r"\d[\d,]*(?:\.\d{1,2})?", line)
+            }
+            if float(quantity) not in source_numbers or not any(
+                abs(float(amount) - number) < 0.01 for number in source_numbers
+            ):
+                continue
         if not 1 <= quantity <= 10000 or not 0 < amount <= 100_000_000:
-            continue
-        source_numbers = {
-            float(number.replace(",", ""))
-            for number in re.findall(r"\d[\d,]*(?:\.\d{1,2})?", line)
-        }
-        if float(quantity) not in source_numbers or not any(
-            abs(float(amount) - number) < 0.01 for number in source_numbers
-        ):
             continue
         if str(candidate.get("kind", "")).casefold() == "labor" or re.search(
             r"\b(labou?r|technician|mechanic|service\s+charge|work\s+charge|inspection)\b",
@@ -913,7 +983,8 @@ def _verified_ai_items(value, raw_lines: list[str]):
         ):
             labor_total = (labor_total or 0.0) + amount
             continue
-        parts.append({"name": name.strip(), "quantity": quantity, "total": amount})
+        parts.append({"name": (table_item["name"] if table_item else name.strip()),
+                      "quantity": quantity, "total": amount})
     return parts, labor_total
 
 
@@ -1039,7 +1110,10 @@ def merge_ai_bill_fields(result: dict, structured, raw_text: str):
         result["odometer_km"] = odometer
     items, ai_labor = _verified_ai_items(structured.get("items"), result["raw_lines"])
     if items:
-        result["items"] = items
+        # Keep deterministic table extraction complete; AI is used to classify
+        # line types and only fills parts when the local pass found none.
+        if not result.get("items"):
+            result["items"] = items
     if ai_labor is not None:
         result["labor_total"] = ai_labor
     result["structured_by"] = "nvidia_nim"

@@ -400,9 +400,11 @@ class SupabaseServiceRepository implements ServiceRepository {
                     id: p['id'] as String,
                     name: p['name'] as String,
                     quantity: (p['qty'] as num).toInt(),
-                    costPerUnit: (p['cost'] as num).toDouble(),
-                    totalCost: (p['cost'] as num).toDouble() *
+                    // service_parts.cost is stored as the printed line total.
+                    // Do not multiply it by qty again when loading a record.
+                    costPerUnit: (p['cost'] as num).toDouble() /
                         (p['qty'] as num).toDouble(),
+                    totalCost: (p['cost'] as num).toDouble(),
                   ))
               .toList() ??
           const [],

@@ -112,6 +112,54 @@ def test_ai_structured_parts_map_to_reviewable_rows_only_with_ocr_evidence():
     assert result["labor_total"] == 4000.0
 
 
+def test_invoice_table_uses_quantity_rate_and_amount_columns_not_row_serial_or_hsn():
+    raw_text = """S.No Description of Goods / Services HSN/SAC Qty Unit Rate (₹) Amount (₹)
+1 Engine Oil 15W-40 CI-4 (Diesel) 2710 18 Ltr 385.00 6,930.00
+2 Engine Oil Filter Element 8421 1 Nos 640.00 640.00
+3 Fuel Filter (Primary) 8421 1 Nos 780.00 780.00
+4 Air Filter Element 8421 1 Nos 1,150.00 1,150.00
+5 Brake Lining Set, Rear (with rivets) 8708 2 Set 2,350.00 4,700.00
+6 Gear Box Oil EP-90 2710 6 Ltr 310.00 1,860.00
+7 Multipurpose Grease 2710 2 Kg 260.00 520.00
+8 Brake Drum Turning / Machining 9987 4 Nos 450.00 1,800.00
+9 Labour - Periodic Service (40,000 km) 9987 1 Job 3,500.00 3,500.00
+10 Labour - Rear Brake Overhaul 9987 1 Job 2,500.00 2,500.00"""
+
+    result = main.extract(raw_text)
+
+    assert result["items"] == [
+        {"name": "Engine Oil 15W-40 CI-4 (Diesel)", "quantity": 18, "total": 6930.0},
+        {"name": "Engine Oil Filter Element", "quantity": 1, "total": 640.0},
+        {"name": "Fuel Filter (Primary)", "quantity": 1, "total": 780.0},
+        {"name": "Air Filter Element", "quantity": 1, "total": 1150.0},
+        {"name": "Brake Lining Set, Rear (with rivets)", "quantity": 2, "total": 4700.0},
+        {"name": "Gear Box Oil EP-90", "quantity": 6, "total": 1860.0},
+        {"name": "Multipurpose Grease", "quantity": 2, "total": 520.0},
+        {"name": "Brake Drum Turning / Machining", "quantity": 4, "total": 1800.0},
+    ]
+    assert result["labor_total"] == 6000.0
+
+
+def test_ai_table_values_cannot_replace_printed_quantity_or_amount():
+    source_line = "6 Gear Box Oil EP-90 2710 6 Ltr 310.00 1,860.00"
+    result = main.extract(source_line)
+    structured = {
+        "items": [{
+            "name": "Gear Box Oil EP-90",
+            "quantity": 6,
+            "total": 11160.0,
+            "source_line": source_line,
+            "kind": "part",
+        }]
+    }
+
+    main.merge_ai_bill_fields(result, structured, source_line)
+
+    assert result["items"] == [
+        {"name": "Gear Box Oil EP-90", "quantity": 6, "total": 1860.0}
+    ]
+
+
 def test_real_tesseract_reads_synthetic_invoice_through_scan_endpoint(monkeypatch):
     tesseract = shutil.which("tesseract")
     if not tesseract:
