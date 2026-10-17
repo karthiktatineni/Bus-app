@@ -5,9 +5,9 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 ## Verified in this pass
 
 - [x] Flutter analysis clean.
-- [x] Full Flutter suite: 59 tests passed.
+- [x] Full Flutter suite: 60 tests passed.
 - [x] Narrow 320 px dashboard, vehicle list, service detail/history layout regression passed.
-- [x] Python OCR/RAG tests: 5 passed, including the authenticated bill image upload/extraction response and missing-session rejection.
+- [x] Python backend suite: 9 tests passed, including bill OCR upload, chat-history validation, contextual cost routing, and RAG/operational path selection.
 - [x] Supabase migration list reconciled through `20261017170000`.
 - [x] Render `/health`: status ok, Redis ok, Supabase auth ok, OCR ok, NVIDIA configured.
 - [x] Debug APK built at repository root as `fleetpulse.apk`, installed and launched on OnePlus 7T.
@@ -21,8 +21,8 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 
 ## Remaining before production sign-off
 
-- [x] Review diff, commit (`348edf7`), and push source to `main`.
-- [~] Health uptime reset after push and health is ok; confirm exact deployed commit in Render and run signed-in Fleet AI from app.
+- [x] Commit (`0b680ca`) and push source to `main`; Render health uptime reset and returned healthy after the push.
+- [~] Run signed-in Fleet AI cost follow-up (“all vehicles”) and manual RAG question; health alone does not verify these full paths.
 - [ ] Test OCR against representative bills and verify results persist to the signed-in company.
 - [ ] Complete one signed-in service + bill OCR + parts + photos save/reopen on the OnePlus or client test account; confirm private image display.
 - [ ] Run live CRUD/media tests for bus docs/photos, service photos, bill images, and role permissions.
@@ -37,3 +37,4 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 - Render health shows service dependencies are configured/reachable; it does not prove a signed-in Fleet AI request, RAG retrieval, or OCR persistence path.
 - An empty manual corpus means maintenance-manual questions cannot be grounded in manual passages yet.
 - `fleetpulse.apk` is debug-signed for evaluation, not a production release.
+- Fleet AI retains up to 50 messages in encrypted device storage per user and sends the latest 12 as context; it does not sync to another device or survive uninstall.

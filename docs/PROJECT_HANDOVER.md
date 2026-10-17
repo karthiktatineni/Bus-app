@@ -4,11 +4,11 @@ Updated 17 October 2026.
 
 ## Current verified state
 
-- The RAG/media base was committed as `348edf7`; the vehicle service/OCR and reminder changes were committed as `9852dbf` and pushed to `main`.
+- Current service/OCR and Fleet AI memory changes are committed as `0b680ca` and pushed to GitHub `main`.
 - Remote Supabase migrations through `20261017170000` are applied and match local migration history.
-- After the push, Render health uptime reset; `/health` is currently healthy. This indicates a restart after the push, but the Render dashboard's deployed revision and a signed-in AI request still need direct confirmation.
+- After the push, Render health uptime reset and `/health` returned healthy Redis, Supabase auth, OCR, and NVIDIA configuration. A signed-in AI request still needs live verification.
 - The OnePlus 7T is connected as ADB device `3b038054`. Debug APK `fleetpulse.apk` was installed and launched.
-- All 59 Flutter tests, `flutter analyze`, and 5 Python tests passed. Python syntax compilation passed.
+- All 60 Flutter tests, `flutter analyze`, and 9 Python backend tests passed.
 - No authorized manuals are currently in the RAG corpus; manual-grounded answers are not ready until ingestion.
 
 ## Changes made
@@ -25,10 +25,12 @@ Updated 17 October 2026.
 10. Added [SERVICE_RECORD_WORKFLOW.md](SERVICE_RECORD_WORKFLOW.md) with the user flow, data architecture, storage mapping, OCR limits and live acceptance checks.
 11. Tightened bill-number extraction so the generic heading “Tax Invoice” cannot be mistaken for the invoice number; the OCR endpoint contract is covered with an authenticated upload test.
 12. The service form uses a vertical stepper on narrow phones and expanded, ellipsized vehicle dropdowns; a 320 px regression test confirms it does not overflow.
+13. Fleet AI now keeps up to 50 transcript messages in encrypted, per-user device storage and sends its most recent 12 messages as working context. Backend follow-ups resolve against this history; cost totals are routed to the database RPC, “all vehicles” forces a fleet-wide scope, and omitted dates default to the last 30 days. Operational data questions avoid unnecessary embedding calls; knowledge questions still use vector RAG.
+14. Chat memory is device-local. It does not sync across devices and will not survive uninstall or device loss. Cloud-synced conversation memory would need a separate authenticated, RLS-protected storage design.
 
 ## Remaining work
 
-1. Confirm the Render dashboard shows the service/OCR source commit `9852dbf` deployed. Check service logs and run a signed-in Fleet AI question in the app; `/health` does not confirm successful database/RAG/model calls.
+1. Run a signed-in Fleet AI cost question followed by “all vehicles,” then ask a manual-grounded question. Verify the database amount, date range, cross-turn interpretation, RAG citations and abstention on missing manual evidence; `/health` does not confirm these paths.
 3. Test a real OCR bill scan and fleet-data question, then verify two test tenants cannot read each other's fleet data or RAG chunks.
 4. Ingest authorized manuals and verify citations, retrieval quality, tenant scoping, and abstention for unsupported questions.
 5. Test photo/document upload, display, and deletion with admin and staff accounts against live RLS/Storage.
@@ -38,7 +40,7 @@ OCR extracts vendor, invoice number, date and total when readable; it does not i
 
 ## Build and device notes
 
-- `fleetpulse.apk` is at the repository root and is a debug APK; package `com.fleetpulse.bus_app`.
+- `fleetpulse.apk` is at the repository root and is a debug APK; package `com.fleetpulse.bus_app`. Current SHA-256: `64F3A53E87040732BB7D028B5D15467F920D24FD6123D9251D8476BD1BC8B106`.
 - The initial release APK was unsigned because `android/key.properties` and a release keystore are absent. Do not distribute that file.
 - `flutter build apk --debug` succeeded, and ADB installation plus launch succeeded on `3b038054`.
 - The Android build logs a future compatibility warning from `flutter_image_compress_common` concerning Built-in Kotlin migration; current build succeeds.

@@ -2,14 +2,14 @@
 
 Updated 17 October 2026.
 
-This is the verified handover after the latest UI, backend, RAG embedding, and Android build pass. It distinguishes local verification from checks that still require signed-in production data or authorized manuals.
+This is the verified handover after the latest service/OCR and Fleet AI memory pass. It distinguishes local verification from checks that still require signed-in production data or authorized manuals.
 
 ## Current status
 
-- The RAG/media base was committed as `348edf7`; the vehicle service/OCR and reminder changes were committed as `9852dbf` and pushed to `main`.
+- The current application/backend changes were committed as `0b680ca` and pushed to GitHub `main` (remote `main` matches this commit).
 - Supabase migration history is reconciled. Migrations `20261017150000` and `20261017170000` are applied remotely.
-- After the push, Render's health uptime reset and `/health` returned `status: ok`; Redis, Supabase auth, and OCR checks passed, and NVIDIA is configured. This indicates the service restarted after the push, but the Render dashboard revision and signed-in AI request were not independently inspected.
-- A debug-signed `fleetpulse.apk` was built, installed on the connected OnePlus 7T (`3b038054`), and launched. The release APK build was unsigned because no Android release key is configured; it was not installed.
+- After the push, Render's health uptime reset and `/health` returned `status: ok`; Redis, Supabase auth, and OCR checks passed, and NVIDIA is configured. A signed-in AI request was not exercised against production.
+- Debug-signed `fleetpulse.apk` was rebuilt, installed, and launched on the connected OnePlus 7T (`3b038054`). SHA-256: `64F3A53E87040732BB7D028B5D15467F920D24FD6123D9251D8476BD1BC8B106`. The release APK is not signed because no Android release key is configured.
 - Manual RAG corpus is empty. Fleet-data/tool questions can use live tenant data after sign-in; manual retrieval and citations need authorized manuals ingested first.
 
 ## Changes in this pass
@@ -30,21 +30,24 @@ This is the verified handover after the latest UI, backend, RAG embedding, and A
 - Legacy mock repositories and generated sample data have been moved from `lib/` into `test/fakes/`; production providers point to Supabase repositories.
 - Fixed an OCR parser false positive where a generic “Tax Invoice” heading could be mistaken for an invoice number; extraction now requires a label and value on the same line. Added authenticated-upload response and missing-session tests.
 - Dashboard To do and Maintenance Reminders now include Due Soon/Overdue vehicle statuses when no open maintenance task exists for that bus. Date-only comparison treats a task due today as due today, not overdue.
+- Fleet AI stores up to 50 recent transcript messages in encrypted device storage scoped to the signed-in user and sends the newest 12 messages as short-term context. The backend uses conversation context for follow-ups, includes context in Redis cache keys and RAG queries, and routes cost questions to the cost RPC. “All vehicles” is forced to a null vehicle filter; an unspecified period defaults to the last 30 calendar days. Operational data questions skip embedding/RAG calls; maintenance knowledge questions continue through vector retrieval.
+- Fleet AI memory is currently per-user on this device; it does not sync between devices or survive uninstall/device loss. Cross-device cloud conversation memory requires an authenticated/RLS-protected persistence design and is not implemented.
+- Service OCR requests use a JPEG multipart content type after image compression. Empty OCR vendor results must be entered by the user; no fake vendor/parts are inserted.
 - The Add Service Record stepper switches to vertical on phone widths; the bus selector expands and truncates long labels instead of overflowing. Added a 320 px form regression test.
 - Added [SERVICE_RECORD_WORKFLOW.md](SERVICE_RECORD_WORKFLOW.md) for the user steps, request/data flow, tables/buckets, OCR limits and live acceptance test.
 
 ## Verification completed
 
 - `flutter analyze`: no issues found.
-- `flutter test`: all 59 tests passed, including 320 px service-form, vehicle-status To do and vehicle service-entry regressions.
-- Python OCR/backend and knowledge ingestion tests: 5 passed, including signed-in bill-image upload/field extraction and missing-session rejection.
+- `flutter test`: all 60 tests passed, including 320 px service-form, vehicle-status To do and vehicle service-entry regressions.
+- Python OCR/backend tests: 9 passed, including signed-in bill-image upload/field extraction, missing-session rejection, bounded chat history, contextual cost routing and RAG routing.
 - `npx supabase migration list --project-ref uwvjvlkkcknwiapvrwng`: local and remote migration versions matched, including `20261017170000`.
 - Render health endpoint returned healthy Redis, Supabase auth, and OCR checks.
 - Android debug APK installed successfully and app launch was triggered on the OnePlus 7T.
 
 ## Still required before production sign-off
 
-- Commit and push the reviewed changes to `main`; then wait for the Render deployment and check its logs plus a signed-in Fleet AI query from the app.
+- Run a signed-in Fleet AI spending follow-up and manual question from the app to verify live database tool use, RAG retrieval, and chat memory. The health endpoint does not exercise those paths.
 - Test OCR, fleet-data AI answers, and tenant isolation using staging accounts. The health endpoint alone does not verify the end-to-end path.
 - Ingest manuals the company is authorized to use, then test retrieval, citations, tenant separation, and abstention when evidence is missing.
 - Run end-to-end upload/view/delete checks for vehicle documents/photos, service photos, bill images, and role boundaries against Supabase Storage/RLS.
