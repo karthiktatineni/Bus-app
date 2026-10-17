@@ -16,8 +16,8 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 
 ## Remaining before production sign-off
 
-- [ ] Review diff/secrets, commit and push source to `main`.
-- [ ] Verify Render deploys new backend revision; inspect logs and run signed-in Fleet AI from app.
+- [x] Review diff, commit (`348edf7`), and push source to `main`.
+- [~] Health uptime reset after push and health is ok; confirm exact deployed commit in Render and run signed-in Fleet AI from app.
 - [ ] Test OCR against representative bills and verify results persist to the signed-in company.
 - [ ] Run live CRUD/media tests for bus docs/photos, service photos, bill images, and role permissions.
 - [ ] Test tenant isolation with at least two staging companies/accounts.

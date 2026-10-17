@@ -6,9 +6,9 @@ This is the verified handover after the latest UI, backend, RAG embedding, and A
 
 ## Current status
 
-- Flutter source and backend fixes are ready on `feature/client-preview`; the branch starts at the current `origin/main`. The implementation has not yet been committed/pushed in this pass, so the new backend source is not yet on Render.
+- Flutter source and backend fixes were committed as `348edf7` and pushed to `main`.
 - Supabase migration history is reconciled. Migrations `20261017150000` and `20261017170000` are applied remotely.
-- Render `https://fleetpulse-ocr.onrender.com/health` returned `status: ok`; Redis, Supabase auth, and OCR checks passed, and NVIDIA is configured. This health route does not prove a signed-in AI request succeeds.
+- After the push, Render's health uptime reset and `/health` returned `status: ok`; Redis, Supabase auth, and OCR checks passed, and NVIDIA is configured. This indicates the service restarted after the push, but the Render dashboard revision and signed-in AI request were not independently inspected.
 - A debug-signed `fleetpulse.apk` was built, installed on the connected OnePlus 7T (`3b038054`), and launched. The release APK build was unsigned because no Android release key is configured; it was not installed.
 - Manual RAG corpus is empty. Fleet-data/tool questions can use live tenant data after sign-in; manual retrieval and citations need authorized manuals ingested first.
 

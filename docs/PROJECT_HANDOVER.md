@@ -4,9 +4,9 @@ Updated 17 October 2026.
 
 ## Current verified state
 
-- Checkout: `feature/client-preview`, based on the latest `origin/main`. Changes from this pass remain uncommitted pending final review/push.
+- Source changes were committed as `348edf7` and pushed to `main`.
 - Remote Supabase migrations through `20261017170000` are applied and match local migration history.
-- Render health at `https://fleetpulse-ocr.onrender.com/health` is currently healthy. The deployed backend may still be the older revision until the source changes are pushed and Render redeploys.
+- After the push, Render health uptime reset; `/health` is currently healthy. This indicates a restart after the push, but the Render dashboard's deployed revision and a signed-in AI request still need direct confirmation.
 - The OnePlus 7T is connected as ADB device `3b038054`. Debug APK `fleetpulse.apk` was installed and launched.
 - All 56 Flutter tests, `flutter analyze`, and 3 Python tests passed. Python syntax compilation passed.
 - No authorized manuals are currently in the RAG corpus; manual-grounded answers are not ready until ingestion.
@@ -22,8 +22,7 @@ Updated 17 October 2026.
 
 ## Remaining work
 
-1. Review staged files for secrets and generated content, then commit and push the changes to `main`. `origin/main` currently equals the starting commit of this work.
-2. Confirm Render deploys the commit. Check service logs and run a signed-in Fleet AI question in the app; `/health` does not confirm successful database/RAG/model calls.
+1. Confirm the Render dashboard shows commit `348edf7` deployed. Check service logs and run a signed-in Fleet AI question in the app; `/health` does not confirm successful database/RAG/model calls.
 3. Test a real OCR bill scan and fleet-data question, then verify two test tenants cannot read each other's fleet data or RAG chunks.
 4. Ingest authorized manuals and verify citations, retrieval quality, tenant scoping, and abstention for unsupported questions.
 5. Test photo/document upload, display, and deletion with admin and staff accounts against live RLS/Storage.
