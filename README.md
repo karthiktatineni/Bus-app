@@ -34,10 +34,7 @@ For an end-to-end checklist and step-by-step environment handover, see `docs/WOR
 ```powershell
 flutter analyze
 flutter test
-flutter build apk --release `
-  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co `
-  --dart-define=SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY `
-  --dart-define=OCR_SERVICE_URL=https://fleetpulse-ocr.onrender.com
+.\scripts\build_android.ps1
 ```
 
-Configure an Android release keystore and signing values in a local, untracked Gradle properties file before distributing a release APK.
+The build script reads only `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `OCR_SERVICE_URL` from the local, ignored `.env`, validates the required Supabase settings, and injects them into the Flutter release build. It never passes backend secrets to Flutter. For production distribution, configure an Android release keystore in the ignored `android/key.properties`; without it, the script requires the local internal test key and warns that the APK is not a production release. Startup configuration failures are shown in an in-app diagnostic screen instead of leaving a blank screen.
