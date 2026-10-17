@@ -53,18 +53,29 @@ class BillsListScreen extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                bill.vendor,
-                                style: const TextStyle(
-                                    fontSize: 14, fontWeight: FontWeight.bold),
+                              Expanded(
+                                child: Text(
+                                  bill.vendor,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                              Text(
-                                '₹${NumberFormat('#,###').format(bill.total)}',
-                                style: const TextStyle(
-                                  fontFamily: 'JetBrainsMono',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  '₹${NumberFormat('#,###').format(bill.total)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.end,
+                                  style: const TextStyle(
+                                    fontFamily: 'JetBrainsMono',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
                                 ),
                               ),
                             ],

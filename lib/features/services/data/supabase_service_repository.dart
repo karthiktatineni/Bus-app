@@ -116,6 +116,64 @@ class SupabaseServiceRepository implements ServiceRepository {
   }
 
   @override
+  Future<void> delete(String id) async {
+    final photos = await _client
+        .from('service_photos')
+        .select('url')
+        .eq('service_record_id', id);
+    for (final photo in photos) {
+      final path = photo['url'] as String?;
+      if (path != null &&
+          !path.startsWith('http://') &&
+          !path.startsWith('https://')) {
+        await _storage.remove('service-photos', path);
+      }
+    }
+    await _client.from('service_records').delete().eq('id', id);
+  }
+
+  @override
+  Future<void> deletePhoto(String serviceId, String photoId) async {
+    final photo = await _client
+        .from('service_photos')
+        .select('url')
+        .eq('id', photoId)
+        .eq('service_record_id', serviceId)
+        .maybeSingle();
+    if (photo == null) return;
+
+    final path = photo['url'] as String?;
+    if (path != null &&
+        !path.startsWith('http://') &&
+        !path.startsWith('https://')) {
+      await _storage.remove('service-photos', path);
+    }
+    await _client
+        .from('service_photos')
+        .delete()
+        .eq('id', photoId)
+        .eq('service_record_id', serviceId);
+  }
+
+  @override
+  Future<void> addPhoto(
+      String serviceId, String filePath, PhotoType type) async {
+    final companyId = await _getCompanyId();
+    final objectPath = await _storage.upload(
+      bucket: 'service-photos',
+      companyId: companyId,
+      parentId: serviceId,
+      filePath: filePath,
+    );
+    await _client.from('service_photos').insert({
+      'company_id': companyId,
+      'service_record_id': serviceId,
+      'url': objectPath,
+      'type': type.name,
+    });
+  }
+
+  @override
   Future<List<MaintenanceTask>> upcomingTasks({int withinDays = 14}) async {
     final rows = await _client
         .from('maintenance_tasks')

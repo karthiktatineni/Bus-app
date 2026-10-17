@@ -77,4 +77,14 @@ class MockBillRepository implements BillRepository {
     }
     _bills.removeAt(index);
   }
+
+  @override
+  Future<void> deleteImage(String id) async {
+    await MockDelay.simulate();
+    final index = _bills.indexWhere((item) => item.id == id);
+    if (index == -1) {
+      throw NotFoundException('Bill with ID $id not found.');
+    }
+    _bills[index] = _bills[index].copyWith(clearImageUrl: true);
+  }
 }

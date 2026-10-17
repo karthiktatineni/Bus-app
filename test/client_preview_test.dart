@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:bus_app/core/theme/app_theme.dart';
 import 'package:bus_app/features/auth/providers.dart';
+import 'package:bus_app/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:bus_app/features/services/presentation/service_history_screen.dart';
+import 'package:bus_app/features/services/presentation/service_detail_screen.dart';
 import 'package:bus_app/features/services/providers.dart';
 import 'package:bus_app/features/vehicles/presentation/vehicles_list_screen.dart';
+import 'package:bus_app/features/vehicles/presentation/add_edit_vehicle_screen.dart';
 import 'package:bus_app/features/vehicles/providers.dart';
 import 'package:bus_app/main.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +16,72 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Client preview interactions', () {
+    testWidgets('dashboard and fleet lists fit a narrow phone viewport',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        _screenWith(
+          user: _adminUser,
+          vehicleRepository: _FakeVehicleRepository(_vehicles),
+          serviceRepository: _FakeServiceRepository(records: _serviceRecords),
+          child: const DashboardScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final vehicleListError = tester.takeException();
+      expect(vehicleListError, isNull, reason: vehicleListError?.toString());
+
+      await tester.pumpWidget(
+        _screenWith(
+          user: _staffUser,
+          vehicleRepository: _FakeVehicleRepository(_vehicles),
+          child: const VehiclesListScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(
+        _screenWith(
+          user: _adminUser,
+          child: const AddEditVehicleScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).first, const Offset(0, -560));
+      await tester.pumpAndSettle();
+      expect(find.text('Add bus photos'), findsOneWidget);
+      expect(find.text('Scan / add document'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(
+        _screenWith(
+          user: _staffUser,
+          serviceRepository: _FakeServiceRepository(records: _serviceRecords),
+          child: const ServiceDetailScreen(serviceId: 'srv-oil'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).first, const Offset(0, -650));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Add service photo'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      await tester.pumpWidget(
+        _screenWith(
+          user: _staffUser,
+          serviceRepository: _FakeServiceRepository(records: _serviceRecords),
+          child: const ServiceHistoryScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('to-do checklist completion can be undone', (tester) async {
       await tester.pumpWidget(
         _appWith(
@@ -274,6 +343,12 @@ class _FakeVehicleRepository implements VehicleRepository {
 
   @override
   Future<void> delete(String id) async {}
+
+  @override
+  Future<void> deletePhoto(String vehicleId, String photoUrl) async {}
+
+  @override
+  Future<void> addPhoto(String vehicleId, String filePath) async {}
 }
 
 class _FakeServiceRepository implements ServiceRepository {
@@ -298,6 +373,16 @@ class _FakeServiceRepository implements ServiceRepository {
 
   @override
   Future<ServiceRecord> create(ServiceRecord r) async => r;
+
+  @override
+  Future<void> delete(String id) async {}
+
+  @override
+  Future<void> deletePhoto(String serviceId, String photoId) async {}
+
+  @override
+  Future<void> addPhoto(
+      String serviceId, String filePath, PhotoType type) async {}
 
   @override
   Future<List<MaintenanceTask>> upcomingTasks({int withinDays = 14}) async =>

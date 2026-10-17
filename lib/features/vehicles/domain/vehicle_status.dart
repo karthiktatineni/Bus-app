@@ -9,6 +9,18 @@ enum VehicleStatus {
   final String label;
   const VehicleStatus(this.label);
 
+  /// Accept both Dart enum names and the database's snake_case values.
+  static VehicleStatus fromStorage(Object? value) {
+    final normalized = value?.toString().replaceAll('_', '').toLowerCase();
+    return switch (normalized) {
+      'duesoon' => VehicleStatus.dueSoon,
+      'inworkshop' => VehicleStatus.inWorkshop,
+      'overdue' => VehicleStatus.overdue,
+      'active' => VehicleStatus.active,
+      _ => VehicleStatus.active,
+    };
+  }
+
   ChipStatus get chipStatus {
     switch (this) {
       case VehicleStatus.active:

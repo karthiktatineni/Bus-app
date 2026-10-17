@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../auth/providers.dart';
 import '../providers.dart';
 
 class BillDetailScreen extends ConsumerWidget {
@@ -16,6 +18,7 @@ class BillDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final billRepo = ref.watch(billRepositoryProvider);
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
 
     return FutureBuilder<Bill?>(
       future: billRepo.get(billId),
@@ -38,6 +41,14 @@ class BillDetailScreen extends ConsumerWidget {
         return Scaffold(
           appBar: AppBar(
             title: Text('Invoice #${bill.billNo}'),
+            actions: [
+              if (isAdmin)
+                IconButton(
+                  tooltip: 'Delete bill',
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () => _deleteBill(context, ref, bill),
+                ),
+            ],
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),
@@ -129,9 +140,23 @@ class BillDetailScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Scanned Invoice Document',
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          const Expanded(
+                            child: Text('Scanned Invoice Document',
+                                style: TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.bold)),
+                          ),
+                          if (isAdmin && bill.imageUrl != null)
+                            IconButton(
+                              tooltip: 'Delete invoice image',
+                              icon: const Icon(Icons.delete_outline,
+                                  color: AppTheme.danger),
+                              onPressed: () =>
+                                  _deleteBillImage(context, ref, bill),
+                            ),
+                        ],
+                      ),
                       const SizedBox(height: 12),
                       Container(
                         height: 200,
@@ -143,24 +168,22 @@ class BillDetailScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: AppTheme.border),
                         ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.receipt_long,
-                                  size: 48, color: AppTheme.primaryColor),
-                              const SizedBox(height: 8),
-                              Text('Invoice #${bill.billNo}',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12)),
-                              Text(bill.vendor,
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppTheme.textSecondary)),
-                            ],
-                          ),
-                        ),
+                        child: bill.imageUrl == null
+                            ? const Center(
+                                child: Text('No invoice image attached'),
+                              )
+                            : ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  bill.imageUrl!,
+                                  width: double.infinity,
+                                  height: 200,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Text('Invoice image unavailable'),
+                                  ),
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -171,5 +194,76 @@ class BillDetailScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _deleteBill(
+      BuildContext context, WidgetRef ref, Bill bill) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete bill?'),
+        content: Text(
+          'Delete invoice ${bill.billNo.isEmpty ? bill.vendor : bill.billNo} and its attached image? This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete bill'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref.read(billRepositoryProvider).delete(bill.id);
+      if (!context.mounted) return;
+      context.go('/bills');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bill deleted.')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete this bill. Try again.')),
+      );
+    }
+  }
+
+  Future<void> _deleteBillImage(
+      BuildContext context, WidgetRef ref, Bill bill) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete invoice image?'),
+        content: const Text(
+            'The bill record and its item details will remain. The image will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete image'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await ref.read(billRepositoryProvider).deleteImage(bill.id);
+      ref.invalidate(billRepositoryProvider);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete the invoice image.')),
+      );
+    }
   }
 }

@@ -6,4 +6,5 @@ abstract class BillRepository {
   Future<Bill> create(Bill b);
   Future<Bill> update(Bill b);
   Future<void> delete(String id);
+  Future<void> deleteImage(String id);
 }

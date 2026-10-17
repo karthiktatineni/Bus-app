@@ -36,6 +36,16 @@ void main() {
   });
 
   group('Vehicle & VehicleDocument Model Tests', () {
+    test('vehicle statuses accept database snake_case values', () {
+      expect(VehicleStatus.fromStorage('active'), VehicleStatus.active);
+      expect(VehicleStatus.fromStorage('overdue'), VehicleStatus.overdue);
+      expect(
+          VehicleStatus.fromStorage('in_workshop'), VehicleStatus.inWorkshop);
+      expect(VehicleStatus.fromStorage('due_soon'), VehicleStatus.dueSoon);
+      expect(VehicleStatus.fromStorage('dueSoon'), VehicleStatus.dueSoon);
+      expect(VehicleStatus.fromStorage('unexpected'), VehicleStatus.active);
+    });
+
     test('Vehicle serialization and copyWith', () {
       final now = DateTime.now();
       final doc = VehicleDocument(

@@ -108,10 +108,7 @@ class Vehicle {
       odometerKm: json['odometerKm'] as int? ?? 0,
       depot: json['depot'] as String? ?? 'Hyderabad Main',
       purchaseDate: DateTime.parse(json['purchaseDate'] as String),
-      status: VehicleStatus.values.firstWhere(
-        (s) => s.name == json['status'],
-        orElse: () => VehicleStatus.active,
-      ),
+      status: VehicleStatus.fromStorage(json['status']),
       photos: (json['photos'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??

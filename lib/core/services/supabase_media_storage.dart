@@ -29,4 +29,27 @@ class SupabaseMediaStorage {
     }
     return _client.storage.from(bucket).createSignedUrl(objectPath, 3600);
   }
+
+  Future<void> remove(String bucket, String objectPath) async {
+    if (objectPath.startsWith('https://') || objectPath.startsWith('http://')) {
+      throw ArgumentError('A storage object path is required.');
+    }
+    await _client.storage.from(bucket).remove([objectPath]);
+  }
+
+  String? objectPathFromSignedUrl(String bucket, String value) {
+    final uri = Uri.tryParse(value);
+    if (uri == null || (uri.scheme != 'https' && uri.scheme != 'http')) {
+      return null;
+    }
+    final segments = uri.pathSegments;
+    final bucketIndex = segments.indexOf(bucket);
+    if (bucketIndex < 1 ||
+        !const {'sign', 'public', 'authenticated'}
+            .contains(segments[bucketIndex - 1]) ||
+        bucketIndex + 1 >= segments.length) {
+      return null;
+    }
+    return segments.skip(bucketIndex + 1).join('/');
+  }
 }

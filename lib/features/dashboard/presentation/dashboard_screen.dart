@@ -311,8 +311,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          runSpacing: 4,
           children: [
             Row(
               children: [
@@ -539,8 +540,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          runSpacing: 4,
           children: [
             Row(
               children: [
@@ -894,8 +897,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        const Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          runSpacing: 4,
           children: [
             Row(
               children: [
@@ -950,8 +955,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          alignment: WrapAlignment.spaceBetween,
                           children: [
                             Text(
                               v.registrationNo,
@@ -1006,52 +1013,55 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'ODOMETER',
-                                    style: TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontSize: 9,
-                                      color: AppTheme.textSecondary,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'ODOMETER',
+                                      style: TextStyle(
+                                        fontFamily: 'JetBrainsMono',
+                                        fontSize: 9,
+                                        color: AppTheme.textSecondary,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    '${NumberFormat('#,###').format(v.odometerKm)} km',
-                                    style: const TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
+                                    Text(
+                                      '${NumberFormat('#,###').format(v.odometerKm)} km',
+                                      style: const TextStyle(
+                                        fontFamily: 'JetBrainsMono',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  const Text(
-                                    'LAST SERVICE',
-                                    style: TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontSize: 9,
-                                      color: AppTheme.textSecondary,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    const Text(
+                                      'LAST SERVICE',
+                                      style: TextStyle(
+                                        fontFamily: 'JetBrainsMono',
+                                        fontSize: 9,
+                                        color: AppTheme.textSecondary,
+                                      ),
                                     ),
-                                  ),
-                                  Text(
-                                    lastService == null
-                                        ? '—'
-                                        : '₹${NumberFormat('#,###').format(lastService.total)}',
-                                    style: const TextStyle(
-                                      fontFamily: 'JetBrainsMono',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppTheme.primaryColor,
+                                    Text(
+                                      lastService == null
+                                          ? '—'
+                                          : '₹${NumberFormat('#,###').format(lastService.total)}',
+                                      style: const TextStyle(
+                                        fontFamily: 'JetBrainsMono',
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppTheme.primaryColor,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -1436,15 +1446,20 @@ class _MetricCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontFamily: 'JetBrainsMono',
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
+                Expanded(
+                  child: Text(
+                    title == 'IN WORKSHOP' ? 'WORKSHOP' : title,
+                    style: TextStyle(
+                      fontFamily: 'JetBrainsMono',
+                      fontSize: title == 'IN WORKSHOP' ? 9 : 10,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                const SizedBox(width: 2),
                 Icon(icon, size: 14, color: textColor),
               ],
             ),

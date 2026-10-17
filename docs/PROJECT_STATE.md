@@ -2,44 +2,43 @@
 
 Updated 17 October 2026.
 
-For the ordered cloud setup and production handoff, see `docs/PROJECT_HANDOVER.md`. The compact status checklist is `docs/WORKING_CHECKLIST.md`.
+This is the verified handover after the latest UI, backend, RAG embedding, and Android build pass. It distinguishes local verification from checks that still require signed-in production data or authorized manuals.
 
-## What is implemented in this checkout
+## Current status
 
-- Flutter feature providers use Supabase implementations for auth, vehicles, services, bills, users, settings, and notifications. Login restores the persisted Supabase session and no longer fills demo credentials.
-- Camera/gallery image picking and JPEG compression are wired in. Vehicle, service, and bill images upload to private company-scoped Storage paths and reads use expiring signed URLs.
-- Service entry starts empty, persists parts and photos, can mark tasks complete in the database, and invokes the OCR service instead of a fake delay.
-- A FastAPI/Tesseract OCR service is defined at `backend/ocr_service/`, with Supabase-token authentication and deterministic GSTIN, invoice number, date, total, vendor, and confidence extraction.
-- Fleet AI has a chat screen and authenticated `/ai/fleet-assistant` route in the Render FastAPI backend. It verifies the signed-in user with Supabase Auth, calls fleet RPCs with that user's JWT, and sends returned records to NVIDIA NIM for a grounded response.
-- Render Key Value provides Redis-compatible storage over Render's private network. The shared Render backend uses it for short-lived tenant/user-scoped RPC and answer caches, per-user query embeddings, and 24-hour OCR image digest results. Cache failures fall back to the source service/model.
-- The AI now retrieves tenant-authorized maintenance chunks through pgvector using NVIDIA `baai/bge-m3` embeddings, uses a similarity threshold, asks the model to cite sources, and displays retrieved source labels. `backend/knowledge/ingest.py` ingests authorized Markdown/text references.
-- SQL migrations define the 16-table schema, RLS, indexes, Storage buckets, role policies, vehicle soft-delete audit, and session activation after invitation acceptance. Edge Function sources cover company bootstrap and admin user invitations.
-- Android camera/network permissions and iOS camera/photo usage descriptions are present. README and acceptance instructions are in place.
+- Flutter source and backend fixes are ready on `feature/client-preview`; the branch starts at the current `origin/main`. The implementation has not yet been committed/pushed in this pass, so the new backend source is not yet on Render.
+- Supabase migration history is reconciled. Migrations `20261017150000` and `20261017170000` are applied remotely.
+- Render `https://fleetpulse-ocr.onrender.com/health` returned `status: ok`; Redis, Supabase auth, and OCR checks passed, and NVIDIA is configured. This health route does not prove a signed-in AI request succeeds.
+- A debug-signed `fleetpulse.apk` was built, installed on the connected OnePlus 7T (`3b038054`), and launched. The release APK build was unsigned because no Android release key is configured; it was not installed.
+- Manual RAG corpus is empty. Fleet-data/tool questions can use live tenant data after sign-in; manual retrieval and citations need authorized manuals ingested first.
 
-## Local verification
+## Changes in this pass
 
-- `flutter analyze`: **0 issues**.
-- `flutter test`: **53 tests passed**.
-- The existing APK files in `apk/` predate this work; they were not replaced.
+- Fleet AI uses NVIDIA `nvidia/nemotron-3-embed-1b` with `input_type=query`, validates 2048-element vectors, and keys Redis cache entries by model.
+- Offline knowledge ingestion uses the same model with `input_type=passage`, retries transient embedding calls, and writes to the new corpus.
+- Migration `20261017170000_nemotron_embedding_dimension.sql` creates a `halfvec(2048)` corpus and updates the RAG RPCs while retaining the legacy 1024-vector corpus. `halfvec` is used because pgvector's HNSW index supports larger dimensions than `vector` indexes.
+- Backend startup now uses FastAPI lifespan handling for Redis initialization and shutdown; the Python tests no longer emit lifecycle deprecation warnings.
+- Flutter vehicle status parsing handles storage values such as `in_workshop` and `due_soon`.
+- Added admin delete/archive actions for bills/images, service records/photos, and vehicle photos/archive, retaining historical records where appropriate.
+- Added vehicle photo and document capture during add/edit; existing bus documents/photos can be viewed, and service records support image attachments. Vehicle overview now reflects actual documents rather than placeholder certificates.
+- Fixed narrow layout issues in dashboard, vehicle list, and service details. Image preview now displays the actual uploaded photo and supports zoom.
 
-## What is not live or verified yet
+## Verification completed
 
-- The Supabase CLI and Supabase MCP are unavailable in this session. The migrations and remaining Edge Functions have **not** been applied or deployed to project `uwvjvlkkcknwiapvrwng`; live RLS, buckets, RPCs, bootstrap, and auth therefore remain unverified.
-- Render Key Value has not been provisioned. The Render Blueprint defines it as an internal-only service and wires its private URL into the backend; deploy the Blueprint to enable caching. Requests remain functional without Redis but will not receive cache benefits.
-- No authorized maintenance manual corpus is present or ingested yet. The RAG code is ready, but factual manual answers require loading the correct manuals; without relevant retrieval evidence the assistant is instructed to abstain. LLM wording still cannot be guaranteed 100% correct.
-- The NVIDIA key must be configured as a Render backend secret. It must never be added to Flutter build defines.
-- The combined OCR/AI backend has not been deployed to Render, so the mobile OCR and AI flows need the final backend URL.
-- No live tenant seed has been created. There is no fabricated 10-bus seed in the production migration.
-- The AI response is database-grounded, but an LLM cannot guarantee zero hallucinations or mathematically 100% factual wording. The Render AI route and OCR need live acceptance checks.
-- The assistant currently returns a completed Markdown response; token streaming and interactive vehicle/task cards are not implemented.
-- Android Gradle is still configured to sign release builds with the debug key. A production APK requires the owner's protected release keystore and signing configuration.
-- The existing Firebase configuration was not tested end-to-end.
+- `flutter analyze`: no issues found.
+- `flutter test`: all 56 tests passed, including the 320 px narrow-phone regression.
+- Python OCR/backend and knowledge ingestion tests: 3 passed; `py_compile` passed.
+- `npx supabase migration list --project-ref uwvjvlkkcknwiapvrwng`: local and remote migration versions matched, including `20261017170000`.
+- Render health endpoint returned healthy Redis, Supabase auth, and OCR checks.
+- Android debug APK installed successfully and app launch was triggered on the OnePlus 7T.
 
-## Deployment order
+## Still required before production sign-off
 
-1. Apply all three ordered SQL migrations to a staging Supabase project and inspect the policies/RPCs.
-2. Configure a one-time `BOOTSTRAP_SECRET`; deploy `manage-user` and `bootstrap-company`.
-3. Bootstrap a staging company, accept the administrator invitation, and create a staff account.
-4. Create the Render Blueprint; it provisions private Render Key Value and the combined OCR/AI backend. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and a rotated `NVIDIA_NIM_API_KEY` for that backend. Flutter defaults to `https://fleetpulse-ocr.onrender.com` and can override it with `OCR_SERVICE_URL`.
-5. Ingest authorized maintenance manuals using `backend/knowledge/ingest.py`, with company scope for private manuals.
-6. Complete `docs/ACCEPTANCE_TEST.md`, configure release signing, then create and install the release APK.
+- Commit and push the reviewed changes to `main`; then wait for the Render deployment and check its logs plus a signed-in Fleet AI query from the app.
+- Test OCR, fleet-data AI answers, and tenant isolation using staging accounts. The health endpoint alone does not verify the end-to-end path.
+- Ingest manuals the company is authorized to use, then test retrieval, citations, tenant separation, and abstention when evidence is missing.
+- Run end-to-end upload/view/delete checks for vehicle documents/photos, service photos, bill images, and role boundaries against Supabase Storage/RLS.
+- Configure protected Android release signing before distributing a production APK. `fleetpulse.apk` in the root is a debug build for device evaluation.
+- Review the Android plugin warning about `flutter_image_compress_common` and Built-in Kotlin compatibility before a future Flutter/Gradle upgrade.
+
+See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for resume order and [WORKING_CHECKLIST.md](WORKING_CHECKLIST.md) for individual acceptance items.

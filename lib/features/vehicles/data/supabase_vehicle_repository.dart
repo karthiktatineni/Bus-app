@@ -117,13 +117,22 @@ class SupabaseVehicleRepository implements VehicleRepository {
       });
     }
     for (final document in v.documents) {
+      var fileUrl = document.fileUrl;
+      if (fileUrl != null && File(fileUrl).existsSync()) {
+        fileUrl = await _storage.upload(
+          bucket: 'vehicle-photos',
+          companyId: companyId,
+          parentId: row['id'] as String,
+          filePath: fileUrl,
+        );
+      }
       await _client.from('vehicle_documents').insert({
         'company_id': companyId,
         'vehicle_id': row['id'],
         'type': document.type.name,
         'number': document.number,
         'expiry_date': document.expiryDate.toIso8601String().split('T').first,
-        'file_url': document.fileUrl,
+        'file_url': fileUrl,
         'created_by': _client.auth.currentUser!.id,
       });
     }
@@ -132,6 +141,7 @@ class SupabaseVehicleRepository implements VehicleRepository {
 
   @override
   Future<Vehicle> update(Vehicle v) async {
+    final companyId = await _getCompanyId();
     final row = await _client
         .from('vehicles')
         .update({
@@ -151,7 +161,41 @@ class SupabaseVehicleRepository implements VehicleRepository {
         .eq('id', v.id)
         .select()
         .single();
-    return _rowToVehicle(row);
+    for (final path in v.photos.where((path) => File(path).existsSync())) {
+      final objectPath = await _storage.upload(
+        bucket: 'vehicle-photos',
+        companyId: companyId,
+        parentId: v.id,
+        filePath: path,
+      );
+      await _client.from('vehicle_photos').insert({
+        'company_id': companyId,
+        'vehicle_id': v.id,
+        'url': objectPath,
+        'created_by': _client.auth.currentUser!.id,
+      });
+    }
+    for (final document in v.documents) {
+      var fileUrl = document.fileUrl;
+      if (fileUrl != null && File(fileUrl).existsSync()) {
+        fileUrl = await _storage.upload(
+          bucket: 'vehicle-photos',
+          companyId: companyId,
+          parentId: v.id,
+          filePath: fileUrl,
+        );
+      }
+      await _client.from('vehicle_documents').insert({
+        'company_id': companyId,
+        'vehicle_id': v.id,
+        'type': document.type.name,
+        'number': document.number,
+        'expiry_date': document.expiryDate.toIso8601String().split('T').first,
+        'file_url': fileUrl,
+        'created_by': _client.auth.currentUser!.id,
+      });
+    }
+    return get(row['id'] as String);
   }
 
   @override
@@ -160,6 +204,48 @@ class SupabaseVehicleRepository implements VehicleRepository {
     await _client.from('vehicles').update({
       'deleted_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', id);
+  }
+
+  @override
+  Future<void> deletePhoto(String vehicleId, String photoUrl) async {
+    final objectPath =
+        _storage.objectPathFromSignedUrl('vehicle-photos', photoUrl);
+    if (objectPath == null) {
+      throw StateError('Could not identify this vehicle photo in storage.');
+    }
+    final photo = await _client
+        .from('vehicle_photos')
+        .select('id,url')
+        .eq('vehicle_id', vehicleId)
+        .eq('url', objectPath)
+        .maybeSingle();
+    if (photo == null) {
+      throw StateError(
+          'This vehicle photo no longer exists. Refresh and retry.');
+    }
+    await _storage.remove('vehicle-photos', objectPath);
+    await _client
+        .from('vehicle_photos')
+        .delete()
+        .eq('id', photo['id'])
+        .eq('vehicle_id', vehicleId);
+  }
+
+  @override
+  Future<void> addPhoto(String vehicleId, String filePath) async {
+    final companyId = await _getCompanyId();
+    final objectPath = await _storage.upload(
+      bucket: 'vehicle-photos',
+      companyId: companyId,
+      parentId: vehicleId,
+      filePath: filePath,
+    );
+    await _client.from('vehicle_photos').insert({
+      'company_id': companyId,
+      'vehicle_id': vehicleId,
+      'url': objectPath,
+      'created_by': _client.auth.currentUser!.id,
+    });
   }
 
   Future<Vehicle> _rowToVehicle(
@@ -182,25 +268,24 @@ class SupabaseVehicleRepository implements VehicleRepository {
       purchaseDate: row['purchase_date'] != null
           ? DateTime.parse(row['purchase_date'] as String)
           : DateTime.now(),
-      status: VehicleStatus.values.firstWhere(
-        (s) => s.name == row['status'],
-        orElse: () => VehicleStatus.active,
-      ),
+      status: VehicleStatus.fromStorage(row['status']),
       photos: await Future.wait((photoRows ?? const []).map((photo) =>
           _storage.signedUrl('vehicle-photos', photo['url'] as String))),
-      documents: documents
-              ?.map((d) => VehicleDocument(
-                    id: d['id'] as String,
-                    type: DocumentType.values.firstWhere(
-                      (type) => type.name == d['type'],
-                      orElse: () => DocumentType.insurance,
-                    ),
-                    number: d['number'] as String,
-                    expiryDate: DateTime.parse(d['expiry_date'] as String),
-                    fileUrl: d['file_url'] as String?,
-                  ))
-              .toList() ??
-          const [],
+      documents: documents == null
+          ? const []
+          : await Future.wait(documents.map((d) async => VehicleDocument(
+                id: d['id'] as String,
+                type: DocumentType.values.firstWhere(
+                  (type) => type.name == d['type'],
+                  orElse: () => DocumentType.insurance,
+                ),
+                number: d['number'] as String,
+                expiryDate: DateTime.parse(d['expiry_date'] as String),
+                fileUrl: d['file_url'] == null
+                    ? null
+                    : await _storage.signedUrl(
+                        'vehicle-photos', d['file_url'] as String),
+              ))),
     );
   }
 }

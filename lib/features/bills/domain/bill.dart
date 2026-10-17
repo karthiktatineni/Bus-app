@@ -83,6 +83,7 @@ class Bill {
     double? total,
     String? imageUrl,
     double? ocrConfidence,
+    bool clearImageUrl = false,
   }) {
     return Bill(
       id: id ?? this.id,
@@ -94,7 +95,7 @@ class Bill {
       items: items ?? this.items,
       tax: tax ?? this.tax,
       total: total ?? this.total,
-      imageUrl: imageUrl ?? this.imageUrl,
+      imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       ocrConfidence: ocrConfidence ?? this.ocrConfidence,
     );
   }

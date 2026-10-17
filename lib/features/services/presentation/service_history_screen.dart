@@ -164,7 +164,10 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
                                 ],
                               ),
                               const SizedBox(height: 4),
-                              Row(
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 2,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
                                   Text(
                                     DateFormat('dd MMM yyyy').format(r.date),
@@ -192,14 +195,16 @@ class _ServiceHistoryScreenState extends ConsumerState<ServiceHistoryScreen> {
                               const Divider(height: 1),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    '${r.workshop} (${r.mechanic})',
-                                    style: const TextStyle(
-                                        fontSize: 11,
-                                        color: AppTheme.textSecondary),
+                                  Expanded(
+                                    child: Text(
+                                      '${r.workshop} (${r.mechanic})',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontSize: 11,
+                                          color: AppTheme.textSecondary),
+                                    ),
                                   ),
                                   const Row(
                                     children: [

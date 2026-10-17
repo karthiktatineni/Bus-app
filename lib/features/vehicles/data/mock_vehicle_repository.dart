@@ -79,4 +79,29 @@ class MockVehicleRepository implements VehicleRepository {
     }
     _vehicles.removeAt(index);
   }
+
+  @override
+  Future<void> deletePhoto(String vehicleId, String photoUrl) async {
+    await MockDelay.simulate();
+    final index = _vehicles.indexWhere((vehicle) => vehicle.id == vehicleId);
+    if (index == -1) {
+      throw NotFoundException('Vehicle with ID $vehicleId not found.');
+    }
+    final vehicle = _vehicles[index];
+    _vehicles[index] = vehicle.copyWith(
+      photos: vehicle.photos.where((photo) => photo != photoUrl).toList(),
+    );
+  }
+
+  @override
+  Future<void> addPhoto(String vehicleId, String filePath) async {
+    await MockDelay.simulate();
+    final index = _vehicles.indexWhere((vehicle) => vehicle.id == vehicleId);
+    if (index == -1) {
+      throw NotFoundException('Vehicle with ID $vehicleId not found.');
+    }
+    _vehicles[index] = _vehicles[index].copyWith(
+      photos: [..._vehicles[index].photos, filePath],
+    );
+  }
 }

@@ -7,4 +7,6 @@ abstract class VehicleRepository {
   Future<Vehicle> create(Vehicle v);
   Future<Vehicle> update(Vehicle v);
   Future<void> delete(String id);
+  Future<void> deletePhoto(String vehicleId, String photoUrl);
+  Future<void> addPhoto(String vehicleId, String filePath);
 }

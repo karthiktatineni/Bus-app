@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../auth/providers.dart';
 import '../../services/providers.dart';
 import '../providers.dart';
 
@@ -41,6 +42,7 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
   Widget build(BuildContext context) {
     final vehicleRepo = ref.watch(vehicleRepositoryProvider);
     final serviceRepo = ref.watch(serviceRepositoryProvider);
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
 
     return FutureBuilder<Vehicle?>(
       future: vehicleRepo.get(widget.vehicleId),
@@ -69,6 +71,13 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
                 tooltip: 'Edit Vehicle',
                 onPressed: () => context.go('/vehicles/${vehicle.id}/edit'),
               ),
+              if (isAdmin)
+                IconButton(
+                  tooltip: 'Archive bus',
+                  icon: const Icon(Icons.delete_outline),
+                  onPressed: () =>
+                      _archiveVehicle(context, vehicleRepo, vehicle),
+                ),
             ],
             bottom: TabBar(
               controller: _tabController,
@@ -195,31 +204,42 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
         ),
         const SizedBox(height: 16),
 
-        // Active Documents Summary
+        // Documents attached to this bus
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Documents',
+                    const Text('Documents',
                         style: TextStyle(
                             fontSize: 14, fontWeight: FontWeight.bold)),
-                    Text('3 on file',
-                        style: TextStyle(
+                    Text('${vehicle.documents.length} on file',
+                        style: const TextStyle(
                             fontSize: 11, color: AppTheme.textSecondary)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                _docRow(
-                    'Fitness Certificate', 'Expiring soon', AppTheme.danger),
-                const Divider(height: 1),
-                _docRow('Commercial Insurance', 'Valid', AppTheme.success),
-                const Divider(height: 1),
-                _docRow('Pollution (PUC)', 'Valid', AppTheme.success),
+                if (vehicle.documents.isEmpty)
+                  const Text('No documents added',
+                      style: TextStyle(
+                          fontSize: 12, color: AppTheme.textSecondary))
+                else
+                  ...vehicle.documents.indexed.expand((entry) => [
+                        if (entry.$1 > 0) const Divider(height: 1),
+                        _docRow(
+                          entry.$2.type.label,
+                          entry.$2.isExpired
+                              ? 'Expired'
+                              : 'Expires ${DateFormat('dd MMM yyyy').format(entry.$2.expiryDate)}',
+                          entry.$2.isExpired
+                              ? AppTheme.danger
+                              : AppTheme.success,
+                        ),
+                      ]),
               ],
             ),
           ),
@@ -454,15 +474,25 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
               padding: const EdgeInsets.all(14),
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                  InkWell(
+                    onTap: doc.fileUrl == null
+                        ? null
+                        : () => _showPinchZoomPhoto(
+                            context, doc.fileUrl!, doc.type.label),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: doc.fileUrl == null
+                          ? const Icon(Icons.description,
+                              color: AppTheme.primaryColor, size: 20)
+                          : _vehiclePhotoImage(doc.fileUrl!),
                     ),
-                    child: const Icon(Icons.description,
-                        color: AppTheme.primaryColor, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -479,6 +509,8 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
                           'No: ${doc.number} • Expires: ${DateFormat('dd MMM yyyy').format(doc.expiryDate)}',
                           style: const TextStyle(
                               fontSize: 11, color: AppTheme.textSecondary),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -512,6 +544,7 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
   }
 
   Widget _buildPhotosTab(Vehicle vehicle, VehicleRepository vehicleRepo) {
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
     final photos = vehicle.photos;
     if (photos.isEmpty) {
       return const EmptyState(
@@ -539,13 +572,7 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Container(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.15),
-                  child: const Center(
-                    child: Icon(Icons.directions_bus,
-                        size: 48, color: AppTheme.primaryColor),
-                  ),
-                ),
+                _vehiclePhotoImage(photoUrl),
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -565,12 +592,123 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
                     ),
                   ),
                 ),
+                if (isAdmin)
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: Material(
+                      color: Colors.black54,
+                      shape: const CircleBorder(),
+                      child: IconButton(
+                        visualDensity: VisualDensity.compact,
+                        constraints: const BoxConstraints.tightFor(
+                            width: 40, height: 40),
+                        tooltip: 'Delete vehicle photo',
+                        icon: const Icon(Icons.delete_outline,
+                            color: Colors.white, size: 20),
+                        onPressed: () => _deleteVehiclePhoto(
+                            context, vehicleRepo, vehicle, photoUrl),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  Widget _vehiclePhotoImage(String photoUrl) {
+    if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+      return Image.network(
+        photoUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const ColoredBox(
+          color: AppTheme.surfaceMuted,
+          child: Center(child: Icon(Icons.broken_image_outlined)),
+        ),
+      );
+    }
+    return Image.asset(
+      photoUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => const ColoredBox(
+        color: AppTheme.surfaceMuted,
+        child: Center(child: Icon(Icons.directions_bus)),
+      ),
+    );
+  }
+
+  Future<void> _archiveVehicle(BuildContext context,
+      VehicleRepository vehicleRepo, Vehicle vehicle) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Archive this bus?'),
+        content: Text(
+          '${vehicle.registrationNo} will be removed from the active fleet. Its service and billing history will be retained.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Archive bus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await vehicleRepo.delete(vehicle.id);
+      if (!context.mounted) return;
+      ref.invalidate(vehicleListStreamProvider);
+      context.go('/vehicles');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Bus archived. Fleet history was kept.')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not archive this bus.')),
+      );
+    }
+  }
+
+  Future<void> _deleteVehiclePhoto(BuildContext context,
+      VehicleRepository vehicleRepo, Vehicle vehicle, String photoUrl) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete bus photo?'),
+        content: const Text('This photo will be permanently removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete photo'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await vehicleRepo.deletePhoto(vehicle.id, photoUrl);
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete this bus photo.')),
+      );
+    }
   }
 
   void _showPinchZoomPhoto(
@@ -595,33 +733,19 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
               child: InteractiveViewer(
                 minScale: 0.5,
                 maxScale: 4.0,
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 300,
-                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.directions_bus,
-                          size: 80, color: Colors.white),
-                      const SizedBox(height: 12),
-                      Text(
-                        caption,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Pinch to zoom / double tap',
-                        style: TextStyle(color: Colors.white70, fontSize: 11),
-                      ),
-                    ],
-                  ),
+                  child: _vehiclePhotoImage(photoUrl),
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            Text(caption,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+            const Text('Pinch to zoom',
+                style: TextStyle(color: Colors.white70, fontSize: 11)),
           ],
         ),
       ),

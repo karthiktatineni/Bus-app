@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/services/media_service.dart';
 import '../providers.dart';
 
 class AddEditVehicleScreen extends ConsumerStatefulWidget {
@@ -35,6 +38,10 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
   String _selectedDepot = 'Bengaluru Central';
   String _selectedFuel = 'Diesel';
   VehicleStatus _selectedStatus = VehicleStatus.active;
+  final List<String> _pendingPhotos = [];
+  final List<String> _existingPhotos = [];
+  final List<VehicleDocument> _pendingDocuments = [];
+  final List<VehicleDocument> _existingDocuments = [];
 
   @override
   void initState() {
@@ -68,7 +75,141 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
         _selectedDepot = vehicle.depot;
         _selectedFuel = vehicle.fuelType;
         _selectedStatus = vehicle.status;
+        _existingPhotos
+          ..clear()
+          ..addAll(vehicle.photos);
+        _existingDocuments
+          ..clear()
+          ..addAll(vehicle.documents);
       });
+    }
+  }
+
+  Future<void> _pickBusPhotos() async {
+    try {
+      final media = ref.read(mediaServiceProvider);
+      final paths = await media.pickMultipleImages();
+      final compressed = <String>[];
+      for (final path in paths) {
+        compressed.add(await media.compressImage(path));
+      }
+      if (!mounted || compressed.isEmpty) return;
+      setState(() {
+        _pendingPhotos.addAll(compressed);
+        _isDirty = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not select bus photos.')),
+      );
+    }
+  }
+
+  Future<void> _addDocumentImage() async {
+    try {
+      final media = ref.read(mediaServiceProvider);
+      final path = await media.pickImageFromCamera() ??
+          await media.pickImageFromGallery();
+      if (path == null || !mounted) return;
+      final compressed = await media.compressImage(path);
+      if (!mounted) return;
+      final document = await _documentDetailsDialog(compressed);
+      if (!mounted || document == null) return;
+      setState(() {
+        _pendingDocuments.add(document);
+        _isDirty = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not attach the document image.')),
+      );
+    }
+  }
+
+  Future<VehicleDocument?> _documentDetailsDialog(String filePath) async {
+    var type = DocumentType.insurance;
+    var expiry = DateTime.now().add(const Duration(days: 365));
+    final numberController = TextEditingController();
+    try {
+      return await showDialog<VehicleDocument>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            title: const Text('Vehicle document details'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<DocumentType>(
+                    initialValue: type,
+                    decoration:
+                        const InputDecoration(labelText: 'Document type'),
+                    items: DocumentType.values
+                        .map((value) => DropdownMenuItem(
+                              value: value,
+                              child: Text(value.label),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setDialogState(() => type = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: numberController,
+                    decoration:
+                        const InputDecoration(labelText: 'Document number'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final selected = await showDatePicker(
+                        context: context,
+                        initialDate: expiry,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (selected != null) {
+                        setDialogState(() => expiry = selected);
+                      }
+                    },
+                    icon: const Icon(Icons.event),
+                    label: Text(
+                        'Expires ${MaterialLocalizations.of(context).formatMediumDate(expiry)}'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  final number = numberController.text.trim();
+                  if (number.isEmpty) return;
+                  Navigator.pop(
+                    dialogContext,
+                    VehicleDocument(
+                      id: 'pending_${DateTime.now().microsecondsSinceEpoch}',
+                      type: type,
+                      number: number,
+                      expiryDate: expiry,
+                      fileUrl: filePath,
+                    ),
+                  );
+                },
+                child: const Text('Attach'),
+              ),
+            ],
+          ),
+        ),
+      );
+    } finally {
+      numberController.dispose();
     }
   }
 
@@ -129,13 +270,25 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
       depot: _selectedDepot,
       purchaseDate: DateTime(2023, 1, 1),
       status: _selectedStatus,
+      photos: List.unmodifiable(_pendingPhotos),
+      documents: List.unmodifiable(_pendingDocuments),
     );
 
     final repo = ref.read(vehicleRepositoryProvider);
-    if (widget.vehicleId != null) {
-      await repo.update(vehicle);
-    } else {
-      await repo.create(vehicle);
+    try {
+      if (widget.vehicleId != null) {
+        await repo.update(vehicle);
+      } else {
+        await repo.create(vehicle);
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text('Could not save vehicle or attachments: $error')),
+      );
+      return;
     }
 
     if (mounted) {
@@ -209,7 +362,9 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             width: 28,
@@ -222,7 +377,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                             child: const Icon(Icons.directions_bus,
                                 size: 18, color: AppTheme.primaryColor),
                           ),
-                          const SizedBox(width: 8),
                           const Text(
                             '1. Basic Information',
                             style: TextStyle(
@@ -250,6 +404,7 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         children: [
                           Expanded(
                             child: DropdownButtonFormField<String>(
+                              isExpanded: true,
                               initialValue: _selectedMake,
                               decoration:
                                   const InputDecoration(labelText: 'Make *'),
@@ -305,6 +460,7 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
+                        isExpanded: true,
                         initialValue: _selectedDepot,
                         decoration: const InputDecoration(
                             labelText: 'Assigned Depot *'),
@@ -329,7 +485,9 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Container(
                             width: 28,
@@ -342,7 +500,6 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                             child: const Icon(Icons.precision_manufacturing,
                                 size: 18, color: AppTheme.primaryColor),
                           ),
-                          const SizedBox(width: 8),
                           const Text(
                             '2. Technical & Capacity Specs',
                             style: TextStyle(
@@ -402,6 +559,7 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: DropdownButtonFormField<String>(
+                              isExpanded: true,
                               initialValue: _selectedFuel,
                               decoration: const InputDecoration(
                                   labelText: 'Fuel System *'),
@@ -434,6 +592,88 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                           return null;
                         },
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('3. Bus documents & photos',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _pickBusPhotos,
+                            icon: const Icon(Icons.add_a_photo_outlined),
+                            label: const Text('Add bus photos'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: _isLoading ? null : _addDocumentImage,
+                            icon: const Icon(Icons.upload_file_outlined),
+                            label: const Text('Scan / add document'),
+                          ),
+                        ],
+                      ),
+                      if (_existingPhotos.isNotEmpty ||
+                          _pendingPhotos.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        const Text('Bus photos',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final path in _existingPhotos)
+                              _photoThumbnail(path),
+                            for (final path in _pendingPhotos)
+                              Stack(
+                                children: [
+                                  _photoThumbnail(path),
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: IconButton.filledTonal(
+                                      visualDensity: VisualDensity.compact,
+                                      tooltip: 'Remove selected photo',
+                                      onPressed: () => setState(
+                                          () => _pendingPhotos.remove(path)),
+                                      icon: const Icon(Icons.close, size: 16),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
+                      if (_existingDocuments.isNotEmpty ||
+                          _pendingDocuments.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        const Text('Vehicle documents',
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        for (final document in [
+                          ..._existingDocuments,
+                          ..._pendingDocuments,
+                        ])
+                          ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.description_outlined),
+                            title: Text(document.type.label),
+                            subtitle: Text(
+                                '${document.number} • Expires ${MaterialLocalizations.of(context).formatMediumDate(document.expiryDate)}'),
+                          ),
+                      ],
                     ],
                   ),
                 ),
@@ -483,6 +723,25 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _photoThumbnail(String path) {
+    final isLocal = !path.startsWith('https://') && !path.startsWith('http://');
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: SizedBox(
+        width: 76,
+        height: 76,
+        child: isLocal
+            ? Image.file(File(path), fit: BoxFit.cover)
+            : Image.network(path,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const ColoredBox(
+                      color: AppTheme.surfaceMuted,
+                      child: Icon(Icons.broken_image_outlined),
+                    )),
       ),
     );
   }

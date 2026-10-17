@@ -123,7 +123,35 @@ class SupabaseBillRepository implements BillRepository {
 
   @override
   Future<void> delete(String id) async {
+    final row = await _client
+        .from('bills')
+        .select('image_url')
+        .eq('id', id)
+        .maybeSingle();
+    final storedImage = row?['image_url'] as String?;
+    if (storedImage != null &&
+        !storedImage.startsWith('http://') &&
+        !storedImage.startsWith('https://')) {
+      await _storage.remove('bills', storedImage);
+    }
     await _client.from('bills').delete().eq('id', id);
+  }
+
+  @override
+  Future<void> deleteImage(String id) async {
+    final row = await _client
+        .from('bills')
+        .select('image_url')
+        .eq('id', id)
+        .maybeSingle();
+    final storedImage = row?['image_url'] as String?;
+    if (storedImage == null) return;
+
+    if (!storedImage.startsWith('http://') &&
+        !storedImage.startsWith('https://')) {
+      await _storage.remove('bills', storedImage);
+    }
+    await _client.from('bills').update({'image_url': null}).eq('id', id);
   }
 
   Future<Bill> _fromRow(Map<String, dynamic> row,

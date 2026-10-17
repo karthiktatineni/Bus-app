@@ -67,6 +67,50 @@ class MockServiceRepository implements ServiceRepository {
   }
 
   @override
+  Future<void> delete(String id) async {
+    await MockDelay.simulate();
+    final index = _services.indexWhere((service) => service.id == id);
+    if (index == -1) {
+      throw NotFoundException('Service record with ID $id not found.');
+    }
+    _services.removeAt(index);
+  }
+
+  @override
+  Future<void> deletePhoto(String serviceId, String photoId) async {
+    await MockDelay.simulate();
+    final index = _services.indexWhere((service) => service.id == serviceId);
+    if (index == -1) {
+      throw NotFoundException('Service record with ID $serviceId not found.');
+    }
+    final record = _services[index];
+    _services[index] = record.copyWith(
+      photos: record.photos.where((photo) => photo.id != photoId).toList(),
+    );
+  }
+
+  @override
+  Future<void> addPhoto(
+      String serviceId, String filePath, PhotoType type) async {
+    await MockDelay.simulate();
+    final index = _services.indexWhere((service) => service.id == serviceId);
+    if (index == -1) {
+      throw NotFoundException('Service record with ID $serviceId not found.');
+    }
+    final record = _services[index];
+    _services[index] = record.copyWith(
+      photos: [
+        ...record.photos,
+        ServicePhoto(
+          id: 'photo_${DateTime.now().microsecondsSinceEpoch}',
+          url: filePath,
+          type: type,
+        ),
+      ],
+    );
+  }
+
+  @override
   Future<List<MaintenanceTask>> upcomingTasks({int withinDays = 14}) async {
     await MockDelay.simulate();
     return _tasks.where((t) {
