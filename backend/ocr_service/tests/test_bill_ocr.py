@@ -208,7 +208,7 @@ def test_bill_ocr_tries_alternate_invoice_layout_before_rejecting(monkeypatch):
 
     def recognize(_image, *, config, timeout):
         calls.append((config, timeout))
-        if config == "--oem 3 --psm 4":
+        if config == "--oem 3 --psm 11":
             return "Invoice\nWorkshop: Westside Fleet\nGrand Total Rs. 3,250.00"
         return ""
 
@@ -231,9 +231,8 @@ def test_bill_ocr_tries_alternate_invoice_layout_before_rejecting(monkeypatch):
     assert response.status_code == 200
     assert response.json()["grand_total"] == 3250.0
     assert calls == [
-        ("--oem 3 --psm 6", 9),
+        ("--oem 3 --psm 6", 18),
         ("--oem 3 --psm 11", 8),
-        ("--oem 3 --psm 4", 8),
     ]
 
 
@@ -249,7 +248,7 @@ def test_bill_ocr_retries_sparse_layout_without_unbounded_rotations(monkeypatch)
 
     def recognize(image, *, config, timeout):
         calls.append((image.size, config, timeout))
-        if len(calls) == 3:
+        if len(calls) == 2:
             return "Workshop Invoice\nGrand Total Rs. 2,850.00"
         return ""
 
@@ -271,11 +270,11 @@ def test_bill_ocr_retries_sparse_layout_without_unbounded_rotations(monkeypatch)
 
     assert response.status_code == 200
     assert response.json()["grand_total"] == 2850.0
-    assert len(calls) == 3
+    assert len(calls) == 2
     assert [call[1] for call in calls] == [
-        "--oem 3 --psm 6", "--oem 3 --psm 11", "--oem 3 --psm 4"
+        "--oem 3 --psm 6", "--oem 3 --psm 11"
     ]
-    assert all(call[2] <= 12 for call in calls)
+    assert all(call[2] <= 18 for call in calls)
 
 
 def test_bill_ocr_reports_engine_timeout_as_408_not_unreadable_image(monkeypatch):

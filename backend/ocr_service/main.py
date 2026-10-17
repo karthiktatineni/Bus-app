@@ -1106,7 +1106,7 @@ async def scan_bill(request: Request):
             # Large phone photos make repeated Tesseract passes expensive on
             # Render's small instances. Bound pixels while retaining enough
             # resolution for printed invoice text.
-            max_dimension = 1600
+            max_dimension = 1100
             if max(image.size) > max_dimension:
                 scale = max_dimension / max(image.size)
                 image = image.resize(
@@ -1124,14 +1124,12 @@ async def scan_bill(request: Request):
             # Start with the common full-page invoice layout. Retry sparse
             # receipts only when the first result is unreadable; avoid eagerly
             # preparing/rotating several full-size images on every request.
-            attempts = [(sharpened, "--oem 3 --psm 6", 9)]
+            attempts = [(sharpened, "--oem 3 --psm 6", 18)]
             best_text = ""
             timed_out = 0
-            for index in range(3):
+            for index in range(2):
                 if index == 1:
                     attempts.append((enhanced, "--oem 3 --psm 11", 8))
-                elif index == 2:
-                    attempts.append((enhanced, "--oem 3 --psm 4", 8))
                 candidate, config, timeout_seconds = attempts[index]
                 try:
                     text = pytesseract.image_to_string(candidate, config=config, timeout=timeout_seconds)
@@ -1145,7 +1143,7 @@ async def scan_bill(request: Request):
                     best_text = text
                 if len(best_text.strip()) >= 24:
                     break
-            if not best_text.strip() and timed_out == 3:
+            if not best_text.strip() and timed_out == 2:
                 raise TimeoutError("All OCR layout attempts timed out.")
             return best_text
 
