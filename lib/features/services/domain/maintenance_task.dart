@@ -25,7 +25,10 @@ class MaintenanceTask {
 
   bool get isOverdue {
     if (isDone || dueDate == null) return false;
-    return dueDate!.isBefore(DateTime.now());
+    final due = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+    return due.isBefore(todayDate);
   }
 
   MaintenanceTask copyWith({

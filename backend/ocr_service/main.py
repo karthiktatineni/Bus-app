@@ -127,7 +127,10 @@ async def handle_unexpected_error(request: Request, exc: Exception):
 
 
 GSTIN = re.compile(r"\b\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]\b", re.I)
-INVOICE = re.compile(r"(?:invoice|bill|cash\s*memo)(?:\s*(?:no|number|#))?\s*[:#-]?\s*([A-Z0-9/-]{3,})", re.I)
+INVOICE = re.compile(
+    r"(?im)^\s*(?:tax\s+)?(?:invoice|bill|cash\s*memo)\s*"
+    r"(?:(?:no|number)\.?\s*)?[#:]?\s*([A-Z0-9][A-Z0-9/-]{2,})\s*$"
+)
 DATE = re.compile(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[A-Z]{3,9}\s+\d{4})\b", re.I)
 MONEY = re.compile(r"(?:₹|Rs\.?\s*)?([0-9][0-9,]*(?:\.\d{1,2})?)", re.I)
 FLEET_TOOLS = [

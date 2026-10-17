@@ -304,64 +304,79 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
           return const Center(child: CircularProgressIndicator());
         }
         final records = snapshot.data ?? [];
-        if (records.isEmpty) {
-          return const EmptyState(
-              message: 'No service records for this vehicle',
-              icon: Icons.build_outlined);
-        }
-
-        return ListView.builder(
+        return ListView(
           padding: const EdgeInsets.all(16),
-          itemCount: records.length,
-          itemBuilder: (context, index) {
-            final r = records[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: Card(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => context.go('/services/${r.id}'),
-                  child: Padding(
-                    padding: const EdgeInsets.all(14),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () async {
+                  await context.push(
+                      '/services/add?vehicleId=${Uri.encodeComponent(vehicle.id)}');
+                  if (mounted) setState(() {});
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Add service record'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (records.isEmpty)
+              const EmptyState(
+                  message:
+                      'No service records yet. Add the first service, parts, bill and photos above.',
+                  icon: Icons.build_outlined)
+            else
+              ...records.map((r) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: Card(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => context.go('/services/${r.id}'),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              r.type.label,
-                              style: const TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  r.type.label,
+                                  style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  '₹${NumberFormat('#,###').format(r.total)}',
+                                  style: const TextStyle(
+                                    fontFamily: 'JetBrainsMono',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                              ],
                             ),
+                            const SizedBox(height: 4),
                             Text(
-                              '₹${NumberFormat('#,###').format(r.total)}',
+                              '${DateFormat('dd MMM yyyy').format(r.date)} • ${r.workshop} (${r.mechanic})',
                               style: const TextStyle(
-                                fontFamily: 'JetBrainsMono',
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
-                              ),
+                                  fontSize: 11, color: AppTheme.textSecondary),
                             ),
+                            if (r.notes.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(r.notes,
+                                  style: const TextStyle(fontSize: 12)),
+                            ],
                           ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${DateFormat('dd MMM yyyy').format(r.date)} • ${r.workshop} (${r.mechanic})',
-                          style: const TextStyle(
-                              fontSize: 11, color: AppTheme.textSecondary),
-                        ),
-                        if (r.notes.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          Text(r.notes, style: const TextStyle(fontSize: 12)),
-                        ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            );
-          },
+                );
+              }),
+          ],
         );
       },
     );

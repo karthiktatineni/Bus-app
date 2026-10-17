@@ -29,6 +29,21 @@ class SupabaseServiceRepository implements ServiceRepository {
     }
     final rows = await query.order('date', ascending: false);
 
+    final billIdsByService = <String, String>{};
+    if (rows.isNotEmpty) {
+      final linkedBills = await _client
+          .from('bills')
+          .select('id,service_id')
+          .inFilter('service_id', rows.map((row) => row['id']).toList());
+      for (final bill in linkedBills) {
+        final serviceId = bill['service_id'] as String?;
+        final billId = bill['id'] as String?;
+        if (serviceId != null && billId != null) {
+          billIdsByService[serviceId] = billId;
+        }
+      }
+    }
+
     final records = <ServiceRecord>[];
     for (final row in rows) {
       final parts = await _client
@@ -39,7 +54,12 @@ class SupabaseServiceRepository implements ServiceRepository {
           .from('service_photos')
           .select()
           .eq('service_record_id', row['id']);
-      records.add(await _rowToServiceRecord(row, parts: parts, photos: photos));
+      records.add(await _rowToServiceRecord(
+        row,
+        parts: parts,
+        photos: photos,
+        billId: billIdsByService[row['id'] as String],
+      ));
     }
     return records;
   }
@@ -56,7 +76,17 @@ class SupabaseServiceRepository implements ServiceRepository {
         .from('service_photos')
         .select()
         .eq('service_record_id', id);
-    return _rowToServiceRecord(row, parts: parts, photos: photos);
+    final bill = await _client
+        .from('bills')
+        .select('id')
+        .eq('service_id', id)
+        .maybeSingle();
+    return _rowToServiceRecord(
+      row,
+      parts: parts,
+      photos: photos,
+      billId: bill?['id'] as String?,
+    );
   }
 
   @override
@@ -269,6 +299,7 @@ class SupabaseServiceRepository implements ServiceRepository {
     Map<String, dynamic> row, {
     List<Map<String, dynamic>>? parts,
     List<Map<String, dynamic>>? photos,
+    String? billId,
   }) async {
     return ServiceRecord(
       id: row['id'] as String,
@@ -296,6 +327,7 @@ class SupabaseServiceRepository implements ServiceRepository {
       labourCost: (row['labour_cost'] as num).toDouble(),
       tax: (row['tax'] as num).toDouble(),
       total: (row['total'] as num).toDouble(),
+      billId: billId,
       photos: photos == null
           ? const []
           : await Future.wait(photos.map((p) async => ServicePhoto(

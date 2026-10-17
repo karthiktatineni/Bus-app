@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/services/media_service.dart';
@@ -33,6 +34,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
   final _odometerController = TextEditingController();
   final _workshopController = TextEditingController();
   final _mechanicController = TextEditingController();
+  final _notesController = TextEditingController();
 
   // Step 2: Parts & Costs
   final _labourCostController = TextEditingController();
@@ -64,6 +66,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     _odometerController.dispose();
     _workshopController.dispose();
     _mechanicController.dispose();
+    _notesController.dispose();
     _labourCostController.dispose();
     _vendorController.dispose();
     _billNoController.dispose();
@@ -80,8 +83,29 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
 
   Future<void> _scanBill() async {
     final media = ref.read(mediaServiceProvider);
-    final path =
-        await media.pickImageFromCamera() ?? await media.pickImageFromGallery();
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Take bill photo'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose bill photo'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+    final path = source == ImageSource.camera
+        ? await media.pickImageFromCamera()
+        : await media.pickImageFromGallery();
     if (path == null || !mounted) return;
     setState(() {
       _isScanningBill = true;
@@ -137,7 +161,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       odometerKm: int.tryParse(_odometerController.text.trim()) ?? 0,
       workshop: _workshopController.text.trim(),
       mechanic: _mechanicController.text.trim(),
-      notes: 'Logged via mobile client',
+      notes: _notesController.text.trim(),
       parts: _parts.map((part) {
         final quantity = part['qty'] as int;
         final unitCost = part['cost'] as int;
@@ -165,21 +189,51 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     try {
       final saved = await serviceRepo.create(record);
       final billTotal = double.tryParse(_billTotalController.text.trim());
-      if (_vendorController.text.trim().isNotEmpty &&
-          _billNoController.text.trim().isNotEmpty &&
-          billTotal != null) {
-        await ref.read(billRepositoryProvider).create(Bill(
-              id: const Uuid().v4(),
-              vehicleId: saved.vehicleId,
-              serviceId: saved.id,
-              vendor: _vendorController.text.trim(),
-              billNo: _billNoController.text.trim(),
-              billDate: _billDate ?? DateTime.now(),
-              tax: saved.tax,
-              total: billTotal,
-              imageUrl: _billImagePath,
-              ocrConfidence: _ocrConfidence,
-            ));
+      final hasBill = _billImagePath != null ||
+          _vendorController.text.trim().isNotEmpty ||
+          _billNoController.text.trim().isNotEmpty ||
+          billTotal != null;
+      if (hasBill) {
+        try {
+          await ref.read(billRepositoryProvider).create(Bill(
+                id: const Uuid().v4(),
+                vehicleId: saved.vehicleId,
+                serviceId: saved.id,
+                vendor: _vendorController.text.trim().isEmpty
+                    ? (_workshopController.text.trim().isEmpty
+                        ? 'Unknown vendor'
+                        : _workshopController.text.trim())
+                    : _vendorController.text.trim(),
+                billNo: _billNoController.text.trim(),
+                billDate: _billDate ?? DateTime.now(),
+                items: _parts
+                    .where((part) => (part['name'] as String).trim().isNotEmpty)
+                    .map((part) {
+                  final quantity = part['qty'] as int;
+                  final unitCost = (part['cost'] as int).toDouble();
+                  return BillItem(
+                    name: (part['name'] as String).trim(),
+                    quantity: quantity,
+                    unitCost: unitCost,
+                    total: unitCost * quantity,
+                  );
+                }).toList(),
+                tax: saved.tax,
+                total: billTotal ?? saved.total,
+                imageUrl: _billImagePath,
+                ocrConfidence: _ocrConfidence,
+              ));
+        } catch (error) {
+          if (!mounted) return;
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                'Service record saved, but the bill could not be saved: $error. Open the service record and add the bill again.'),
+            duration: const Duration(seconds: 7),
+          ));
+          context.pop();
+          return;
+        }
       }
     } catch (error) {
       if (mounted) {
@@ -195,8 +249,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Service record logged and scheduled next cycle advanced!'),
+          content: Text('Service record, parts and attachments saved.'),
           backgroundColor: AppTheme.success,
         ),
       );
@@ -365,6 +418,17 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                       controller: _mechanicController,
                       decoration: const InputDecoration(
                           labelText: 'Assigned Mechanic / Lead'),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _notesController,
+                      minLines: 2,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Service details / work performed',
+                        hintText: 'Describe inspection, repairs and findings',
+                        alignLabelWithHint: true,
+                      ),
                     ),
                   ],
                 ),
@@ -557,7 +621,6 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                 content: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Mock OCR Card
                     Card(
                       child: Padding(
                         padding: const EdgeInsets.all(14),
@@ -600,7 +663,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Capture a bill image and confirm any low-confidence fields before saving.',
+                              'Take or choose an invoice photo. OCR reads vendor, invoice number, date and total; review these fields before saving.',
                               style: TextStyle(fontSize: 11),
                             ),
                             const SizedBox(height: 12),
@@ -616,7 +679,9 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                                     : const Icon(Icons.camera_alt),
                                 label: Text(_billScanned
                                     ? 'Rescan Invoice'
-                                    : 'Scan Bill / Invoice'),
+                                    : _billImagePath == null
+                                        ? 'Upload & scan bill / invoice'
+                                        : 'Scan bill again'),
                                 onPressed: _isScanningBill ? null : _scanBill,
                               ),
                             ),
@@ -625,7 +690,6 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-
                     TextFormField(
                       controller: _vendorController,
                       decoration: InputDecoration(
@@ -650,6 +714,51 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                         prefixText: '₹',
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _billDate ?? _serviceDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null) setState(() => _billDate = picked);
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Bill date',
+                          suffixIcon: Icon(Icons.calendar_today_outlined),
+                        ),
+                        child: Text(DateFormat('dd MMM yyyy')
+                            .format(_billDate ?? _serviceDate)),
+                      ),
+                    ),
+                    if (_billImagePath != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.attach_file, size: 16),
+                          const SizedBox(width: 6),
+                          const Expanded(
+                            child: Text(
+                                'Bill image attached; it will be stored with this vehicle and service.',
+                                style: TextStyle(fontSize: 11),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis),
+                          ),
+                          IconButton(
+                            tooltip: 'Remove bill image',
+                            onPressed: () => setState(() {
+                              _billImagePath = null;
+                              _billScanned = false;
+                              _ocrConfidence = null;
+                            }),
+                            icon: const Icon(Icons.close, size: 18),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -8,6 +8,7 @@ import 'package:bus_app/features/services/presentation/service_detail_screen.dar
 import 'package:bus_app/features/services/providers.dart';
 import 'package:bus_app/features/vehicles/presentation/vehicles_list_screen.dart';
 import 'package:bus_app/features/vehicles/presentation/add_edit_vehicle_screen.dart';
+import 'package:bus_app/features/vehicles/presentation/vehicle_detail_screen.dart';
 import 'package:bus_app/features/vehicles/providers.dart';
 import 'package:bus_app/main.dart';
 import 'package:flutter/material.dart';
@@ -103,6 +104,8 @@ void main() {
       expect(find.text('Inspect brake lines'), findsWidgets);
 
       final taskCheckbox = find.byType(Checkbox).first;
+      await tester.drag(find.byType(ListView).first, const Offset(0, -420));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(taskCheckbox);
       await tester.tap(taskCheckbox);
       await tester.pump();
@@ -118,6 +121,37 @@ void main() {
       expect(
           _hasTaskDecoration('Inspect brake lines', TextDecoration.lineThrough),
           isFalse);
+    });
+
+    testWidgets('to-do shows vehicle due-soon and overdue status without tasks',
+        (tester) async {
+      await tester.pumpWidget(_screenWith(
+        user: _adminUser,
+        vehicleRepository: _FakeVehicleRepository(_vehicles),
+        serviceRepository: _FakeServiceRepository(),
+        child: const DashboardScreen(),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Service overdue'), findsOneWidget);
+      expect(find.textContaining('Service due soon'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('vehicle service history exposes add-service action',
+        (tester) async {
+      await tester.pumpWidget(_screenWith(
+        user: _adminUser,
+        vehicleRepository: _FakeVehicleRepository(_vehicles),
+        serviceRepository: _FakeServiceRepository(),
+        child: const VehicleDetailScreen(vehicleId: 'veh-active'),
+      ));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Service history'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add service record'), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('role-aware drawer shows admin-only actions only for admins',

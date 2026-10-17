@@ -200,12 +200,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               final inWorkshopBuses = vehicles
                   .where((v) => v.status == VehicleStatus.inWorkshop)
                   .length;
-              final overdueTasks = tasks.where((t) => t.isOverdue).length;
-              final due14DaysTasks = tasks.where((t) {
-                if (t.isDone || t.dueDate == null) return false;
-                final diff = t.dueDate!.difference(DateTime.now()).inDays;
-                return diff >= 0 && diff <= 14;
-              }).length;
+              final openTasks =
+                  tasks.where((task) => !task.isDone).toList(growable: false);
+              final taskVehicleIds =
+                  openTasks.map((task) => task.vehicleId).toSet();
+              final statusOverdue = vehicles
+                  .where((vehicle) =>
+                      vehicle.status == VehicleStatus.overdue &&
+                      !taskVehicleIds.contains(vehicle.id))
+                  .length;
+              final statusDueSoon = vehicles
+                  .where((vehicle) =>
+                      vehicle.status == VehicleStatus.dueSoon &&
+                      !taskVehicleIds.contains(vehicle.id))
+                  .length;
+              final today = DateUtils.dateOnly(DateTime.now());
+              final overdueTasks =
+                  openTasks.where((task) => task.isOverdue).length +
+                      statusOverdue;
+              final due14DaysTasks = openTasks.where((task) {
+                    if (task.dueDate == null || task.isOverdue) return false;
+                    final due = DateUtils.dateOnly(task.dueDate!);
+                    return !due.isBefore(today) &&
+                        !due.isAfter(today.add(const Duration(days: 14)));
+                  }).length +
+                  statusDueSoon;
 
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -535,7 +554,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Widget _buildTodoSection(
       List<MaintenanceTask> tasks, List<Vehicle> vehicles, bool isAdmin) {
-    final displayTasks = tasks.take(4).toList();
+    final openTasks = tasks.where((task) => !task.isDone).toList()
+      ..sort((a, b) {
+        if (a.isOverdue != b.isOverdue) return a.isOverdue ? -1 : 1;
+        if (a.dueDate == null) return 1;
+        if (b.dueDate == null) return -1;
+        return a.dueDate!.compareTo(b.dueDate!);
+      });
+    final taskVehicleIds = openTasks.map((task) => task.vehicleId).toSet();
+    final statusVehicles = vehicles
+        .where((vehicle) =>
+            (vehicle.status == VehicleStatus.overdue ||
+                vehicle.status == VehicleStatus.dueSoon) &&
+            !taskVehicleIds.contains(vehicle.id))
+        .toList()
+      ..sort((a, b) {
+        if (a.status != b.status) {
+          return a.status == VehicleStatus.overdue ? -1 : 1;
+        }
+        return a.registrationNo.compareTo(b.registrationNo);
+      });
+    final displayStatusVehicles = statusVehicles.take(4).toList();
+    final displayTasks =
+        openTasks.take((4 - displayStatusVehicles.length).clamp(0, 4)).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,7 +604,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    '${displayTasks.length}',
+                    '${statusVehicles.length + openTasks.length}',
                     style: const TextStyle(
                       fontFamily: 'JetBrainsMono',
                       fontSize: 11,
@@ -603,7 +644,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Card(
           child: Column(
             children: [
-              if (displayTasks.isEmpty)
+              if (displayTasks.isEmpty && displayStatusVehicles.isEmpty)
                 const ListTile(
                   leading: Icon(Icons.check_circle_outline),
                   title: Text('No open maintenance tasks'),
@@ -612,6 +653,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 )
               else
+                ...displayStatusVehicles.map((vehicle) => ListTile(
+                      dense: true,
+                      leading: Icon(
+                        vehicle.status == VehicleStatus.overdue
+                            ? Icons.warning_amber_rounded
+                            : Icons.schedule,
+                        color: vehicle.status == VehicleStatus.overdue
+                            ? AppTheme.danger
+                            : AppTheme.warning,
+                      ),
+                      title: Text(
+                        '${vehicle.registrationNo} · Service ${vehicle.status.label.toLowerCase()}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      subtitle:
+                          const Text('Open vehicle to add a service record'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.go('/vehicles/${vehicle.id}'),
+                    )),
+              if (displayStatusVehicles.isNotEmpty && displayTasks.isNotEmpty)
+                const Divider(height: 1),
+              if (displayTasks.isNotEmpty)
                 ...displayTasks.map((task) {
                   final isChecked = _completedTaskIds.contains(task.id);
                   final isOverdue = task.isOverdue;

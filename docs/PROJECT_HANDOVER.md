@@ -8,7 +8,7 @@ Updated 17 October 2026.
 - Remote Supabase migrations through `20261017170000` are applied and match local migration history.
 - After the push, Render health uptime reset; `/health` is currently healthy. This indicates a restart after the push, but the Render dashboard's deployed revision and a signed-in AI request still need direct confirmation.
 - The OnePlus 7T is connected as ADB device `3b038054`. Debug APK `fleetpulse.apk` was installed and launched.
-- All 56 Flutter tests, `flutter analyze`, and 3 Python tests passed. Python syntax compilation passed.
+- All 58 Flutter tests, `flutter analyze`, and 5 Python tests passed. Python syntax compilation passed.
 - No authorized manuals are currently in the RAG corpus; manual-grounded answers are not ready until ingestion.
 
 ## Changes made
@@ -19,6 +19,11 @@ Updated 17 October 2026.
 4. Added admin media delete/archive flows for bills, service history, and vehicles; added bus photo/document attachment on add/edit and service-history photo attachments.
 5. Replaced placeholder vehicle document rows with database-backed data and made uploaded media previewable/zoomable.
 6. Fixed and regression-tested responsive layouts at 320 px width.
+7. Added a vehicle-scoped **Service history → Add service record** flow with a preselected bus, work details, parts/costs, service photos, invoice capture and editable OCR results.
+8. Saved service parts as bill line items and resolved linked bills when a service detail is opened.
+9. Included Due Soon/Overdue vehicle status in dashboard To do and the full reminder page when no corresponding open maintenance task exists; corrected date-only due comparisons.
+10. Added [SERVICE_RECORD_WORKFLOW.md](SERVICE_RECORD_WORKFLOW.md) with the user flow, data architecture, storage mapping, OCR limits and live acceptance checks.
+11. Tightened bill-number extraction so the generic heading “Tax Invoice” cannot be mistaken for the invoice number; the OCR endpoint contract is covered with an authenticated upload test.
 
 ## Remaining work
 
@@ -27,6 +32,8 @@ Updated 17 October 2026.
 4. Ingest authorized manuals and verify citations, retrieval quality, tenant scoping, and abstention for unsupported questions.
 5. Test photo/document upload, display, and deletion with admin and staff accounts against live RLS/Storage.
 6. Set up protected Android release signing for customer distribution. The root APK is debug-signed and suitable for evaluation only.
+
+OCR extracts likely vendor, invoice number, date and total; it does not reliably infer parts/quantities. Enter replacement parts in the Parts step and review all OCR values. The service workflow is locally covered by Flutter tests, but a signed-in live service/bill/image save still needs acceptance on the connected account.
 
 ## Build and device notes
 

@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../providers.dart';
+import '../../vehicles/providers.dart';
 
 class RemindersScreen extends ConsumerStatefulWidget {
   const RemindersScreen({super.key});
@@ -21,25 +22,48 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   @override
   Widget build(BuildContext context) {
     final serviceRepo = ref.watch(serviceRepositoryProvider);
+    final vehicleRepo = ref.watch(vehicleRepositoryProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Maintenance Reminders'),
       ),
-      body: FutureBuilder<List<MaintenanceTask>>(
-        future: serviceRepo.upcomingTasks(withinDays: 60),
+      body: FutureBuilder<List<dynamic>>(
+        future: Future.wait<dynamic>([
+          serviceRepo.upcomingTasks(withinDays: 365),
+          vehicleRepo.list(),
+        ]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final allTasks = snapshot.data ?? [];
+          final result = snapshot.data ?? const [];
+          final allTasks = result.isNotEmpty
+              ? result[0] as List<MaintenanceTask>
+              : const <MaintenanceTask>[];
+          final allVehicles = result.length > 1
+              ? result[1] as List<Vehicle>
+              : const <Vehicle>[];
           final tasks = allTasks
               .where((t) => !t.isDone && !_dismissedTaskIds.contains(t.id))
               .toList();
+          final taskVehicleIds = tasks.map((task) => task.vehicleId).toSet();
+          final statusVehicles = allVehicles
+              .where((vehicle) =>
+                  (vehicle.status == VehicleStatus.overdue ||
+                      vehicle.status == VehicleStatus.dueSoon) &&
+                  !taskVehicleIds.contains(vehicle.id))
+              .toList()
+            ..sort((a, b) {
+              if (a.status != b.status) {
+                return a.status == VehicleStatus.overdue ? -1 : 1;
+              }
+              return a.registrationNo.compareTo(b.registrationNo);
+            });
 
-          if (tasks.isEmpty) {
+          if (tasks.isEmpty && statusVehicles.isEmpty) {
             return const EmptyState(
               message: 'All tasks completed! No pending reminders.',
               icon: Icons.check_circle_outline,
@@ -47,30 +71,49 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
           }
 
           final now = DateTime.now();
+          final today = DateUtils.dateOnly(now);
           final overdue = tasks.where((t) => t.isOverdue).toList();
+          final overdueVehicles = statusVehicles
+              .where((vehicle) => vehicle.status == VehicleStatus.overdue)
+              .toList();
+          final dueSoonVehicles = statusVehicles
+              .where((vehicle) => vehicle.status == VehicleStatus.dueSoon)
+              .toList();
           final thisWeek = tasks.where((t) {
             if (t.isOverdue || t.dueDate == null) return false;
-            final diff = t.dueDate!.difference(now).inDays;
+            final diff =
+                DateUtils.dateOnly(t.dueDate!).difference(today).inDays;
             return diff >= 0 && diff <= 7;
           }).toList();
           final nextWeek = tasks.where((t) {
             if (t.dueDate == null) return false;
-            final diff = t.dueDate!.difference(now).inDays;
+            final diff =
+                DateUtils.dateOnly(t.dueDate!).difference(today).inDays;
             return diff > 7 && diff <= 14;
           }).toList();
           final later = tasks.where((t) {
             if (t.dueDate == null) return true;
-            return t.dueDate!.difference(now).inDays > 14;
+            return DateUtils.dateOnly(t.dueDate!).difference(today).inDays > 14;
           }).toList();
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (overdue.isNotEmpty) ...[
+              if (overdue.isNotEmpty || overdueVehicles.isNotEmpty) ...[
                 _buildSectionHeader('OVERDUE ACTION REQUIRED', AppTheme.danger,
                     Icons.warning_amber_rounded),
                 const SizedBox(height: 8),
                 ...overdue.map((t) => _buildReminderCard(t, isOverdue: true)),
+                ...overdueVehicles.map((vehicle) =>
+                    _buildVehicleReminderCard(vehicle, isOverdue: true)),
+                const SizedBox(height: 16),
+              ],
+              if (dueSoonVehicles.isNotEmpty) ...[
+                _buildSectionHeader('VEHICLES DUE FOR SERVICE',
+                    AppTheme.warning, Icons.schedule),
+                const SizedBox(height: 8),
+                ...dueSoonVehicles
+                    .map((vehicle) => _buildVehicleReminderCard(vehicle)),
                 const SizedBox(height: 16),
               ],
               if (thisWeek.isNotEmpty) ...[
@@ -116,6 +159,24 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildVehicleReminderCard(Vehicle vehicle, {bool isOverdue = false}) {
+    final color = isOverdue ? AppTheme.danger : AppTheme.warning;
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          isOverdue ? Icons.warning_amber_rounded : Icons.schedule,
+          color: color,
+        ),
+        title: Text(
+            '${vehicle.registrationNo} · Service ${vehicle.status.label.toLowerCase()}'),
+        subtitle: const Text(
+            'Open vehicle to review history or add a service record'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.go('/vehicles/${vehicle.id}'),
+      ),
     );
   }
 
