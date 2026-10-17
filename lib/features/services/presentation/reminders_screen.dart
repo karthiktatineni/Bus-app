@@ -17,128 +17,214 @@ class RemindersScreen extends ConsumerStatefulWidget {
 }
 
 class _RemindersScreenState extends ConsumerState<RemindersScreen> {
-  final Set<String> _dismissedTaskIds = {};
+  late Future<List<dynamic>> _remindersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _remindersFuture = _loadReminders();
+  }
+
+  Future<List<dynamic>> _loadReminders() {
+    final serviceRepo = ref.read(serviceRepositoryProvider);
+    final vehicleRepo = ref.read(vehicleRepositoryProvider);
+    return Future.wait<dynamic>([
+      serviceRepo.upcomingTasks(withinDays: 365),
+      vehicleRepo.list(),
+    ]);
+  }
+
+  Future<void> _refreshReminders() async {
+    final future = _loadReminders();
+    setState(() => _remindersFuture = future);
+    await future;
+  }
+
+  Future<void> _completeTask(MaintenanceTask task) async {
+    try {
+      await ref.read(serviceRepositoryProvider).setTaskDone(task.id, true);
+      ref.invalidate(serviceRepositoryProvider);
+      await _refreshReminders();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Marked "${task.title}" done'),
+          action: SnackBarAction(
+            label: 'UNDO',
+            onPressed: () => _undoTaskCompletion(task),
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update this reminder: $error')),
+      );
+    }
+  }
+
+  Future<void> _undoTaskCompletion(MaintenanceTask task) async {
+    try {
+      await ref.read(serviceRepositoryProvider).setTaskDone(task.id, false);
+      ref.invalidate(serviceRepositoryProvider);
+      await _refreshReminders();
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not undo this reminder: $error')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final serviceRepo = ref.watch(serviceRepositoryProvider);
-    final vehicleRepo = ref.watch(vehicleRepositoryProvider);
-
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('Maintenance Reminders'),
+        actions: [
+          IconButton(
+            tooltip: 'Refresh reminders',
+            onPressed: _refreshReminders,
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
       ),
-      body: FutureBuilder<List<dynamic>>(
-        future: Future.wait<dynamic>([
-          serviceRepo.upcomingTasks(withinDays: 365),
-          vehicleRepo.list(),
-        ]),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: RefreshIndicator(
+        onRefresh: _refreshReminders,
+        child: FutureBuilder<List<dynamic>>(
+          future: _remindersFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(
+                    height: 320,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ],
+              );
+            }
+            if (snapshot.hasError) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(
+                    height: 320,
+                    child: Center(child: Text('Could not load reminders.')),
+                  ),
+                ],
+              );
+            }
 
-          final result = snapshot.data ?? const [];
-          final allTasks = result.isNotEmpty
-              ? result[0] as List<MaintenanceTask>
-              : const <MaintenanceTask>[];
-          final allVehicles = result.length > 1
-              ? result[1] as List<Vehicle>
-              : const <Vehicle>[];
-          final tasks = allTasks
-              .where((t) => !t.isDone && !_dismissedTaskIds.contains(t.id))
-              .toList();
-          final taskVehicleIds = tasks.map((task) => task.vehicleId).toSet();
-          final statusVehicles = allVehicles
-              .where((vehicle) =>
-                  (vehicle.status == VehicleStatus.overdue ||
-                      vehicle.status == VehicleStatus.dueSoon) &&
-                  !taskVehicleIds.contains(vehicle.id))
-              .toList()
-            ..sort((a, b) {
-              if (a.status != b.status) {
-                return a.status == VehicleStatus.overdue ? -1 : 1;
-              }
-              return a.registrationNo.compareTo(b.registrationNo);
-            });
+            final result = snapshot.data ?? const [];
+            final allTasks = result.isNotEmpty
+                ? result[0] as List<MaintenanceTask>
+                : const <MaintenanceTask>[];
+            final allVehicles = result.length > 1
+                ? result[1] as List<Vehicle>
+                : const <Vehicle>[];
+            final tasks = allTasks.where((t) => !t.isDone).toList();
+            final taskVehicleIds = tasks.map((task) => task.vehicleId).toSet();
+            final statusVehicles = allVehicles
+                .where((vehicle) =>
+                    (vehicle.status == VehicleStatus.overdue ||
+                        vehicle.status == VehicleStatus.dueSoon) &&
+                    !taskVehicleIds.contains(vehicle.id))
+                .toList()
+              ..sort((a, b) {
+                if (a.status != b.status) {
+                  return a.status == VehicleStatus.overdue ? -1 : 1;
+                }
+                return a.registrationNo.compareTo(b.registrationNo);
+              });
 
-          if (tasks.isEmpty && statusVehicles.isEmpty) {
-            return const EmptyState(
-              message: 'All tasks completed! No pending reminders.',
-              icon: Icons.check_circle_outline,
+            if (tasks.isEmpty && statusVehicles.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 220),
+                  EmptyState(
+                    message: 'All tasks completed! No pending reminders.',
+                    icon: Icons.check_circle_outline,
+                  ),
+                ],
+              );
+            }
+
+            final now = DateTime.now();
+            final today = DateUtils.dateOnly(now);
+            final overdue = tasks.where((t) => t.isOverdue).toList();
+            final overdueVehicles = statusVehicles
+                .where((vehicle) => vehicle.status == VehicleStatus.overdue)
+                .toList();
+            final dueSoonVehicles = statusVehicles
+                .where((vehicle) => vehicle.status == VehicleStatus.dueSoon)
+                .toList();
+            final thisWeek = tasks.where((t) {
+              if (t.isOverdue || t.dueDate == null) return false;
+              final diff =
+                  DateUtils.dateOnly(t.dueDate!).difference(today).inDays;
+              return diff >= 0 && diff <= 7;
+            }).toList();
+            final nextWeek = tasks.where((t) {
+              if (t.dueDate == null) return false;
+              final diff =
+                  DateUtils.dateOnly(t.dueDate!).difference(today).inDays;
+              return diff > 7 && diff <= 14;
+            }).toList();
+            final later = tasks.where((t) {
+              if (t.dueDate == null) return true;
+              return DateUtils.dateOnly(t.dueDate!).difference(today).inDays >
+                  14;
+            }).toList();
+
+            return ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (overdue.isNotEmpty || overdueVehicles.isNotEmpty) ...[
+                  _buildSectionHeader('OVERDUE ACTION REQUIRED',
+                      AppTheme.danger, Icons.warning_amber_rounded),
+                  const SizedBox(height: 8),
+                  ...overdue.map((t) => _buildReminderCard(t, isOverdue: true)),
+                  ...overdueVehicles.map((vehicle) =>
+                      _buildVehicleReminderCard(vehicle, isOverdue: true)),
+                  const SizedBox(height: 16),
+                ],
+                if (dueSoonVehicles.isNotEmpty) ...[
+                  _buildSectionHeader('VEHICLES DUE FOR SERVICE',
+                      AppTheme.warning, Icons.schedule),
+                  const SizedBox(height: 8),
+                  ...dueSoonVehicles
+                      .map((vehicle) => _buildVehicleReminderCard(vehicle)),
+                  const SizedBox(height: 16),
+                ],
+                if (thisWeek.isNotEmpty) ...[
+                  _buildSectionHeader(
+                      'DUE THIS WEEK', AppTheme.warning, Icons.schedule),
+                  const SizedBox(height: 8),
+                  ...thisWeek.map((t) => _buildReminderCard(t)),
+                  const SizedBox(height: 16),
+                ],
+                if (nextWeek.isNotEmpty) ...[
+                  _buildSectionHeader('DUE NEXT WEEK', AppTheme.primaryColor,
+                      Icons.calendar_today_outlined),
+                  const SizedBox(height: 8),
+                  ...nextWeek.map((t) => _buildReminderCard(t)),
+                  const SizedBox(height: 16),
+                ],
+                if (later.isNotEmpty) ...[
+                  _buildSectionHeader('UPCOMING LATER', AppTheme.textSecondary,
+                      Icons.event_note),
+                  const SizedBox(height: 8),
+                  ...later.map((t) => _buildReminderCard(t)),
+                ],
+              ],
             );
-          }
-
-          final now = DateTime.now();
-          final today = DateUtils.dateOnly(now);
-          final overdue = tasks.where((t) => t.isOverdue).toList();
-          final overdueVehicles = statusVehicles
-              .where((vehicle) => vehicle.status == VehicleStatus.overdue)
-              .toList();
-          final dueSoonVehicles = statusVehicles
-              .where((vehicle) => vehicle.status == VehicleStatus.dueSoon)
-              .toList();
-          final thisWeek = tasks.where((t) {
-            if (t.isOverdue || t.dueDate == null) return false;
-            final diff =
-                DateUtils.dateOnly(t.dueDate!).difference(today).inDays;
-            return diff >= 0 && diff <= 7;
-          }).toList();
-          final nextWeek = tasks.where((t) {
-            if (t.dueDate == null) return false;
-            final diff =
-                DateUtils.dateOnly(t.dueDate!).difference(today).inDays;
-            return diff > 7 && diff <= 14;
-          }).toList();
-          final later = tasks.where((t) {
-            if (t.dueDate == null) return true;
-            return DateUtils.dateOnly(t.dueDate!).difference(today).inDays > 14;
-          }).toList();
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (overdue.isNotEmpty || overdueVehicles.isNotEmpty) ...[
-                _buildSectionHeader('OVERDUE ACTION REQUIRED', AppTheme.danger,
-                    Icons.warning_amber_rounded),
-                const SizedBox(height: 8),
-                ...overdue.map((t) => _buildReminderCard(t, isOverdue: true)),
-                ...overdueVehicles.map((vehicle) =>
-                    _buildVehicleReminderCard(vehicle, isOverdue: true)),
-                const SizedBox(height: 16),
-              ],
-              if (dueSoonVehicles.isNotEmpty) ...[
-                _buildSectionHeader('VEHICLES DUE FOR SERVICE',
-                    AppTheme.warning, Icons.schedule),
-                const SizedBox(height: 8),
-                ...dueSoonVehicles
-                    .map((vehicle) => _buildVehicleReminderCard(vehicle)),
-                const SizedBox(height: 16),
-              ],
-              if (thisWeek.isNotEmpty) ...[
-                _buildSectionHeader(
-                    'DUE THIS WEEK', AppTheme.warning, Icons.schedule),
-                const SizedBox(height: 8),
-                ...thisWeek.map((t) => _buildReminderCard(t)),
-                const SizedBox(height: 16),
-              ],
-              if (nextWeek.isNotEmpty) ...[
-                _buildSectionHeader('DUE NEXT WEEK', AppTheme.primaryColor,
-                    Icons.calendar_today_outlined),
-                const SizedBox(height: 8),
-                ...nextWeek.map((t) => _buildReminderCard(t)),
-                const SizedBox(height: 16),
-              ],
-              if (later.isNotEmpty) ...[
-                _buildSectionHeader(
-                    'UPCOMING LATER', AppTheme.textSecondary, Icons.event_note),
-                const SizedBox(height: 8),
-                ...later.map((t) => _buildReminderCard(t)),
-              ],
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -254,20 +340,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: () {
-                      setState(() => _dismissedTaskIds.add(task.id));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Marked "${task.title}" done'),
-                          action: SnackBarAction(
-                            label: 'UNDO',
-                            onPressed: () {
-                              setState(() => _dismissedTaskIds.remove(task.id));
-                            },
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: () => _completeTask(task),
                     child:
                         const Text('Mark Done', style: TextStyle(fontSize: 12)),
                   ),

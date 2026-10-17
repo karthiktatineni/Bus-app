@@ -15,9 +15,22 @@ class UsersScreen extends ConsumerStatefulWidget {
 }
 
 class _UsersScreenState extends ConsumerState<UsersScreen> {
+  late Future<List<AppUser>> _usersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersFuture = ref.read(userRepositoryProvider).list();
+  }
+
+  Future<void> _refreshUsers() async {
+    final future = ref.read(userRepositoryProvider).list();
+    setState(() => _usersFuture = future);
+    await future;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userRepo = ref.watch(userRepositoryProvider);
     final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
 
     if (!isAdmin) {
@@ -32,6 +45,11 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
       appBar: AppBar(
         title: const Text('User Management'),
         actions: [
+          IconButton(
+            tooltip: 'Refresh users',
+            onPressed: _refreshUsers,
+            icon: const Icon(Icons.refresh),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilledButton.icon(
@@ -42,131 +60,158 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<AppUser>>(
-        future: userRepo.list(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Could not load company users.'),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    onPressed: () => setState(() {}),
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+      body: RefreshIndicator(
+        onRefresh: _refreshUsers,
+        child: FutureBuilder<List<AppUser>>(
+          future: _usersFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(
+                    height: 320,
+                    child: Center(child: CircularProgressIndicator()),
                   ),
                 ],
-              ),
-            );
-          }
+              );
+            }
+            if (snapshot.hasError) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  SizedBox(
+                    height: 320,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Could not load company users.'),
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: _refreshUsers,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
 
-          final users = snapshot.data ?? [];
-          if (users.isEmpty) {
-            return const EmptyState(
-                message: 'No users found', icon: Icons.group_off_outlined);
-          }
+            final users = snapshot.data ?? [];
+            if (users.isEmpty) {
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
+                  SizedBox(height: 220),
+                  EmptyState(
+                    message: 'No users found',
+                    icon: Icons.group_off_outlined,
+                  ),
+                ],
+              );
+            }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: users.length,
-            itemBuilder: (context, index) {
-              final user = users[index];
-              final isAdmin = user.role == UserRole.admin;
+            return ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              itemCount: users.length,
+              itemBuilder: (context, index) {
+                final user = users[index];
+                final isAdmin = user.role == UserRole.admin;
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                child: Card(
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () => _showUserDetailModal(context, user),
-                    child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: isAdmin
-                                ? AppTheme.primaryColor
-                                : AppTheme.surfaceMuted,
-                            child: Text(
-                              user.name.isNotEmpty
-                                  ? user.name[0].toUpperCase()
-                                  : 'U',
-                              style: TextStyle(
-                                fontFamily: 'JetBrainsMono',
-                                color: isAdmin
-                                    ? Colors.white
-                                    : AppTheme.textPrimary,
-                                fontWeight: FontWeight.bold,
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 10),
+                  child: Card(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => _showUserDetailModal(context, user),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: isAdmin
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.surfaceMuted,
+                              child: Text(
+                                user.name.isNotEmpty
+                                    ? user.name[0].toUpperCase()
+                                    : 'U',
+                                style: TextStyle(
+                                  fontFamily: 'JetBrainsMono',
+                                  color: isAdmin
+                                      ? Colors.white
+                                      : AppTheme.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      user.name,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    if (isAdmin)
-                                      const Icon(Icons.verified,
-                                          size: 14,
-                                          color: AppTheme.primaryColor),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  user.email,
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      color: AppTheme.textSecondary),
-                                ),
-                              ],
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        user.name,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      if (isAdmin)
+                                        const Icon(Icons.verified,
+                                            size: 14,
+                                            color: AppTheme.primaryColor),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    user.email,
+                                    style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.textSecondary),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: isAdmin
-                                  ? AppTheme.primaryColor
-                                      .withValues(alpha: 0.12)
-                                  : AppTheme.surfaceMuted,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              isAdmin ? 'ADMIN' : 'STAFF',
-                              style: TextStyle(
-                                fontFamily: 'JetBrainsMono',
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
                                 color: isAdmin
                                     ? AppTheme.primaryColor
-                                    : AppTheme.textSecondary,
+                                        .withValues(alpha: 0.12)
+                                    : AppTheme.surfaceMuted,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isAdmin ? 'ADMIN' : 'STAFF',
+                                style: TextStyle(
+                                  fontFamily: 'JetBrainsMono',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isAdmin
+                                      ? AppTheme.primaryColor
+                                      : AppTheme.textSecondary,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
@@ -296,15 +341,14 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                                         );
                                     if (!ctx.mounted) return;
                                     Navigator.pop(ctx);
-                                    if (mounted) {
-                                      setState(() {});
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text('User account created.')),
-                                      );
-                                    }
+                                    if (!mounted) return;
+                                    await _refreshUsers();
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content:
+                                              Text('User account created.')),
+                                    );
                                   } catch (error) {
                                     setSheetState(() {
                                       isSaving = false;
@@ -483,14 +527,14 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                         await ref.read(userRepositoryProvider).remove(user.id);
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
-                        if (mounted) {
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content:
-                                    Text('User account permanently deleted.')),
-                          );
-                        }
+                        if (!mounted) return;
+                        await _refreshUsers();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content:
+                                  Text('User account permanently deleted.')),
+                        );
                       } catch (error) {
                         setDialogState(() {
                           isSaving = false;
@@ -522,13 +566,13 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                             );
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
-                        if (mounted) {
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('User details updated.')),
-                          );
-                        }
+                        if (!mounted) return;
+                        await _refreshUsers();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('User details updated.')),
+                        );
                       } catch (error) {
                         setDialogState(() {
                           isSaving = false;

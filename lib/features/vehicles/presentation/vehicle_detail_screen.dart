@@ -67,6 +67,14 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen>
             title: Text(vehicle.registrationNo),
             actions: [
               IconButton(
+                tooltip: 'Refresh vehicle details',
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  ref.invalidate(vehicleRepositoryProvider);
+                  ref.invalidate(serviceRepositoryProvider);
+                },
+              ),
+              IconButton(
                 icon: const Icon(Icons.edit_outlined),
                 tooltip: 'Edit Vehicle',
                 onPressed: () => context.go('/vehicles/${vehicle.id}/edit'),

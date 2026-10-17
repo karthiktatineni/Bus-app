@@ -32,6 +32,11 @@ class _VehiclesListScreenState extends ConsumerState<VehiclesListScreen> {
       appBar: AppBar(
         title: const Text('Vehicles List'),
         actions: [
+          IconButton(
+            tooltip: 'Refresh vehicles',
+            icon: const Icon(Icons.refresh),
+            onPressed: () => ref.invalidate(vehicleListStreamProvider),
+          ),
           if (isAdmin)
             Padding(
               padding: const EdgeInsets.only(right: 8),
