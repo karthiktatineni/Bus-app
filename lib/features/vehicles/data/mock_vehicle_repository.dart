@@ -17,7 +17,9 @@ class MockVehicleRepository implements VehicleRepository {
   Future<Vehicle> get(String id) async {
     // Deliberate failing path
     if (id == 'fail-id' || id == 'veh-error') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated vehicle retrieval failure.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated vehicle retrieval failure.');
     }
 
     await MockDelay.simulate();
@@ -30,7 +32,9 @@ class MockVehicleRepository implements VehicleRepository {
   @override
   Future<Vehicle> create(Vehicle v) async {
     if (v.registrationNo.toUpperCase().contains('FAIL')) {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated vehicle creation failure.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated vehicle creation failure.');
     }
 
     await MockDelay.simulate();
@@ -41,7 +45,9 @@ class MockVehicleRepository implements VehicleRepository {
   @override
   Future<Vehicle> update(Vehicle v) async {
     if (v.id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated vehicle update failure.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated vehicle update failure.');
     }
 
     await MockDelay.simulate();
@@ -56,7 +62,9 @@ class MockVehicleRepository implements VehicleRepository {
   @override
   Future<void> delete(String id) async {
     if (id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated vehicle deletion failure.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated vehicle deletion failure.');
     }
 
     await MockDelay.simulate();

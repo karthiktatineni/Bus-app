@@ -26,6 +26,10 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Capture vehicle, service, and bill photos for fleet records.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select vehicle, service, and bill photos for fleet records.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

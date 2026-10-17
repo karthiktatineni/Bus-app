@@ -1,0 +1,3 @@
+-- supabase/seed.sql
+-- Production environment: No mock or seed data is loaded.
+-- Real companies, vehicles, and records are created through the application.

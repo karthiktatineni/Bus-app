@@ -1,7 +1,7 @@
 name: bus_app
-description: "Bus Maintenance App"
+description: "FleetPulse - Fleet Maintenance & Intelligence"
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+1
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -13,6 +13,15 @@ dependencies:
   go_router: ^13.0.0
   cached_network_image: ^3.3.0
   intl: ^0.19.0
+  supabase_flutter: ^2.8.0
+  image_picker: ^1.1.2
+  flutter_image_compress: ^2.4.0
+  path_provider: ^2.1.5
+  flutter_markdown: ^0.7.4+3
+  http: ^1.2.1
+  mime: ^1.0.6
+  path: ^1.9.0
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:
@@ -34,5 +43,4 @@ flutter:
         - asset: assets/fonts/JetBrainsMono-Bold.ttf
           weight: 700
   assets:
-    - assets/mock/
     - assets/logo/

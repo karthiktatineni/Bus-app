@@ -36,8 +36,8 @@ class MockData {
       ),
       const AppUser(
         id: 'usr-003',
-        name: 'Suresh Kumar',
-        email: 'suresh@fleetpulse.com',
+        name: 'Staff Operator',
+        email: 'staff@fleetpulse.com',
         phone: '+91 91234 56789',
         role: UserRole.staff,
         status: UserStatus.active,
@@ -497,13 +497,18 @@ class MockData {
           odometerKm: baseOdo,
           workshop: 'Sri Balaji Heavy Workshop, Sanath Nagar',
           mechanic: 'Ramesh Chander',
-          notes: 'Regular engine oil and filter replacement. General inspection done.',
+          notes:
+              'Regular engine oil and filter replacement. General inspection done.',
           parts: partsOilChange,
           labourCost: 2500.0,
           tax: 1800.0,
           total: 14050.0,
           photos: const [
-            ServicePhoto(id: 'sph-1', url: 'assets/mock/bus_sample_1.jpg', type: PhotoType.after, caption: 'Oil drainage complete'),
+            ServicePhoto(
+                id: 'sph-1',
+                url: 'assets/mock/bus_sample_1.jpg',
+                type: PhotoType.after,
+                caption: 'Oil drainage complete'),
           ],
           billId: 'bill-${i.toString().padLeft(2, '0')}1',
         ),
@@ -519,13 +524,18 @@ class MockData {
           odometerKm: baseOdo - 12000,
           workshop: 'Deccan Commercial Brake & Hub Services',
           mechanic: 'M. A. Khadeer',
-          notes: 'Replaced worn front and rear brake linings. Drum machined and slack adjuster tuned.',
+          notes:
+              'Replaced worn front and rear brake linings. Drum machined and slack adjuster tuned.',
           parts: partsBrakeOverhaul,
           labourCost: 4500.0,
           tax: 3200.0,
           total: 29300.0,
           photos: const [
-            ServicePhoto(id: 'sph-2', url: 'assets/mock/bus_sample_2.jpg', type: PhotoType.part, caption: 'New brake shoe kit installed'),
+            ServicePhoto(
+                id: 'sph-2',
+                url: 'assets/mock/bus_sample_2.jpg',
+                type: PhotoType.part,
+                caption: 'New brake shoe kit installed'),
           ],
           billId: 'bill-${i.toString().padLeft(2, '0')}2',
         ),
@@ -541,10 +551,21 @@ class MockData {
           odometerKm: baseOdo - 25000,
           workshop: 'Amaron Power Zone Autoworks, Kukatpally',
           mechanic: 'Prakash Rao',
-          notes: 'Alternator belt tightened, terminal cleaning, headlamp relay replaced.',
+          notes:
+              'Alternator belt tightened, terminal cleaning, headlamp relay replaced.',
           parts: const [
-            ServicePart(id: 'prt-el-1', name: 'Lucas TVS Heavy Duty Alternator Belt', quantity: 1, costPerUnit: 1450.0, totalCost: 1450.0),
-            ServicePart(id: 'prt-el-2', name: 'Bosch 24V 70A Headlamp Relay', quantity: 2, costPerUnit: 450.0, totalCost: 900.0),
+            ServicePart(
+                id: 'prt-el-1',
+                name: 'Lucas TVS Heavy Duty Alternator Belt',
+                quantity: 1,
+                costPerUnit: 1450.0,
+                totalCost: 1450.0),
+            ServicePart(
+                id: 'prt-el-2',
+                name: 'Bosch 24V 70A Headlamp Relay',
+                quantity: 2,
+                costPerUnit: 450.0,
+                totalCost: 900.0),
           ],
           labourCost: 1200.0,
           tax: 450.0,
@@ -564,7 +585,8 @@ class MockData {
           odometerKm: baseOdo - 38000,
           workshop: 'Apollo Tyres Commercial Hub, Medchal',
           mechanic: 'Sunil Goud',
-          notes: 'Fitted 2 new radial tyres on front steer axle. Rear tyres rotated and aligned.',
+          notes:
+              'Fitted 2 new radial tyres on front steer axle. Rear tyres rotated and aligned.',
           parts: partsTyres,
           labourCost: 2000.0,
           tax: 9800.0,
@@ -580,11 +602,16 @@ class MockData {
           ServiceRecord(
             id: 'srv-${i.toString().padLeft(2, '0')}5',
             vehicleId: vehId,
-            type: i == 4 ? ServiceType.majorRepair : ServiceType.clutchReplacement,
+            type: i == 4
+                ? ServiceType.majorRepair
+                : ServiceType.clutchReplacement,
             date: now.subtract(Duration(days: 310 + (i * 7))),
             odometerKm: baseOdo - 52000,
-            workshop: i == 4 ? 'Volvo Authorized Workshop, Shamshabad' : 'National Motors Commercial Centre',
-            mechanic: i == 4 ? 'A. S. Murthy (Volvo Specialist)' : 'Mohd. Rafiq',
+            workshop: i == 4
+                ? 'Volvo Authorized Workshop, Shamshabad'
+                : 'National Motors Commercial Centre',
+            mechanic:
+                i == 4 ? 'A. S. Murthy (Volvo Specialist)' : 'Mohd. Rafiq',
             notes: i == 4
                 ? 'Complete turbocharger replacement, cylinder head gasket renewed, cooling flush.'
                 : 'Clutch plate and pressure plate overhaul with new gearbox fluid.',
@@ -593,7 +620,11 @@ class MockData {
             tax: i == 4 ? 20500.0 : 8500.0,
             total: i == 4 ? 133000.0 : 62500.0,
             photos: const [
-              ServicePhoto(id: 'sph-3', url: 'assets/mock/bus_sample_2.jpg', type: PhotoType.before, caption: 'Before disassembly'),
+              ServicePhoto(
+                  id: 'sph-3',
+                  url: 'assets/mock/bus_sample_2.jpg',
+                  type: PhotoType.before,
+                  caption: 'Before disassembly'),
             ],
             billId: 'bill-${i.toString().padLeft(2, '0')}5',
           ),
@@ -677,7 +708,8 @@ class MockData {
   // ---------------------------------------------------------
   // MAINTENANCE TASKS (Calculated from schedules + statutory deadlines)
   // ---------------------------------------------------------
-  static List<MaintenanceTask> generateTasks({List<Vehicle>? vehicles, List<ServiceSchedule>? schedules}) {
+  static List<MaintenanceTask> generateTasks(
+      {List<Vehicle>? vehicles, List<ServiceSchedule>? schedules}) {
     final vehList = vehicles ?? generateVehicles();
     final schedList = schedules ?? generateSchedules();
     final tasks = <MaintenanceTask>[];

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "556342005045",
+    "project_id": "busapp-3a05a",
+    "storage_bucket": "busapp-3a05a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556342005045:android:2b70661304942c84e0107c",
+        "android_client_info": {
+          "package_name": "com.fleetpulse.bus_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHUd8EIL94q2XyEiQGqLxhi8MbVRuVyTs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -16,7 +16,8 @@ class MockUserRepository implements UserRepository {
   @override
   Future<AppUser> get(String id) async {
     if (id == 'fail-id' || id == 'usr-error') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated user fetch failure.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated user fetch failure.');
     }
 
     await MockDelay.simulate();
@@ -34,7 +35,9 @@ class MockUserRepository implements UserRepository {
     required String phone,
   }) async {
     if (email.contains('fail')) {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated invitation email dispatch failure.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated invitation email dispatch failure.');
     }
 
     await MockDelay.simulate();
@@ -53,7 +56,8 @@ class MockUserRepository implements UserRepository {
   @override
   Future<AppUser> update(AppUser u) async {
     if (u.id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated user update failure.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated user update failure.');
     }
 
     await MockDelay.simulate();
@@ -68,7 +72,8 @@ class MockUserRepository implements UserRepository {
   @override
   Future<void> remove(String id) async {
     if (id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated user deletion failure.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated user deletion failure.');
     }
 
     await MockDelay.simulate();

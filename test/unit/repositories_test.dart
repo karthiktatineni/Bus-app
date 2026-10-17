@@ -37,7 +37,8 @@ void main() {
       expect(current?.id, user.id);
     });
 
-    test('sign in with incorrect password throws UnauthorizedException', () async {
+    test('sign in with incorrect password throws UnauthorizedException',
+        () async {
       expect(
         () => repo.signIn('karthik@fleetpulse.com', 'wrongpassword'),
         throwsA(isA<UnauthorizedException>()),
@@ -117,7 +118,8 @@ void main() {
       repo = MockServiceRepository();
     });
 
-    test('listAll returns historical services and can filter by vehicle', () async {
+    test('listAll returns historical services and can filter by vehicle',
+        () async {
       final allServices = await repo.listAll();
       expect(allServices.length, greaterThanOrEqualTo(40));
 

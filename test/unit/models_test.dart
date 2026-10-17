@@ -132,7 +132,8 @@ void main() {
   group('Bill Model Tests', () {
     test('Bill and BillItem serialization', () {
       final now = DateTime.now();
-      const item = BillItem(name: 'Engine Oil', quantity: 1, unitCost: 6500, total: 6500);
+      const item = BillItem(
+          name: 'Engine Oil', quantity: 1, unitCost: 6500, total: 6500);
 
       final bill = Bill(
         id: 'bill-1',

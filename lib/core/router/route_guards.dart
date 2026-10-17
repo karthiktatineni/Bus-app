@@ -2,7 +2,12 @@ import '../../features/auth/domain/app_user.dart';
 
 class RouteGuards {
   static const Set<String> publicRoutes = {'/login', '/forgot-password'};
-  static const Set<String> adminOnlyRoutes = {'/users', '/vehicles/new', '/settings/company'};
+  static const Set<String> adminOnlyRoutes = {
+    '/users',
+    '/vehicles/new',
+    '/vehicles/add',
+    '/settings/company'
+  };
 
   /// Evaluates routing redirect logic based on current authentication state and route path.
   static String? checkRedirect({

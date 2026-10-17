@@ -4,14 +4,14 @@ class AppTheme {
   // Brand Colors
   static const Color primaryColor = Color(0xFF0F4C81);
   static const Color onPrimaryColor = Color(0xFFFFFFFF);
-  
+
   static const Color background = Color(0xFFF6F7F9);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceMuted = Color(0xFFEEF0F3);
-  
+
   static const Color textPrimary = Color(0xFF111827);
   static const Color textSecondary = Color(0xFF5B6472);
-  
+
   static const Color border = Color(0xFFE2E5EA);
 
   // Status Colors
@@ -35,18 +35,38 @@ class AppTheme {
       // Using local font family (Hanken Grotesk and JetBrains Mono)
       fontFamily: 'HankenGrotesk',
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary),
-        displayMedium: TextStyle(fontSize: 22, fontWeight: FontWeight.w600, color: textPrimary),
-        displaySmall: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
-        titleLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
-        titleMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
-        bodyLarge: TextStyle(fontSize: 15, fontWeight: FontWeight.w400, color: textPrimary),
-        bodyMedium: TextStyle(fontSize: 13, fontWeight: FontWeight.w400, color: textPrimary),
-        bodySmall: TextStyle(fontSize: 11, fontWeight: FontWeight.w400, color: textPrimary),
+        displayLarge: TextStyle(
+            fontSize: 28, fontWeight: FontWeight.w700, color: textPrimary),
+        displayMedium: TextStyle(
+            fontSize: 22, fontWeight: FontWeight.w600, color: textPrimary),
+        displaySmall: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
+        titleLarge: TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+        titleMedium: TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+        bodyLarge: TextStyle(
+            fontSize: 15, fontWeight: FontWeight.w400, color: textPrimary),
+        bodyMedium: TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w400, color: textPrimary),
+        bodySmall: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w400, color: textPrimary),
         // Data labels mapped to JetBrainsMono via fontFamily override in specific widgets
-        labelLarge: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 13, fontWeight: FontWeight.w500, color: textSecondary),
-        labelMedium: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary),
-        labelSmall: TextStyle(fontFamily: 'JetBrainsMono', fontSize: 10, fontWeight: FontWeight.w500, color: textSecondary),
+        labelLarge: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: textSecondary),
+        labelMedium: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: textSecondary),
+        labelSmall: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: textSecondary),
       ),
       cardTheme: const CardThemeData(
         elevation: 0,
@@ -66,13 +86,17 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, fontFamily: 'HankenGrotesk'),
+          textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'HankenGrotesk'),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: const BorderSide(color: border, width: 1),
@@ -95,11 +119,100 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
+    const darkBackground = Color(0xFF141B2B);
+    const darkSurface = Color(0xFF1C2436);
+    const darkSurfaceMuted = Color(0xFF263045);
+    const darkBorder = Color(0xFF333E56);
+    const darkTextPrimary = Color(0xFFF9F9FF);
+    const darkTextSecondary = Color(0xFFA0AAB8);
+
     return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
       colorScheme: const ColorScheme.dark(
-        primary: primaryColor,
+        primary: Color(0xFF8EBDF9),
+        onPrimary: Color(0xFF00355F),
+        surface: darkSurface,
+        surfaceContainerHighest: darkSurfaceMuted,
+        error: danger,
+        onSurface: darkTextPrimary,
       ),
+      scaffoldBackgroundColor: darkBackground,
+      cardColor: darkSurface,
+      fontFamily: 'HankenGrotesk',
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+            fontSize: 28, fontWeight: FontWeight.w700, color: darkTextPrimary),
+        displayMedium: TextStyle(
+            fontSize: 22, fontWeight: FontWeight.w600, color: darkTextPrimary),
+        displaySmall: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.w600, color: darkTextPrimary),
+        titleLarge: TextStyle(
+            fontSize: 16, fontWeight: FontWeight.w600, color: darkTextPrimary),
+        titleMedium: TextStyle(
+            fontSize: 14, fontWeight: FontWeight.w600, color: darkTextPrimary),
+        bodyLarge: TextStyle(
+            fontSize: 15, fontWeight: FontWeight.w400, color: darkTextPrimary),
+        bodyMedium: TextStyle(
+            fontSize: 13, fontWeight: FontWeight.w400, color: darkTextPrimary),
+        bodySmall: TextStyle(
+            fontSize: 11, fontWeight: FontWeight.w400, color: darkTextPrimary),
+        labelLarge: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: darkTextSecondary),
+        labelMedium: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: darkTextSecondary),
+        labelSmall: TextStyle(
+            fontFamily: 'JetBrainsMono',
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color: darkTextSecondary),
+      ),
+      cardTheme: const CardThemeData(
+        elevation: 0,
+        color: darkSurface,
+        margin: EdgeInsets.all(0),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: darkBorder, width: 1),
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(44),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          textStyle: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'HankenGrotesk'),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkSurface,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: darkBorder, width: 1)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: darkBorder, width: 1)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF8EBDF9), width: 1.5)),
+      ),
+      dividerTheme:
+          const DividerThemeData(color: darkBorder, thickness: 1, space: 1),
     );
   }
 }

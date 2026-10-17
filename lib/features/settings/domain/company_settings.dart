@@ -7,7 +7,11 @@ class CompanySettings {
   const CompanySettings({
     this.name = 'FleetPulse Bus Operations',
     this.logoUrl,
-    this.depots = const ['Hyderabad Central', 'Secunderabad Depot', 'Warangal Depot'],
+    this.depots = const [
+      'Hyderabad Central',
+      'Secunderabad Depot',
+      'Warangal Depot'
+    ],
     this.defaultReminderLeadDays = 7,
   });
 
@@ -21,7 +25,8 @@ class CompanySettings {
       name: name ?? this.name,
       logoUrl: logoUrl ?? this.logoUrl,
       depots: depots ?? this.depots,
-      defaultReminderLeadDays: defaultReminderLeadDays ?? this.defaultReminderLeadDays,
+      defaultReminderLeadDays:
+          defaultReminderLeadDays ?? this.defaultReminderLeadDays,
     );
   }
 
@@ -38,7 +43,9 @@ class CompanySettings {
     return CompanySettings(
       name: json['name'] as String? ?? 'FleetPulse Bus Operations',
       logoUrl: json['logoUrl'] as String?,
-      depots: (json['depots'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      depots: (json['depots'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
           const ['Hyderabad Central', 'Secunderabad Depot', 'Warangal Depot'],
       defaultReminderLeadDays: json['defaultReminderLeadDays'] as int? ?? 7,
     );

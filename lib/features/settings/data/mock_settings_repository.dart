@@ -16,7 +16,9 @@ class MockSettingsRepository implements SettingsRepository {
   @override
   Future<void> saveUserSettings(UserSettings s) async {
     if (s.language == 'fail') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated user settings save error.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated user settings save error.');
     }
     await MockDelay.simulate();
     _userSettings = s;
@@ -31,7 +33,9 @@ class MockSettingsRepository implements SettingsRepository {
   @override
   Future<void> saveCompanySettings(CompanySettings s) async {
     if (s.name.contains('FAIL')) {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated company settings save error.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated company settings save error.');
     }
     await MockDelay.simulate();
     _companySettings = s;

@@ -84,19 +84,22 @@ void main() {
 
       // Case A: Neither date nor km reached
       expect(
-        schedule.isDue(currentOdometerKm: 110000, currentDate: DateTime(2026, 8, 1)),
+        schedule.isDue(
+            currentOdometerKm: 110000, currentDate: DateTime(2026, 8, 1)),
         isFalse,
       );
 
       // Case B: KM reached first (120,500 km) on August 1 (before November due date)
       expect(
-        schedule.isDue(currentOdometerKm: 120500, currentDate: DateTime(2026, 8, 1)),
+        schedule.isDue(
+            currentOdometerKm: 120500, currentDate: DateTime(2026, 8, 1)),
         isTrue,
       );
 
       // Case C: Date reached first (Nov 15) while km is only 112,000 km
       expect(
-        schedule.isDue(currentOdometerKm: 112000, currentDate: DateTime(2026, 11, 15)),
+        schedule.isDue(
+            currentOdometerKm: 112000, currentDate: DateTime(2026, 11, 15)),
         isTrue,
       );
     });
@@ -120,7 +123,8 @@ void main() {
 
       // Odometer 116000 km (1000 km past threshold)
       expect(
-        schedule.isOverdue(currentOdometerKm: 116000, currentDate: DateTime(2026, 7, 1)),
+        schedule.isOverdue(
+            currentOdometerKm: 116000, currentDate: DateTime(2026, 7, 1)),
         isTrue,
       );
     });
@@ -146,7 +150,10 @@ void main() {
       expect(nextCycle.lastDoneKm, 150500);
       expect(nextCycle.nextDueKm, 160500);
       expect(nextCycle.nextDueDate, DateTime(2027, 1, 10));
-      expect(nextCycle.isDue(currentOdometerKm: 150500, currentDate: DateTime(2026, 10, 10)), isFalse);
+      expect(
+          nextCycle.isDue(
+              currentOdometerKm: 150500, currentDate: DateTime(2026, 10, 10)),
+          isFalse);
     });
   });
 
@@ -157,7 +164,8 @@ void main() {
       final initialUnread = await repo.unreadCount(userId: 'usr-001');
       expect(initialUnread, greaterThan(0));
 
-      final notifications = await repo.list(userId: 'usr-001', unreadOnly: true);
+      final notifications =
+          await repo.list(userId: 'usr-001', unreadOnly: true);
       expect(notifications, isNotEmpty);
 
       final firstId = notifications.first.id;

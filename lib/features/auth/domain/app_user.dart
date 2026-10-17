@@ -88,5 +88,6 @@ class AppUser {
           avatarUrl == other.avatarUrl;
 
   @override
-  int get hashCode => Object.hash(id, name, email, phone, role, status, avatarUrl);
+  int get hashCode =>
+      Object.hash(id, name, email, phone, role, status, avatarUrl);
 }

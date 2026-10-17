@@ -22,65 +22,95 @@ void main() {
       status: UserStatus.active,
     );
 
-    test('unauthenticated user redirected to /login when accessing protected routes', () {
+    test(
+        'unauthenticated user redirected to /login when accessing protected routes',
+        () {
       expect(
-        RouteGuards.checkRedirect(location: '/', isAuthenticated: false, currentUser: null),
+        RouteGuards.checkRedirect(
+            location: '/', isAuthenticated: false, currentUser: null),
         '/login',
       );
       expect(
-        RouteGuards.checkRedirect(location: '/vehicles', isAuthenticated: false, currentUser: null),
+        RouteGuards.checkRedirect(
+            location: '/vehicles', isAuthenticated: false, currentUser: null),
         '/login',
       );
       expect(
-        RouteGuards.checkRedirect(location: '/settings', isAuthenticated: false, currentUser: null),
+        RouteGuards.checkRedirect(
+            location: '/settings', isAuthenticated: false, currentUser: null),
         '/login',
       );
     });
 
-    test('unauthenticated user allowed on public routes (/login, /forgot-password)', () {
+    test(
+        'unauthenticated user allowed on public routes (/login, /forgot-password)',
+        () {
       expect(
-        RouteGuards.checkRedirect(location: '/login', isAuthenticated: false, currentUser: null),
+        RouteGuards.checkRedirect(
+            location: '/login', isAuthenticated: false, currentUser: null),
         isNull,
       );
       expect(
-        RouteGuards.checkRedirect(location: '/forgot-password', isAuthenticated: false, currentUser: null),
+        RouteGuards.checkRedirect(
+            location: '/forgot-password',
+            isAuthenticated: false,
+            currentUser: null),
         isNull,
       );
     });
 
-    test('authenticated user visiting /login or /forgot-password redirected to dashboard /', () {
+    test(
+        'authenticated user visiting /login or /forgot-password redirected to dashboard /',
+        () {
       expect(
-        RouteGuards.checkRedirect(location: '/login', isAuthenticated: true, currentUser: adminUser),
+        RouteGuards.checkRedirect(
+            location: '/login', isAuthenticated: true, currentUser: adminUser),
         '/',
       );
       expect(
-        RouteGuards.checkRedirect(location: '/forgot-password', isAuthenticated: true, currentUser: adminUser),
+        RouteGuards.checkRedirect(
+            location: '/forgot-password',
+            isAuthenticated: true,
+            currentUser: adminUser),
         '/',
       );
     });
 
-    test('staff user blocked from admin-only routes and redirected to dashboard', () {
+    test(
+        'staff user blocked from admin-only routes and redirected to dashboard',
+        () {
       expect(
-        RouteGuards.checkRedirect(location: '/users', isAuthenticated: true, currentUser: staffUser),
+        RouteGuards.checkRedirect(
+            location: '/users', isAuthenticated: true, currentUser: staffUser),
         '/',
       );
       expect(
-        RouteGuards.checkRedirect(location: '/vehicles/new', isAuthenticated: true, currentUser: staffUser),
+        RouteGuards.checkRedirect(
+            location: '/vehicles/new',
+            isAuthenticated: true,
+            currentUser: staffUser),
         '/',
       );
       expect(
-        RouteGuards.checkRedirect(location: '/settings/company', isAuthenticated: true, currentUser: staffUser),
+        RouteGuards.checkRedirect(
+            location: '/settings/company',
+            isAuthenticated: true,
+            currentUser: staffUser),
         '/',
       );
     });
 
     test('admin user permitted on admin routes', () {
       expect(
-        RouteGuards.checkRedirect(location: '/users', isAuthenticated: true, currentUser: adminUser),
+        RouteGuards.checkRedirect(
+            location: '/users', isAuthenticated: true, currentUser: adminUser),
         isNull,
       );
       expect(
-        RouteGuards.checkRedirect(location: '/vehicles/new', isAuthenticated: true, currentUser: adminUser),
+        RouteGuards.checkRedirect(
+            location: '/vehicles/new',
+            isAuthenticated: true,
+            currentUser: adminUser),
         isNull,
       );
     });

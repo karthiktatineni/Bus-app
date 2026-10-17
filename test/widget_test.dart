@@ -25,7 +25,7 @@ void main() {
 
     // Verify AppButton exists
     expect(find.text('Test Button'), findsOneWidget);
-    
+
     // Verify StatusChip exists
     expect(find.text('Active'), findsOneWidget);
   });

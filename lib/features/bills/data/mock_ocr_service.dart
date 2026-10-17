@@ -6,7 +6,11 @@ class MockOcrService implements OcrService {
   Future<OcrResult> scanBill(String imagePath) async {
     // Deliberate failure if imagePath indicates failure
     if (imagePath.contains('fail')) {
-      await MockDelay.simulate(minMs: 600, maxMs: 1000, shouldFail: true, failureMessage: 'OCR parsing failed on unreadable image.');
+      await MockDelay.simulate(
+          minMs: 600,
+          maxMs: 1000,
+          shouldFail: true,
+          failureMessage: 'OCR parsing failed on unreadable image.');
     }
 
     // Typical OCR delay

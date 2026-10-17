@@ -10,7 +10,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -67,7 +68,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: _submitted ? _buildSuccessView(context) : _buildFormView(context, authState),
+                  child: _submitted
+                      ? _buildSuccessView(context)
+                      : _buildFormView(context, authState),
                 ),
               ),
             ),
@@ -127,12 +130,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: AppTheme.danger, size: 20),
+                  const Icon(Icons.error_outline,
+                      color: AppTheme.danger, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       authState.errorMessage!,
-                      style: const TextStyle(color: AppTheme.danger, fontSize: 13),
+                      style:
+                          const TextStyle(color: AppTheme.danger, fontSize: 13),
                     ),
                   ),
                 ],

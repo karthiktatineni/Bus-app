@@ -1,0 +1,29 @@
+services:
+  - type: keyvalue
+    name: fleetpulse-cache
+    region: singapore
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+    persistenceMode: off
+
+  - type: web
+    name: fleetpulse-ocr
+    runtime: docker
+    region: singapore
+    dockerfilePath: ./backend/ocr_service/Dockerfile
+    dockerContext: ./backend/ocr_service
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: fleetpulse-cache
+          property: connectionString
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: NVIDIA_NIM_API_KEY
+        sync: false

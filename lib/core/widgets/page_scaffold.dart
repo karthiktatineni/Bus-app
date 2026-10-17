@@ -25,7 +25,8 @@ class PageScaffold extends StatelessWidget {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: Border(
-          bottom: BorderSide(color: Theme.of(context).dividerTheme.color!, width: 1),
+          bottom: BorderSide(
+              color: Theme.of(context).dividerTheme.color!, width: 1),
         ),
       ),
       drawer: drawer,

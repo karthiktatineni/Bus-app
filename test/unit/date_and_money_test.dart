@@ -17,9 +17,13 @@ void main() {
       final tomorrow = DateTime(2026, 10, 11, 8, 0);
       final yesterday = DateTime(2026, 10, 9, 18, 0);
 
-      expect(AppDateUtils.daysDifference(tomorrow, reference: referenceDate), 1);
-      expect(AppDateUtils.daysDifference(yesterday, reference: referenceDate), -1);
-      expect(AppDateUtils.daysDifference(referenceDate, reference: referenceDate), 0);
+      expect(
+          AppDateUtils.daysDifference(tomorrow, reference: referenceDate), 1);
+      expect(
+          AppDateUtils.daysDifference(yesterday, reference: referenceDate), -1);
+      expect(
+          AppDateUtils.daysDifference(referenceDate, reference: referenceDate),
+          0);
     });
 
     test('formatRelative produces friendly labels', () {
@@ -29,11 +33,16 @@ void main() {
       final inFiveDays = DateTime(2026, 10, 15);
       final fourDaysAgo = DateTime(2026, 10, 6);
 
-      expect(AppDateUtils.formatRelative(today, reference: referenceDate), 'Today');
-      expect(AppDateUtils.formatRelative(tomorrow, reference: referenceDate), 'Tomorrow');
-      expect(AppDateUtils.formatRelative(yesterday, reference: referenceDate), 'Yesterday');
-      expect(AppDateUtils.formatRelative(inFiveDays, reference: referenceDate), 'In 5 days');
-      expect(AppDateUtils.formatRelative(fourDaysAgo, reference: referenceDate), '4 days ago');
+      expect(AppDateUtils.formatRelative(today, reference: referenceDate),
+          'Today');
+      expect(AppDateUtils.formatRelative(tomorrow, reference: referenceDate),
+          'Tomorrow');
+      expect(AppDateUtils.formatRelative(yesterday, reference: referenceDate),
+          'Yesterday');
+      expect(AppDateUtils.formatRelative(inFiveDays, reference: referenceDate),
+          'In 5 days');
+      expect(AppDateUtils.formatRelative(fourDaysAgo, reference: referenceDate),
+          '4 days ago');
     });
 
     test('isOverdue and isDueSoon logic', () {
@@ -41,11 +50,19 @@ void main() {
       final soonDate = DateTime(2026, 10, 18);
       final farFuture = DateTime(2026, 11, 15);
 
-      expect(AppDateUtils.isOverdue(pastDate, reference: referenceDate), isTrue);
-      expect(AppDateUtils.isOverdue(soonDate, reference: referenceDate), isFalse);
+      expect(
+          AppDateUtils.isOverdue(pastDate, reference: referenceDate), isTrue);
+      expect(
+          AppDateUtils.isOverdue(soonDate, reference: referenceDate), isFalse);
 
-      expect(AppDateUtils.isDueSoon(soonDate, withinDays: 14, reference: referenceDate), isTrue);
-      expect(AppDateUtils.isDueSoon(farFuture, withinDays: 14, reference: referenceDate), isFalse);
+      expect(
+          AppDateUtils.isDueSoon(soonDate,
+              withinDays: 14, reference: referenceDate),
+          isTrue);
+      expect(
+          AppDateUtils.isDueSoon(farFuture,
+              withinDays: 14, reference: referenceDate),
+          isFalse);
     });
   });
 

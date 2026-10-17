@@ -78,7 +78,9 @@ class AppNotification {
       body: json['body'] as String,
       linkTarget: json['linkTarget'] as String?,
       isRead: json['isRead'] as bool? ?? false,
-      readAt: json['readAt'] != null ? DateTime.parse(json['readAt'] as String) : null,
+      readAt: json['readAt'] != null
+          ? DateTime.parse(json['readAt'] as String)
+          : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

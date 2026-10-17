@@ -44,7 +44,9 @@ class AppButton extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: isSecondary ? AppTheme.primaryColor : AppTheme.onPrimaryColor,
+                color: isSecondary
+                    ? AppTheme.primaryColor
+                    : AppTheme.onPrimaryColor,
               ),
             )
           : Text(text),

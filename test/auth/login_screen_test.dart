@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:bus_app/core/theme/app_theme.dart';
 import 'package:bus_app/features/auth/presentation/login_screen.dart';
 import 'package:bus_app/mock/mock_delay.dart';
+import 'package:bus_app/features/auth/providers.dart';
+import 'package:bus_app/features/auth/data/mock_auth_repository.dart';
 
 void main() {
   setUp(() {
@@ -16,6 +18,11 @@ void main() {
 
   Widget buildTestableWidget() {
     return ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(
+          MockAuthRepository(initiallyAuthenticated: false),
+        ),
+      ],
       child: MaterialApp(
         theme: AppTheme.lightTheme,
         home: const LoginScreen(),
@@ -23,7 +30,8 @@ void main() {
     );
   }
 
-  testWidgets('LoginScreen renders branding, fields, and submit button', (WidgetTester tester) async {
+  testWidgets('LoginScreen renders branding, fields, and submit button',
+      (WidgetTester tester) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
@@ -33,31 +41,24 @@ void main() {
     expect(find.text('Depot ID / Email'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Sign in'), findsOneWidget);
-    expect(find.text('Remember depot terminal'), findsOneWidget);
-    expect(find.text('Bay #04'), findsOneWidget);
+    expect(find.text('Demo credentials'), findsNothing);
   });
 
-  testWidgets('Role selector pills switch demo credentials', (WidgetTester tester) async {
+  testWidgets('Login form starts without demo credentials',
+      (WidgetTester tester) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
-    // Default is Admin
-    expect(find.text('karthik@fleetpulse.com'), findsOneWidget);
-
-    // Tap Staff pill
-    await tester.tap(find.text('Staff'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('suresh@fleetpulse.com'), findsOneWidget);
-
-    // Tap Admin pill back
-    await tester.tap(find.text('Admin'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('karthik@fleetpulse.com'), findsOneWidget);
+    final email =
+        tester.widget<TextFormField>(find.byType(TextFormField).first);
+    final password =
+        tester.widget<TextFormField>(find.byType(TextFormField).at(1));
+    expect(email.controller?.text, isEmpty);
+    expect(password.controller?.text, isEmpty);
   });
 
-  testWidgets('Inline validation triggers on invalid email', (WidgetTester tester) async {
+  testWidgets('Inline validation triggers on invalid email',
+      (WidgetTester tester) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
@@ -72,10 +73,13 @@ void main() {
     expect(find.text('Please enter a valid email address'), findsOneWidget);
   });
 
-  testWidgets('Error banner displays on incorrect password submission', (WidgetTester tester) async {
+  testWidgets('Error banner displays on incorrect password submission',
+      (WidgetTester tester) async {
     await tester.pumpWidget(buildTestableWidget());
     await tester.pumpAndSettle();
 
+    await tester.enterText(
+        find.byType(TextFormField).first, 'driver@example.com');
     // Enter wrong password
     final passwordField = find.byType(TextFormField).at(1);
     await tester.enterText(passwordField, 'wrongpass123');

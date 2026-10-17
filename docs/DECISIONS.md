@@ -18,3 +18,12 @@
   - Android Application ID: `com.fleetpulse.bus_app`.
   - iOS Bundle ID: `com.fleetpulse.busApp`.
   - CI pinned to Flutter version: `3.47.3`.
+- **Scope Simplification & Production Targeting**:
+  - Dropped Firebase Push Notifications and Crashlytics from current scope.
+  - Dropped App Store / Play Store production release requirements (focus on real-device APK and working backend).
+  - Dropped external third-party SMTP services (Resend/SendGrid); using native Supabase Auth directly.
+- **Cloud OCR Architecture**:
+  - Implemented as a containerized Python FastAPI microservice deployed on Render Cloud (free tier) to extract text and parse Indian invoice fields (Vendor, GSTIN, Invoice #, Date, Items, Tax, Total).
+- **Real-Time Fleet Intelligence AI (NVIDIA NIM)**:
+  - Added RAG & Live Function Calling AI Chatbot powered by NVIDIA NIM (`build.nvidia.com`, `meta/llama-3.3-70b-instruct`).
+  - To achieve 100% factual accuracy and eliminate hallucinations, the chatbot invokes live PostgreSQL RPC functions directly on Supabase under the caller's RLS company boundary.\n

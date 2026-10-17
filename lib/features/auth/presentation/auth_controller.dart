@@ -32,7 +32,18 @@ class AuthState {
 class AuthController extends StateNotifier<AuthState> {
   final Ref _ref;
 
-  AuthController(this._ref) : super(const AuthState());
+  AuthController(this._ref) : super(const AuthState(isLoading: true)) {
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    try {
+      final user = await _ref.read(authRepositoryProvider).getCurrentUser();
+      state = AuthState(user: user);
+    } catch (_) {
+      state = const AuthState();
+    }
+  }
 
   Future<bool> signIn(String email, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
@@ -44,7 +55,10 @@ class AuthController extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: e.toString().replaceFirst('AppException: ', '').replaceFirst('AppException [UNAUTHORIZED]: ', ''),
+        errorMessage: e
+            .toString()
+            .replaceFirst('AppException: ', '')
+            .replaceFirst('AppException [UNAUTHORIZED]: ', ''),
       );
       return false;
     }
@@ -82,6 +96,7 @@ class AuthController extends StateNotifier<AuthState> {
   }
 }
 
-final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AuthState>((ref) {
   return AuthController(ref);
 });

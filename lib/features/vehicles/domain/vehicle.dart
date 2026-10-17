@@ -112,7 +112,10 @@ class Vehicle {
         (s) => s.name == json['status'],
         orElse: () => VehicleStatus.active,
       ),
-      photos: (json['photos'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const [],
+      photos: (json['photos'] as List<dynamic>?)
+              ?.map((e) => e as String)
+              .toList() ??
+          const [],
       documents: (json['documents'] as List<dynamic>?)
               ?.map((e) => VehicleDocument.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -134,5 +137,6 @@ class Vehicle {
           status == other.status;
 
   @override
-  int get hashCode => Object.hash(id, registrationNo, make, model, year, odometerKm, status);
+  int get hashCode =>
+      Object.hash(id, registrationNo, make, model, year, odometerKm, status);
 }

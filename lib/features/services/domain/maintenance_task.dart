@@ -74,7 +74,9 @@ class MaintenanceTask {
       id: json['id'] as String,
       vehicleId: json['vehicleId'] as String,
       title: json['title'] as String,
-      dueDate: json['dueDate'] != null ? DateTime.parse(json['dueDate'] as String) : null,
+      dueDate: json['dueDate'] != null
+          ? DateTime.parse(json['dueDate'] as String)
+          : null,
       dueKm: json['dueKm'] as int?,
       isDone: json['isDone'] as bool? ?? false,
       scheduleId: json['scheduleId'] as String?,

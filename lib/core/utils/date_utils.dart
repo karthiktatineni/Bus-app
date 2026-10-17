@@ -38,7 +38,8 @@ class AppDateUtils {
   }
 
   /// Returns true if target date is due within the given window (default 14 days)
-  static bool isDueSoon(DateTime target, {int withinDays = 14, DateTime? reference}) {
+  static bool isDueSoon(DateTime target,
+      {int withinDays = 14, DateTime? reference}) {
     final diff = daysDifference(target, reference: reference);
     return diff >= 0 && diff <= withinDays;
   }

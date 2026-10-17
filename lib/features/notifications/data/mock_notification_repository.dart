@@ -14,7 +14,8 @@ class MockNotificationRepository implements NotificationRepository {
         userId: 'usr-001',
         type: NotificationType.taskOverdue,
         title: 'PUC Expired: AP 28 Z 8844',
-        body: 'PUC certificate expired 4 days ago. Vehicle requires immediate emission test.',
+        body:
+            'PUC certificate expired 4 days ago. Vehicle requires immediate emission test.',
         linkTarget: '/vehicles/veh-003',
         isRead: false,
         createdAt: now.subtract(const Duration(hours: 2)),
@@ -44,7 +45,8 @@ class MockNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<List<AppNotification>> list({String? userId, bool unreadOnly = false}) async {
+  Future<List<AppNotification>> list(
+      {String? userId, bool unreadOnly = false}) async {
     await MockDelay.simulate(minMs: 200, maxMs: 400);
     var result = _notifications;
     if (userId != null) {
@@ -68,7 +70,8 @@ class MockNotificationRepository implements NotificationRepository {
   @override
   Future<void> markAsRead(String id) async {
     if (id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated mark-as-read failure.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated mark-as-read failure.');
     }
     await MockDelay.simulate(minMs: 100, maxMs: 250);
     final index = _notifications.indexWhere((n) => n.id == id);

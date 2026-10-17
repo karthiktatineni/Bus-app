@@ -29,27 +29,33 @@ class MockServiceRepository implements ServiceRepository {
   Future<ServiceRecord> get(String id) async {
     // Deliberate failing path
     if (id == 'fail-id' || id == 'srv-error') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated service record retrieval error.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated service record retrieval error.');
     }
 
     await MockDelay.simulate();
     return _services.firstWhere(
       (s) => s.id == id,
-      orElse: () => throw NotFoundException('Service record with ID $id not found.'),
+      orElse: () =>
+          throw NotFoundException('Service record with ID $id not found.'),
     );
   }
 
   @override
   Future<ServiceRecord> create(ServiceRecord r) async {
     if (r.workshop.contains('FAIL')) {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated service record creation error.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated service record creation error.');
     }
 
     await MockDelay.simulate();
     _services.insert(0, r);
 
     // If this service was for a schedule, advance the schedule's cycle
-    final scheduleIndex = _schedules.indexWhere((s) => s.vehicleId == r.vehicleId);
+    final scheduleIndex =
+        _schedules.indexWhere((s) => s.vehicleId == r.vehicleId);
     if (scheduleIndex != -1) {
       _schedules[scheduleIndex] = _schedules[scheduleIndex].cycleCompleted(
         completedDate: r.date,
@@ -74,7 +80,9 @@ class MockServiceRepository implements ServiceRepository {
   @override
   Future<void> setTaskDone(String taskId, bool done) async {
     if (taskId == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated task status update error.');
+      await MockDelay.simulate(
+          shouldFail: true,
+          failureMessage: 'Simulated task status update error.');
     }
 
     await MockDelay.simulate();
@@ -92,7 +100,8 @@ class MockServiceRepository implements ServiceRepository {
 
     // Advance schedule if task was linked to a schedule
     if (done && task.scheduleId != null) {
-      final scheduleIndex = _schedules.indexWhere((s) => s.id == task.scheduleId);
+      final scheduleIndex =
+          _schedules.indexWhere((s) => s.id == task.scheduleId);
       if (scheduleIndex != -1) {
         final currentSchedule = _schedules[scheduleIndex];
         _schedules[scheduleIndex] = currentSchedule.cycleCompleted(

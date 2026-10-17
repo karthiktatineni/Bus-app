@@ -1,5 +1,6 @@
 /// Centralized application strings for consistent UI and future localization.
 class AppStrings {
+  static const String appName = 'FleetPulse';
   static const String appTitle = 'FleetPulse';
   static const String appSubtitle = 'Bus Maintenance Management';
 
@@ -34,7 +35,9 @@ class AppStrings {
 
   // Error Messages
   static const String genericError = 'Something went wrong. Please try again.';
-  static const String networkError = 'Network connection issue. Please check connection.';
+  static const String networkError =
+      'Network connection issue. Please check connection.';
   static const String notFoundError = 'Requested resource was not found.';
-  static const String simulationError = 'Simulated error path triggered for testing.';
+  static const String simulationError =
+      'Simulated error path triggered for testing.';
 }

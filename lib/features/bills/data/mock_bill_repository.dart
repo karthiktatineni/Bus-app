@@ -24,7 +24,8 @@ class MockBillRepository implements BillRepository {
   @override
   Future<Bill> get(String id) async {
     if (id == 'fail-id' || id == 'bill-error') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated bill retrieval error.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated bill retrieval error.');
     }
 
     await MockDelay.simulate();
@@ -37,7 +38,8 @@ class MockBillRepository implements BillRepository {
   @override
   Future<Bill> create(Bill b) async {
     if (b.vendor.contains('FAIL')) {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated bill creation error.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated bill creation error.');
     }
 
     await MockDelay.simulate();
@@ -48,7 +50,8 @@ class MockBillRepository implements BillRepository {
   @override
   Future<Bill> update(Bill b) async {
     if (b.id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated bill update error.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated bill update error.');
     }
 
     await MockDelay.simulate();
@@ -63,7 +66,8 @@ class MockBillRepository implements BillRepository {
   @override
   Future<void> delete(String id) async {
     if (id == 'fail-id') {
-      await MockDelay.simulate(shouldFail: true, failureMessage: 'Simulated bill deletion error.');
+      await MockDelay.simulate(
+          shouldFail: true, failureMessage: 'Simulated bill deletion error.');
     }
 
     await MockDelay.simulate();

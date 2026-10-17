@@ -35,7 +35,8 @@ class ServiceSchedule {
   bool isDue({required int currentOdometerKm, DateTime? currentDate}) {
     final now = currentDate ?? DateTime.now();
     final isDueByKm = currentOdometerKm >= nextDueKm;
-    final isDueByDate = now.isAfter(nextDueDate) || now.isAtSameMomentAs(nextDueDate);
+    final isDueByDate =
+        now.isAfter(nextDueDate) || now.isAtSameMomentAs(nextDueDate);
     return isDueByKm || isDueByDate;
   }
 
@@ -48,7 +49,8 @@ class ServiceSchedule {
   /// Calculates days remaining until the date threshold (negative if overdue)
   int daysRemaining({DateTime? currentDate}) {
     final now = currentDate ?? DateTime.now();
-    final target = DateTime(nextDueDate.year, nextDueDate.month, nextDueDate.day);
+    final target =
+        DateTime(nextDueDate.year, nextDueDate.month, nextDueDate.day);
     final ref = DateTime(now.year, now.month, now.day);
     return target.difference(ref).inDays;
   }

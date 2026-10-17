@@ -51,9 +51,12 @@ class UserSettings {
       currency: currency ?? this.currency,
       dateFormat: dateFormat ?? this.dateFormat,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
-      serviceRemindersEnabled: serviceRemindersEnabled ?? this.serviceRemindersEnabled,
-      serviceReminderLeadDays: serviceReminderLeadDays ?? this.serviceReminderLeadDays,
-      docExpiryRemindersEnabled: docExpiryRemindersEnabled ?? this.docExpiryRemindersEnabled,
+      serviceRemindersEnabled:
+          serviceRemindersEnabled ?? this.serviceRemindersEnabled,
+      serviceReminderLeadDays:
+          serviceReminderLeadDays ?? this.serviceReminderLeadDays,
+      docExpiryRemindersEnabled:
+          docExpiryRemindersEnabled ?? this.docExpiryRemindersEnabled,
       docExpiryLeadDays: docExpiryLeadDays ?? this.docExpiryLeadDays,
       pushEnabled: pushEnabled ?? this.pushEnabled,
       emailEnabled: emailEnabled ?? this.emailEnabled,
@@ -89,7 +92,8 @@ class UserSettings {
       notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
       serviceRemindersEnabled: json['serviceRemindersEnabled'] as bool? ?? true,
       serviceReminderLeadDays: json['serviceReminderLeadDays'] as int? ?? 7,
-      docExpiryRemindersEnabled: json['docExpiryRemindersEnabled'] as bool? ?? true,
+      docExpiryRemindersEnabled:
+          json['docExpiryRemindersEnabled'] as bool? ?? true,
       docExpiryLeadDays: json['docExpiryLeadDays'] as int? ?? 15,
       pushEnabled: json['pushEnabled'] as bool? ?? true,
       emailEnabled: json['emailEnabled'] as bool? ?? false,

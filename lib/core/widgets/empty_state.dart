@@ -12,13 +12,18 @@ class EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+          Icon(icon,
+              size: 48,
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurfaceVariant
+                  .withValues(alpha: 0.5)),
           const SizedBox(height: 16),
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
           ),
         ],
       ),

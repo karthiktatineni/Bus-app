@@ -15,32 +15,16 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'karthik@fleetpulse.com');
-  final _passwordController = TextEditingController(text: 'password123');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
-  bool _rememberTerminal = true;
-  String _selectedRole = 'admin'; // 'admin' or 'staff'
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _selectRole(String role) {
-    setState(() {
-      _selectedRole = role;
-      ref.read(authControllerProvider.notifier).clearError();
-      if (role == 'admin') {
-        _emailController.text = 'karthik@fleetpulse.com';
-        _passwordController.text = 'password123';
-      } else {
-        _emailController.text = 'suresh@fleetpulse.com';
-        _passwordController.text = 'password123';
-      }
-    });
   }
 
   Future<void> _handleLogin() async {
@@ -74,9 +58,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   _buildBrandHeader(),
                   const SizedBox(height: 16),
-                  _buildRoleSelector(),
                   const SizedBox(height: 12),
-                  _buildDemoHelperNotice(),
                   const SizedBox(height: 16),
                   _buildLoginFormCard(authState),
                   const SizedBox(height: 24),
@@ -152,127 +134,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildRoleSelector() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceMuted,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _selectRole('admin'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: _selectedRole == 'admin' ? AppTheme.surface : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: _selectedRole == 'admin'
-                      ? const [
-                          BoxShadow(
-                            color: Color(0x0F000000),
-                            blurRadius: 4,
-                            offset: Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.verified_user_outlined,
-                      size: 16,
-                      color: _selectedRole == 'admin' ? AppTheme.primaryColor : AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Admin',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _selectedRole == 'admin' ? AppTheme.primaryColor : AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _selectRole('staff'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                decoration: BoxDecoration(
-                  color: _selectedRole == 'staff' ? AppTheme.surface : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: _selectedRole == 'staff'
-                      ? const [
-                          BoxShadow(
-                            color: Color(0x0F000000),
-                            blurRadius: 4,
-                            offset: Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.engineering_outlined,
-                      size: 16,
-                      color: _selectedRole == 'staff' ? AppTheme.primaryColor : AppTheme.textSecondary,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Staff',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: _selectedRole == 'staff' ? AppTheme.primaryColor : AppTheme.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDemoHelperNotice() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE9EDFF),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFA0C9FF).withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline, color: AppTheme.primaryColor, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _selectedRole == 'admin'
-                  ? 'Demo credentials loaded for Administrator (Full Fleet & Operations Control).'
-                  : 'Demo credentials loaded for Workshop Staff (Maintenance & Inspection Logging).',
-              style: const TextStyle(fontSize: 12, color: AppTheme.primaryColor, height: 1.3),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLoginFormCard(AuthState authState) {
     return Card(
       elevation: 0,
@@ -298,7 +159,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: AppTheme.danger, size: 20),
+                      const Icon(Icons.error_outline,
+                          color: AppTheme.danger, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -366,7 +228,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       prefixIcon: const Icon(Icons.lock_outline, size: 20),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
                           size: 20,
                         ),
                         onPressed: () {
@@ -385,56 +249,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       }
                       return null;
                     },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Checkbox(
-                            value: _rememberTerminal,
-                            activeColor: AppTheme.primaryColor,
-                            onChanged: (val) {
-                              setState(() {
-                                _rememberTerminal = val ?? true;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Flexible(
-                          child: Text(
-                            'Remember depot terminal',
-                            style: TextStyle(fontSize: 12, color: AppTheme.textPrimary),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surfaceMuted,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Text(
-                      'Bay #04',
-                      style: TextStyle(
-                        fontFamily: 'JetBrainsMono',
-                        fontSize: 11,
-                        color: AppTheme.textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                   ),
                 ],
               ),

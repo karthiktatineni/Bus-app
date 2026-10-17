@@ -1,8 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:bus_app/features/auth/presentation/auth_controller.dart';
 import 'package:bus_app/features/auth/providers.dart';
 import 'package:bus_app/mock/mock_delay.dart';
+import 'package:bus_app/features/auth/data/mock_auth_repository.dart';
+
+ProviderContainer createContainer() => ProviderContainer(overrides: [
+      authRepositoryProvider.overrideWithValue(
+        MockAuthRepository(initiallyAuthenticated: false),
+      ),
+    ]);
 
 void main() {
   setUp(() {
@@ -13,19 +19,20 @@ void main() {
     MockDelay.enableDelays = true;
   });
 
-  test('initial auth state is unauthenticated', () {
-    final container = ProviderContainer();
+  test('initial auth state is unauthenticated', () async {
+    final container = createContainer();
     addTearDown(container.dispose);
 
+    await Future<void>.delayed(const Duration(milliseconds: 1));
     final state = container.read(authControllerProvider);
     expect(state.isAuthenticated, isFalse);
     expect(state.user, isNull);
-    expect(state.isLoading, isFalse);
+    expect(state.isLoading, isTrue);
     expect(state.errorMessage, isNull);
   });
 
   test('signIn succeeds with valid credentials', () async {
-    final container = ProviderContainer();
+    final container = createContainer();
     addTearDown(container.dispose);
 
     final success = await container
@@ -41,7 +48,7 @@ void main() {
   });
 
   test('signIn fails with incorrect password and sets error message', () async {
-    final container = ProviderContainer();
+    final container = createContainer();
     addTearDown(container.dispose);
 
     final success = await container
@@ -55,7 +62,7 @@ void main() {
   });
 
   test('signOut clears user session', () async {
-    final container = ProviderContainer();
+    final container = createContainer();
     addTearDown(container.dispose);
 
     await container
@@ -69,7 +76,7 @@ void main() {
   });
 
   test('sendPasswordReset completes successfully', () async {
-    final container = ProviderContainer();
+    final container = createContainer();
     addTearDown(container.dispose);
 
     final success = await container

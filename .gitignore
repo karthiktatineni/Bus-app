@@ -6,5 +6,11 @@ key.properties
 *.mobileprovision
 service_role*.json
 /supabase/.temp/
+__pycache__/
+*.py[cod]
 build/
 .dart_tool/
+apk/
+*.apk
+google-services.json
+!android/app/google-services.json
