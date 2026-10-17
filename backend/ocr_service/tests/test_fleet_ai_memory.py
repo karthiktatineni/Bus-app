@@ -45,3 +45,22 @@ def test_cost_tool_defaults_period_and_all_vehicle_scope():
     assert start and end
     assert params["p_vehicle_id"] is None
     assert 0 <= (main.date.fromisoformat(params["end_date"]) - main.date.fromisoformat(params["start_date"])).days <= 30
+
+
+def test_cost_rpc_rejects_natural_language_and_unevidenced_vehicle_ids():
+    rpc_name, params = main.fleet_rpc_for_tool(
+        "cost_breakdown",
+        {"vehicle_id": "KA01AB1234", "start_date": "last month", "end_date": ""},
+    )
+
+    assert rpc_name == "rpc_get_cost_breakdown"
+    assert params["p_vehicle_id"] is None
+    assert 0 <= (main.date.fromisoformat(params["end_date"]) - main.date.fromisoformat(params["start_date"])).days <= 30
+    assert main._evidenced_vehicle_uuid(
+        "8e8bb482-26f3-4db7-a35b-a3dc53b7c9fc", "no vehicle id in the transcript"
+    ) is None
+
+
+def test_cost_rpc_accepts_only_a_transcript_evidenced_vehicle_uuid():
+    vehicle_id = "8e8bb482-26f3-4db7-a35b-a3dc53b7c9fc"
+    assert main._evidenced_vehicle_uuid(vehicle_id, f"Selected vehicle id: {vehicle_id}") == vehicle_id
