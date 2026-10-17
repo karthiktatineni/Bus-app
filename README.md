@@ -9,7 +9,8 @@ Flutter fleet maintenance app with Supabase Auth, PostgreSQL, private Storage, a
 3. Configure the Supabase project and apply the ordered SQL files in `supabase/migrations/` using the Supabase CLI or SQL editor.
 4. Deploy `manage-user` and `bootstrap-company` from `supabase/functions/`; set `BOOTSTRAP_SECRET` in Supabase. Never place a service-role key in Flutter or source control.
 5. Create the Render Blueprint from `backend/ocr_service/render.yaml`. It provisions the Render Key Value cache and wires its private URL into the existing backend service. Set the Render service variables `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `NVIDIA_NIM_API_KEY`.
-6. Start the app with public client configuration supplied at build time:
+6. The backend exposes a dependency health report at `/health` and Prometheus-format request, dependency, and Redis cache metrics at `/metrics`. The Blueprint generates a private `METRICS_BEARER_TOKEN`; use that value from Render's environment settings when scraping `/metrics`. Never put it in Flutter or source control.
+7. Start the app with public client configuration supplied at build time:
 
 ```powershell
 flutter run `

@@ -27,3 +27,5 @@ services:
         sync: false
       - key: NVIDIA_NIM_API_KEY
         sync: false
+      - key: METRICS_BEARER_TOKEN
+        generateValue: true
