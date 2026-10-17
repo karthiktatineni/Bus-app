@@ -19,6 +19,7 @@ import '../../features/users/presentation/users_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/help_support_screen.dart';
 import '../../features/chat/presentation/fleet_ai_screen.dart';
+import '../widgets/fleet_ai_launcher.dart';
 import 'route_guards.dart';
 
 enum AppRoute {
@@ -31,6 +32,7 @@ enum AppRoute {
   editVehicle,
   services,
   serviceDetail,
+  editService,
   addService,
   reminders,
   bills,
@@ -83,6 +85,12 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         name: AppRoute.forgotPassword.name,
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
+      ShellRoute(
+        builder: (context, state, child) => FleetAiAppOverlay(
+          currentPath: state.uri.path,
+          child: child,
+        ),
+        routes: [
       GoRoute(
         path: '/',
         name: AppRoute.dashboard.name,
@@ -134,6 +142,15 @@ final goRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => ServiceDetailScreen(
               serviceId: state.pathParameters['id']!,
             ),
+            routes: [
+              GoRoute(
+                path: 'edit',
+                name: AppRoute.editService.name,
+                builder: (context, state) => AddServiceScreen(
+                  serviceId: state.pathParameters['id']!,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -175,6 +192,8 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/fleet-ai',
         name: AppRoute.fleetAi.name,
         builder: (context, state) => const FleetAiScreen(),
+      ),
+        ],
       ),
     ],
   );

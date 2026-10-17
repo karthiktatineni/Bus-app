@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../auth/providers.dart';
 import '../providers.dart';
 
 class BillsListScreen extends ConsumerWidget {
@@ -14,6 +15,7 @@ class BillsListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final billRepo = ref.watch(billRepositoryProvider);
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -105,6 +107,18 @@ class BillsListScreen extends ConsumerWidget {
                               ),
                             ],
                           ),
+                          if (isAdmin && bill.uploaderName != null) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Uploaded by ${bill.uploaderName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,

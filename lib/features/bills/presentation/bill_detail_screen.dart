@@ -44,6 +44,12 @@ class BillDetailScreen extends ConsumerWidget {
             actions: [
               if (isAdmin)
                 IconButton(
+                  tooltip: 'Edit bill details',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => _editBill(context, ref, bill),
+                ),
+              if (isAdmin)
+                IconButton(
                   tooltip: 'Delete bill',
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () => _deleteBill(context, ref, bill),
@@ -96,20 +102,31 @@ class BillDetailScreen extends ConsumerWidget {
                             fontSize: 11,
                             color: AppTheme.textSecondary),
                       ),
+                      if (isAdmin && bill.uploaderName != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Uploaded by ${bill.uploaderName}',
+                          style: const TextStyle(
+                              fontSize: 11, color: AppTheme.textSecondary),
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       const Divider(height: 1),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Tax (GST 18%):',
-                              style: TextStyle(fontSize: 12)),
-                          Text('₹${NumberFormat('#,###').format(bill.tax)}',
-                              style: const TextStyle(
-                                  fontFamily: 'JetBrainsMono', fontSize: 12)),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
+                      if (bill.tax > 0) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Tax amount:',
+                                style: TextStyle(fontSize: 12)),
+                            Text(
+                                '₹${NumberFormat('#,###.##').format(bill.tax)}',
+                                style: const TextStyle(
+                                    fontFamily: 'JetBrainsMono', fontSize: 12)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                      ],
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -194,6 +211,124 @@ class BillDetailScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _editBill(BuildContext context, WidgetRef ref, Bill bill) async {
+    final formKey = GlobalKey<FormState>();
+    final vendor = TextEditingController(text: bill.vendor);
+    final number = TextEditingController(text: bill.billNo);
+    final total = TextEditingController(text: bill.total.toStringAsFixed(2));
+    var billDate = bill.billDate;
+    var saving = false;
+    String? errorMessage;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          title: const Text('Edit bill details'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: vendor,
+                    decoration: const InputDecoration(labelText: 'Vendor *'),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Enter the vendor.'
+                        : null,
+                  ),
+                  TextFormField(
+                    controller: number,
+                    decoration: const InputDecoration(labelText: 'Bill number'),
+                  ),
+                  TextFormField(
+                    controller: total,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Total printed on bill *',
+                      prefixText: '₹',
+                    ),
+                    validator: (value) {
+                      final amount = double.tryParse(value?.trim() ?? '');
+                      return amount == null || amount <= 0
+                          ? 'Enter the total printed on the bill.'
+                          : null;
+                    },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Bill date'),
+                    subtitle: Text(DateFormat('dd MMM yyyy').format(billDate)),
+                    trailing: const Icon(Icons.calendar_today_outlined),
+                    onTap: () async {
+                      final selected = await showDatePicker(
+                        context: dialogContext,
+                        initialDate: billDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (selected != null) {
+                        setDialogState(() => billDate = selected);
+                      }
+                    },
+                  ),
+                  if (errorMessage != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(errorMessage!,
+                          style: const TextStyle(color: AppTheme.danger)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: saving ? null : () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: saving
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setDialogState(() {
+                        saving = true;
+                        errorMessage = null;
+                      });
+                      try {
+                        await ref.read(billRepositoryProvider).update(
+                              bill.copyWith(
+                                vendor: vendor.text.trim(),
+                                billNo: number.text.trim(),
+                                total: double.parse(total.text.trim()),
+                                billDate: billDate,
+                              ),
+                            );
+                        ref.invalidate(billRepositoryProvider);
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                        }
+                      } catch (error) {
+                        setDialogState(() {
+                          saving = false;
+                          errorMessage = 'Could not update this bill: $error';
+                        });
+                      }
+                    },
+              child: Text(saving ? 'Saving…' : 'Save changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+    vendor.dispose();
+    number.dispose();
+    total.dispose();
   }
 
   Future<void> _deleteBill(

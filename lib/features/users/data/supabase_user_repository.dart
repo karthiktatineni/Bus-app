@@ -21,12 +21,14 @@ class SupabaseUserRepository implements UserRepository {
   Future<AppUser> invite(
       {required String name,
       required String email,
+      required String password,
       required UserRole role,
       required String phone}) async {
     final result = await _client.functions.invoke('manage-user', body: {
-      'action': 'invite',
+      'action': 'create',
       'name': name,
       'email': email,
+      'password': password,
       'phone': phone,
       'role': role.name,
     });
@@ -38,25 +40,32 @@ class SupabaseUserRepository implements UserRepository {
   }
 
   @override
-  Future<AppUser> update(AppUser user) async {
-    final row = await _client
-        .from('profiles')
-        .update({
-          'name': user.name,
-          'phone': user.phone,
-          'role': user.role.name,
-          'status': user.status.name,
-          'avatar_url': user.avatarUrl,
-        })
-        .eq('id', user.id)
-        .select()
-        .single();
-    return _fromRow(row);
+  Future<AppUser> update(AppUser user, {String? password}) async {
+    final result = await _client.functions.invoke('manage-user', body: {
+      'action': 'update',
+      'id': user.id,
+      'name': user.name,
+      'email': user.email,
+      'phone': user.phone,
+      'role': user.role.name,
+      if (password != null && password.isNotEmpty) 'password': password,
+    });
+    if (result.status < 200 || result.status >= 300) {
+      throw StateError('User update failed.');
+    }
+    final id = (result.data as Map<String, dynamic>)['id'] as String;
+    return get(id);
   }
 
   @override
   Future<void> remove(String id) async {
-    await _client.from('profiles').update({'status': 'disabled'}).eq('id', id);
+    final result = await _client.functions.invoke('manage-user', body: {
+      'action': 'remove',
+      'id': id,
+    });
+    if (result.status < 200 || result.status >= 300) {
+      throw StateError('User removal failed.');
+    }
   }
 
   AppUser _fromRow(Map<String, dynamic> row) => AppUser(

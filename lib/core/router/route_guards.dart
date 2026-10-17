@@ -27,9 +27,12 @@ class RouteGuards {
       return '/';
     }
 
-    // 3. Staff user attempting to access admin-only route
+    // 3. Staff user attempting to access admin-only route or edit service URL.
+    // Service entry creation is open to staff; post-upload edits/deletes are admin-only.
+    final isServiceEditRoute =
+        location.startsWith('/services/') && location.endsWith('/edit');
     if (isAuthenticated && currentUser != null && !currentUser.isAdmin) {
-      if (adminOnlyRoutes.contains(location)) {
+      if (adminOnlyRoutes.contains(location) || isServiceEditRoute) {
         return '/';
       }
     }

@@ -1,8 +1,12 @@
 import asyncio
 import io
+import shutil
+from pathlib import Path
+
+import pytest
 
 import httpx
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 import main
 
@@ -23,7 +27,9 @@ def test_authenticated_bill_ocr_endpoint_returns_reviewable_fields(monkeypatch):
         lambda *_args, **_kwargs: (
             "Northside Bus Workshop\n"
             "Tax Invoice\nInvoice No: INV-2026-048\n"
-            "Date: 17/10/2026\nGrand Total Rs. 12,450.00"
+            "Date: 17/10/2026\n"
+            "Brake pad replacement 1 8,450.00\n"
+            "Labour charge 1 4,000.00\nGrand Total Rs. 12,450.00"
         ),
     )
 
@@ -50,6 +56,72 @@ def test_authenticated_bill_ocr_endpoint_returns_reviewable_fields(monkeypatch):
     assert payload["bill_date"] == "2026-10-17"
     assert payload["grand_total"] == 12450.0
     assert payload["confidence"] == 1.0
+    assert payload["items"] == [
+        {"name": "Brake pad replacement", "quantity": 1, "total": 8450.0},
+        {"name": "Labour charge", "quantity": 1, "total": 4000.0},
+    ]
+
+
+def test_real_tesseract_reads_synthetic_invoice_through_scan_endpoint(monkeypatch):
+    tesseract = shutil.which("tesseract")
+    if not tesseract:
+        candidate = Path(r"C:\Program Files\Tesseract-OCR\tesseract.exe")
+        if candidate.is_file():
+            tesseract = str(candidate)
+    if not tesseract:
+        pytest.skip("Tesseract is not installed on this test host.")
+
+    monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
+    monkeypatch.setenv("SUPABASE_ANON_KEY", "public-test-key")
+    monkeypatch.setattr(main.app.state, "redis", None)
+    monkeypatch.setattr(main.pytesseract.pytesseract, "tesseract_cmd", tesseract)
+
+    async def verify_user(_client, _url, _key, _token):
+        return {"id": "local-ocr-integration-user"}
+
+    monkeypatch.setattr(main, "verify_supabase_user", verify_user)
+    image = Image.new("RGB", (1600, 2000), "white")
+    draw = ImageDraw.Draw(image)
+    font_path = Path(r"C:\Windows\Fonts\arial.ttf")
+    if not font_path.is_file():
+        font_path = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+    font = ImageFont.truetype(str(font_path), 52) if font_path.is_file() else ImageFont.load_default()
+    small = ImageFont.truetype(str(font_path), 42) if font_path.is_file() else font
+    invoice_lines = [
+        (100, "NORTHSIDE BUS WORKSHOP", font),
+        (220, "TAX INVOICE", font),
+        (330, "Invoice No: INV-2026-048", small),
+        (410, "Date: 17/10/2026", small),
+        (620, "Description             Qty      Amount", small),
+        (730, "Brake pad replacement    1       8,450.00", small),
+        (820, "Labour charge            1       4,000.00", small),
+        (1100, "Grand Total Rs. 12,450.00", font),
+    ]
+    for y, text, face in invoice_lines:
+        draw.text((100, y), text, fill="black", font=face)
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", quality=95)
+
+    async def run_request():
+        transport = httpx.ASGITransport(app=main.app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            return await client.post(
+                "/ocr/scan-bill",
+                headers={"Authorization": "Bearer local-ocr-test-token"},
+                files={"file": ("synthetic-invoice.jpg", buffer.getvalue(), "image/jpeg")},
+            )
+
+    response = asyncio.run(run_request())
+    assert response.status_code == 200, response.text
+    payload = response.json()
+    assert payload["vendor"] == "NORTHSIDE BUS WORKSHOP", payload
+    assert payload["invoice_number"] == "INV-2026-048", payload
+    assert payload["bill_date"] == "2026-10-17", payload
+    assert payload["grand_total"] == 12450.0, payload
+    assert payload["items"] == [
+        {"name": "Brake pad replacement", "quantity": 1, "total": 8450.0},
+        {"name": "Labour charge", "quantity": 1, "total": 4000.0},
+    ], payload
 
 
 def test_bill_ocr_endpoint_rejects_missing_session():

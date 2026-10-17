@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../auth/providers.dart';
 import '../providers.dart';
 
 class UsersScreen extends ConsumerStatefulWidget {
@@ -17,17 +18,27 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   @override
   Widget build(BuildContext context) {
     final userRepo = ref.watch(userRepositoryProvider);
+    final isAdmin = ref.watch(currentUserProvider)?.isAdmin ?? false;
+
+    if (!isAdmin) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('User Management')),
+        body: const Center(child: Text('Administrator access is required.')),
+      );
+    }
 
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('User Management'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.person_add_alt_1,
-                color: AppTheme.primaryColor),
-            tooltip: 'Add User',
-            onPressed: () => _showAddUserSheet(context),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilledButton.icon(
+              icon: const Icon(Icons.person_add_alt_1),
+              onPressed: () => _showAddUserSheet(context),
+              label: const Text('Add User'),
+            ),
           ),
         ],
       ),
@@ -36,6 +47,22 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Could not load company users.'),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => setState(() {}),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
           }
 
           final users = snapshot.data ?? [];
@@ -147,7 +174,12 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
   void _showAddUserSheet(BuildContext context) {
     final nameController = TextEditingController();
     final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     UserRole selectedRole = UserRole.staff;
+    var isSaving = false;
+    var obscurePassword = true;
+    String? errorMessage;
 
     showModalBottomSheet(
       context: context,
@@ -165,72 +197,135 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
                 top: 16,
                 bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Add Depot User',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                        labelText: 'Full Name *', hintText: 'Rajesh Sharma'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                        labelText: 'Email Address *',
-                        hintText: 'staff@depot.com'),
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<UserRole>(
-                    initialValue: selectedRole,
-                    decoration: const InputDecoration(labelText: 'Role *'),
-                    items: const [
-                      DropdownMenuItem(
-                          value: UserRole.staff,
-                          child: Text('Staff (Lead Engineer)')),
-                      DropdownMenuItem(
-                          value: UserRole.admin,
-                          child: Text('Admin (Full Depot Access)')),
+              child: Form(
+                key: formKey,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Add Company User',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: nameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration:
+                            const InputDecoration(labelText: 'Full name *'),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                                ? 'Enter the user’s name.'
+                                : null,
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Email *'),
+                        validator: (value) => value == null ||
+                                !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                    .hasMatch(value.trim())
+                            ? 'Enter a valid email address.'
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: passwordController,
+                        obscureText: obscurePassword,
+                        decoration: InputDecoration(
+                          labelText: 'Temporary password *',
+                          helperText: 'Use at least 12 characters.',
+                          suffixIcon: IconButton(
+                            tooltip: obscurePassword
+                                ? 'Show password'
+                                : 'Hide password',
+                            onPressed: () => setSheetState(
+                                () => obscurePassword = !obscurePassword),
+                            icon: Icon(obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined),
+                          ),
+                        ),
+                        validator: (value) => value == null || value.length < 12
+                            ? 'Password must be at least 12 characters.'
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+                      DropdownButtonFormField<UserRole>(
+                        initialValue: selectedRole,
+                        decoration: const InputDecoration(labelText: 'Role *'),
+                        items: const [
+                          DropdownMenuItem(
+                              value: UserRole.staff, child: Text('Staff')),
+                          DropdownMenuItem(
+                              value: UserRole.admin, child: Text('Admin')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setSheetState(() => selectedRole = val);
+                          }
+                        },
+                      ),
+                      if (errorMessage != null) ...[
+                        const SizedBox(height: 8),
+                        Text(errorMessage!,
+                            style: const TextStyle(color: AppTheme.danger)),
+                      ],
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: isSaving
+                              ? null
+                              : () async {
+                                  if (!formKey.currentState!.validate()) return;
+                                  setSheetState(() {
+                                    isSaving = true;
+                                    errorMessage = null;
+                                  });
+                                  try {
+                                    await ref
+                                        .read(userRepositoryProvider)
+                                        .invite(
+                                          name: nameController.text.trim(),
+                                          email: emailController.text.trim(),
+                                          password: passwordController.text,
+                                          role: selectedRole,
+                                          phone: '',
+                                        );
+                                    if (!ctx.mounted) return;
+                                    Navigator.pop(ctx);
+                                    if (mounted) {
+                                      setState(() {});
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('User account created.')),
+                                      );
+                                    }
+                                  } catch (error) {
+                                    setSheetState(() {
+                                      isSaving = false;
+                                      errorMessage = _friendlyError(error);
+                                    });
+                                  }
+                                },
+                          icon: isSaving
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Icon(Icons.person_add_alt_1),
+                          label: Text(isSaving ? 'Creating…' : 'Create user'),
+                        ),
+                      ),
                     ],
-                    onChanged: (val) {
-                      if (val != null) setSheetState(() => selectedRole = val);
-                    },
                   ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (nameController.text.trim().isEmpty ||
-                            emailController.text.trim().isEmpty) {
-                          return;
-                        }
-                        await ref.read(userRepositoryProvider).invite(
-                              name: nameController.text.trim(),
-                              email: emailController.text.trim(),
-                              role: selectedRole,
-                              phone: '',
-                            );
-                        if (!ctx.mounted) return;
-                        Navigator.pop(ctx);
-                        if (mounted) {
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                                content: Text('User invited successfully')),
-                          );
-                        }
-                      },
-                      child: const Text('Add User'),
-                    ),
-                  ),
-                ],
+                ),
               ),
             );
           },
@@ -239,97 +334,210 @@ class _UsersScreenState extends ConsumerState<UsersScreen> {
     );
   }
 
+  String _friendlyError(Object error) {
+    final message = error.toString();
+    if (message.contains('User already registered') ||
+        message.contains('already been registered')) {
+      return 'An account with this email already exists.';
+    }
+    return message.replaceFirst('Exception: ', '');
+  }
+
   void _showUserDetailModal(BuildContext context, AppUser user) {
-    showDialog(
+    final formKey = GlobalKey<FormState>();
+    final nameController = TextEditingController(text: user.name);
+    final emailController = TextEditingController(text: user.email);
+    final passwordController = TextEditingController();
+    var selectedRole = user.role;
+    var isSaving = false;
+    var obscurePassword = true;
+    String? errorMessage;
+
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(user.name),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Email: ${user.email}'),
-            const SizedBox(height: 6),
-            Text('Current Role: ${user.role.name.toUpperCase()}'),
-            const SizedBox(height: 6),
-            Text('Status: ${user.status.name.toUpperCase()}'),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      final newRole = user.role == UserRole.admin
-                          ? UserRole.staff
-                          : UserRole.admin;
-                      final updated = user.copyWith(role: newRole);
-                      await ref.read(userRepositoryProvider).update(updated);
-                      if (!ctx.mounted) return;
-                      Navigator.pop(ctx);
-                      if (mounted) {
-                        setState(() {});
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text(
-                                  'Role changed to ${newRole.name.toUpperCase()}')),
-                        );
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Edit company user'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration:
+                          const InputDecoration(labelText: 'Full name *'),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                              ? 'Enter the user’s name.'
+                              : null,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(labelText: 'Email *'),
+                      validator: (value) => value == null ||
+                              !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                  .hasMatch(value.trim())
+                          ? 'Enter a valid email address.'
+                          : null,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: passwordController,
+                      obscureText: obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'New password (optional)',
+                        helperText: 'Leave blank to keep the current password.',
+                        suffixIcon: IconButton(
+                          tooltip: obscurePassword
+                              ? 'Show password'
+                              : 'Hide password',
+                          onPressed: () => setDialogState(
+                              () => obscurePassword = !obscurePassword),
+                          icon: Icon(obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined),
+                        ),
+                      ),
+                      validator: (value) =>
+                          value != null && value.isNotEmpty && value.length < 12
+                              ? 'Password must be at least 12 characters.'
+                              : null,
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButtonFormField<UserRole>(
+                      initialValue: selectedRole,
+                      decoration: const InputDecoration(labelText: 'Role *'),
+                      items: const [
+                        DropdownMenuItem(
+                            value: UserRole.staff, child: Text('Staff')),
+                        DropdownMenuItem(
+                            value: UserRole.admin, child: Text('Admin')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setDialogState(() => selectedRole = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Account status: ${user.status.name}'),
+                    ),
+                    if (errorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(errorMessage!,
+                          style: const TextStyle(color: AppTheme.danger)),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: isSaving ? null : () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppTheme.danger),
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      final confirmed = await showDialog<bool>(
+                        context: ctx,
+                        builder: (confirmContext) => AlertDialog(
+                          title: const Text('Remove user?'),
+                          content:
+                              Text('Disable ${user.name}’s FleetPulse access?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () =>
+                                  Navigator.pop(confirmContext, false),
+                              child: const Text('Cancel'),
+                            ),
+                            FilledButton(
+                              style: FilledButton.styleFrom(
+                                  backgroundColor: AppTheme.danger),
+                              onPressed: () =>
+                                  Navigator.pop(confirmContext, true),
+                              child: const Text('Disable access'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed != true || !ctx.mounted) return;
+                      setDialogState(() {
+                        isSaving = true;
+                        errorMessage = null;
+                      });
+                      try {
+                        await ref.read(userRepositoryProvider).remove(user.id);
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        if (mounted) {
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('User access disabled.')),
+                          );
+                        }
+                      } catch (error) {
+                        setDialogState(() {
+                          isSaving = false;
+                          errorMessage = _friendlyError(error);
+                        });
                       }
                     },
-                    child: Text(user.role == UserRole.admin
-                        ? 'Make Staff'
-                        : 'Make Admin'),
-                  ),
-                ),
-              ],
+              child: const Text('Remove'),
+            ),
+            FilledButton(
+              onPressed: isSaving
+                  ? null
+                  : () async {
+                      if (!formKey.currentState!.validate()) return;
+                      setDialogState(() {
+                        isSaving = true;
+                        errorMessage = null;
+                      });
+                      try {
+                        await ref.read(userRepositoryProvider).update(
+                              user.copyWith(
+                                name: nameController.text.trim(),
+                                email: emailController.text.trim(),
+                                role: selectedRole,
+                              ),
+                              password: passwordController.text.isEmpty
+                                  ? null
+                                  : passwordController.text,
+                            );
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        if (mounted) {
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('User details updated.')),
+                          );
+                        }
+                      } catch (error) {
+                        setDialogState(() {
+                          isSaving = false;
+                          errorMessage = _friendlyError(error);
+                        });
+                      }
+                    },
+              child: Text(isSaving ? 'Saving…' : 'Save changes'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: AppTheme.danger),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (c) => AlertDialog(
-                  title: const Text('Remove User?'),
-                  content:
-                      Text('Are you sure you want to remove ${user.name}?'),
-                  actions: [
-                    TextButton(
-                        onPressed: () => Navigator.pop(c, false),
-                        child: const Text('Cancel')),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.danger),
-                      onPressed: () => Navigator.pop(c, true),
-                      child: const Text('Remove',
-                          style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              );
-
-              if (!context.mounted) return;
-
-              if (confirm == true) {
-                await ref.read(userRepositoryProvider).remove(user.id);
-                if (!ctx.mounted) return;
-                Navigator.pop(ctx);
-                if (mounted) {
-                  setState(() {});
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('User removed')),
-                  );
-                }
-              }
-            },
-            child: const Text('Remove User'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

@@ -80,6 +80,20 @@ class RenderCloudOcrService implements OcrService {
       confidence: (payload['confidence'] as num?)?.toDouble() ?? 0,
       rawLines:
           (payload['raw_lines'] as List<dynamic>? ?? const []).cast<String>(),
+      items: (payload['items'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .where((item) =>
+              item['name'] is String &&
+              item['quantity'] is num &&
+              item['total'] is num)
+          .map((item) => OcrLineItem(
+                name: (item['name'] as String).trim(),
+                quantity: (item['quantity'] as num).toInt(),
+                total: (item['total'] as num).toDouble(),
+              ))
+          .where((item) =>
+              item.name.isNotEmpty && item.quantity > 0 && item.total > 0)
+          .toList(growable: false),
     );
   }
 }

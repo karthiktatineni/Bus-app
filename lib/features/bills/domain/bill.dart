@@ -56,6 +56,7 @@ class Bill {
   final double total;
   final String? imageUrl;
   final double? ocrConfidence;
+  final String? uploaderName;
 
   const Bill({
     required this.id,
@@ -69,6 +70,7 @@ class Bill {
     required this.total,
     this.imageUrl,
     this.ocrConfidence,
+    this.uploaderName,
   });
 
   Bill copyWith({
@@ -83,6 +85,7 @@ class Bill {
     double? total,
     String? imageUrl,
     double? ocrConfidence,
+    String? uploaderName,
     bool clearImageUrl = false,
   }) {
     return Bill(
@@ -97,6 +100,7 @@ class Bill {
       total: total ?? this.total,
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       ocrConfidence: ocrConfidence ?? this.ocrConfidence,
+      uploaderName: uploaderName ?? this.uploaderName,
     );
   }
 
@@ -113,6 +117,7 @@ class Bill {
       'total': total,
       'imageUrl': imageUrl,
       'ocrConfidence': ocrConfidence,
+      'uploaderName': uploaderName,
     };
   }
 
@@ -132,6 +137,7 @@ class Bill {
       total: (json['total'] as num).toDouble(),
       imageUrl: json['imageUrl'] as String?,
       ocrConfidence: (json['ocrConfidence'] as num?)?.toDouble(),
+      uploaderName: json['uploaderName'] as String?,
     );
   }
 

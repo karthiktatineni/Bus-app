@@ -103,12 +103,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     return Scaffold(
       drawer: const AppDrawer(),
-      floatingActionButton: FloatingActionButton.small(
-        heroTag: 'dashboard-fleet-ai',
-        tooltip: 'Open Fleet AI',
-        onPressed: () => context.go('/fleet-ai'),
-        child: const Icon(Icons.auto_awesome),
-      ),
       appBar: AppBar(
         titleSpacing: 0,
         leading: Builder(

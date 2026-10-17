@@ -27,8 +27,28 @@ class SupabaseBillRepository implements BillRepository {
     var query = _client.from('bills').select();
     if (vehicleId != null) query = query.eq('vehicle_id', vehicleId);
     final rows = await query.order('bill_date', ascending: false);
+    final creatorIds = rows
+        .map((row) => row['created_by'])
+        .whereType<String>()
+        .toSet()
+        .toList();
+    final uploaderNames = <String, String>{};
+    if (creatorIds.isNotEmpty) {
+      final profiles = await _client
+          .from('profiles')
+          .select('id,name')
+          .inFilter('id', creatorIds);
+      for (final profile in profiles) {
+        final id = profile['id'] as String?;
+        final name = profile['name'] as String?;
+        if (id != null && name != null && name.isNotEmpty) {
+          uploaderNames[id] = name;
+        }
+      }
+    }
     return Future.wait(rows.map((row) async => _fromRow(
           row,
+          uploaderName: uploaderNames[row['created_by']],
           items: await _client
               .from('bill_items')
               .select()
@@ -40,7 +60,11 @@ class SupabaseBillRepository implements BillRepository {
   Future<Bill> get(String id) async {
     final row = await _client.from('bills').select().eq('id', id).single();
     final items = await _client.from('bill_items').select().eq('bill_id', id);
-    return _fromRow(row, items: items);
+    return _fromRow(
+      row,
+      items: items,
+      uploaderName: await _getUploaderName(row['created_by'] as String?),
+    );
   }
 
   @override
@@ -94,6 +118,25 @@ class SupabaseBillRepository implements BillRepository {
 
   @override
   Future<Bill> update(Bill bill) async {
+    final companyId = await _companyId();
+    final existing = await _client
+        .from('bills')
+        .select('image_url')
+        .eq('id', bill.id)
+        .single();
+    final existingImage = existing['image_url'] as String?;
+    var imageUrl = existingImage;
+    final suppliedImage = bill.imageUrl;
+    if (suppliedImage == null) {
+      imageUrl = null;
+    } else if (File(suppliedImage).existsSync()) {
+      imageUrl = await _storage.upload(
+        bucket: 'bills',
+        companyId: companyId,
+        parentId: bill.vehicleId,
+        filePath: suppliedImage,
+      );
+    }
     await _client.from('bills').update({
       'vehicle_id': bill.vehicleId,
       'service_id': bill.serviceId.isEmpty ? null : bill.serviceId,
@@ -102,12 +145,11 @@ class SupabaseBillRepository implements BillRepository {
       'bill_date': _date(bill.billDate),
       'tax': bill.tax,
       'total': bill.total,
-      'image_url': bill.imageUrl,
+      'image_url': imageUrl,
       'ocr_confidence': bill.ocrConfidence,
     }).eq('id', bill.id);
     await _client.from('bill_items').delete().eq('bill_id', bill.id);
     if (bill.items.isNotEmpty) {
-      final companyId = await _companyId();
       await _client.from('bill_items').insert(bill.items
           .map((item) => {
                 'company_id': companyId,
@@ -154,13 +196,25 @@ class SupabaseBillRepository implements BillRepository {
     await _client.from('bills').update({'image_url': null}).eq('id', id);
   }
 
+  Future<String?> _getUploaderName(String? userId) async {
+    if (userId == null) return null;
+    final row = await _client
+        .from('profiles')
+        .select('name')
+        .eq('id', userId)
+        .maybeSingle();
+    final name = row?['name'] as String?;
+    return name == null || name.isEmpty ? null : name;
+  }
+
   Future<Bill> _fromRow(Map<String, dynamic> row,
-      {List<Map<String, dynamic>> items = const []}) {
-    return _fromRowAsync(row, items: items);
+      {List<Map<String, dynamic>> items = const [], String? uploaderName}) {
+    return _fromRowAsync(row, items: items, uploaderName: uploaderName);
   }
 
   Future<Bill> _fromRowAsync(Map<String, dynamic> row,
-      {List<Map<String, dynamic>> items = const []}) async {
+      {List<Map<String, dynamic>> items = const [],
+      String? uploaderName}) async {
     final storedImage = row['image_url'] as String?;
     final image = storedImage == null
         ? null
@@ -185,6 +239,7 @@ class SupabaseBillRepository implements BillRepository {
       total: (row['total'] as num).toDouble(),
       imageUrl: image,
       ocrConfidence: (row['ocr_confidence'] as num?)?.toDouble(),
+      uploaderName: uploaderName,
     );
   }
 

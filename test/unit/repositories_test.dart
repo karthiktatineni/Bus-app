@@ -181,10 +181,11 @@ void main() {
       final invited = await userRepo.invite(
         name: 'New Staff',
         email: 'staff.new@fleetpulse.com',
+        password: 'FleetPulseTest!2026',
         role: UserRole.staff,
         phone: '+91 99887 76655',
       );
-      expect(invited.status, UserStatus.invited);
+      expect(invited.status, UserStatus.active);
 
       expect(
         () => userRepo.get('fail-id'),

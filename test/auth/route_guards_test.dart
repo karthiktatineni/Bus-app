@@ -98,6 +98,20 @@ void main() {
             currentUser: staffUser),
         '/',
       );
+      expect(
+        RouteGuards.checkRedirect(
+            location: '/services/service-123/edit',
+            isAuthenticated: true,
+            currentUser: staffUser),
+        '/',
+      );
+      expect(
+        RouteGuards.checkRedirect(
+            location: '/services/add',
+            isAuthenticated: true,
+            currentUser: staffUser),
+        isNull,
+      );
     });
 
     test('admin user permitted on admin routes', () {

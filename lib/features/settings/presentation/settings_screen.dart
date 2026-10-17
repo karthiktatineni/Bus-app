@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../core/widgets/app_drawer.dart';
 import '../../auth/providers.dart';
+import '../providers.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -104,6 +105,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
+
+          if (isAdmin) ...[
+            FutureBuilder<CompanySettings>(
+              future: ref.read(settingsRepositoryProvider).getCompanySettings(),
+              builder: (context, snapshot) {
+                return Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.business_outlined),
+                    title: const Text('Fleet company'),
+                    subtitle: Text(snapshot.hasError
+                        ? 'Company name could not be loaded.'
+                        : snapshot.data?.name ?? 'Loading company details…'),
+                    trailing: IconButton(
+                      tooltip: 'Edit company name',
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: snapshot.data == null
+                          ? null
+                          : () => _editCompanyName(snapshot.data!),
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Appearance Card (Theme switch)
           Card(
@@ -378,5 +404,59 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _editCompanyName(CompanySettings settings) async {
+    final controller = TextEditingController(text: settings.name);
+    final formKey = GlobalKey<FormState>();
+    final updatedName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Edit fleet company name'),
+        content: Form(
+          key: formKey,
+          child: TextFormField(
+            controller: controller,
+            autofocus: true,
+            maxLength: 120,
+            decoration: const InputDecoration(labelText: 'Company name'),
+            validator: (value) => value == null || value.trim().isEmpty
+                ? 'Enter a company name.'
+                : null,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(dialogContext, controller.text.trim());
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (updatedName == null || !mounted) return;
+    try {
+      await ref
+          .read(settingsRepositoryProvider)
+          .saveCompanySettings(settings.copyWith(name: updatedName));
+      if (!mounted) return;
+      setState(() {});
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Fleet company name updated.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save company name: $error')),
+      );
+    }
   }
 }

@@ -67,6 +67,17 @@ class MockServiceRepository implements ServiceRepository {
   }
 
   @override
+  Future<ServiceRecord> update(ServiceRecord r) async {
+    await MockDelay.simulate();
+    final index = _services.indexWhere((service) => service.id == r.id);
+    if (index < 0) {
+      throw NotFoundException('Service record with ID ${r.id} not found.');
+    }
+    _services[index] = r;
+    return r;
+  }
+
+  @override
   Future<void> delete(String id) async {
     await MockDelay.simulate();
     final index = _services.indexWhere((service) => service.id == id);
@@ -125,6 +136,26 @@ class MockServiceRepository implements ServiceRepository {
   Future<MaintenanceTask> createTask(MaintenanceTask task) async {
     await MockDelay.simulate();
     _tasks.add(task);
+    return task;
+  }
+
+  @override
+  Future<MaintenanceTask?> taskForService(String serviceRecordId) async {
+    await MockDelay.simulate();
+    for (final task in _tasks) {
+      if (task.serviceRecordId == serviceRecordId) return task;
+    }
+    return null;
+  }
+
+  @override
+  Future<MaintenanceTask> updateTask(MaintenanceTask task) async {
+    await MockDelay.simulate();
+    final index = _tasks.indexWhere((item) => item.id == task.id);
+    if (index < 0) {
+      throw NotFoundException('Task with ID ${task.id} not found.');
+    }
+    _tasks[index] = task;
     return task;
   }
 

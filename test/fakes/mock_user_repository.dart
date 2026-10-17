@@ -31,6 +31,7 @@ class MockUserRepository implements UserRepository {
   Future<AppUser> invite({
     required String name,
     required String email,
+    required String password,
     required UserRole role,
     required String phone,
   }) async {
@@ -47,14 +48,14 @@ class MockUserRepository implements UserRepository {
       email: email,
       phone: phone,
       role: role,
-      status: UserStatus.invited,
+      status: UserStatus.active,
     );
     _users.add(newUser);
     return newUser;
   }
 
   @override
-  Future<AppUser> update(AppUser u) async {
+  Future<AppUser> update(AppUser u, {String? password}) async {
     if (u.id == 'fail-id') {
       await MockDelay.simulate(
           shouldFail: true, failureMessage: 'Simulated user update failure.');

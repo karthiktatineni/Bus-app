@@ -48,6 +48,12 @@ class ServiceDetailScreen extends ConsumerWidget {
             actions: [
               if (isAdmin)
                 IconButton(
+                  tooltip: 'Edit service record',
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => context.push('/services/${record.id}/edit'),
+                ),
+              if (isAdmin)
+                IconButton(
                   tooltip: 'Delete service record',
                   icon: const Icon(Icons.delete_outline),
                   onPressed: () => _deleteService(context, ref, record),

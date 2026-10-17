@@ -6,9 +6,10 @@ abstract class UserRepository {
   Future<AppUser> invite({
     required String name,
     required String email,
+    required String password,
     required UserRole role,
     required String phone,
   });
-  Future<AppUser> update(AppUser u);
+  Future<AppUser> update(AppUser u, {String? password});
   Future<void> remove(String id);
 }

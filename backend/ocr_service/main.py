@@ -134,6 +134,12 @@ INVOICE = re.compile(
 )
 DATE = re.compile(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{1,2}\s+[A-Z]{3,9}\s+\d{4})\b", re.I)
 MONEY = re.compile(r"(?:₹|Rs\.?\s*)?([0-9][0-9,]*(?:\.\d{1,2})?)", re.I)
+ITEM_ROW = re.compile(
+    r"^(?P<name>[A-Za-z][A-Za-z&().,/ -]{2,}?)\s+"
+    r"(?P<quantity>\d{1,4})\s+(?:₹|Rs\.?\s*)?"
+    r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)\s*$",
+    re.I,
+)
 FLEET_TOOLS = [
     {"type": "function", "function": {"name": "fleet_summary", "description": "Get live company fleet totals and overdue counts.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}}},
     {"type": "function", "function": {"name": "vehicle_status", "description": "Find live status for vehicles by registration, make or model. Use all only when requested.", "parameters": {"type": "object", "properties": {"search_query": {"type": "string"}}, "required": ["search_query"], "additionalProperties": False}}},
@@ -458,11 +464,24 @@ def extract(text: str):
 
     vendor = next((line for line in lines[:5] if len(line) >= 3 and not GSTIN.search(line)
                    and not DATE.search(line) and not re.search(r"tax invoice|invoice|bill\s*no", line, re.I)), None)
+    items = []
+    for line in lines:
+        if re.search(r"\b(total|tax|gst|cgst|sgst|igst|subtotal|discount|balance|invoice|bill no|amount payable)\b", line, re.I):
+            continue
+        item_match = ITEM_ROW.fullmatch(line)
+        if not item_match:
+            continue
+        name = item_match.group("name").strip(" .:-")
+        quantity = int(item_match.group("quantity"))
+        amount = float(item_match.group("amount").replace(",", ""))
+        if len(name) < 3 or quantity < 1 or amount <= 0:
+            continue
+        items.append({"name": name, "quantity": quantity, "total": amount})
     fields = sum(value is not None for value in (invoice, bill_date, total, vendor))
     confidence = round(fields / 4, 3)
     return {"vendor": vendor, "invoice_number": invoice, "bill_date": bill_date,
             "grand_total": total, "gstin": next(iter(GSTIN.findall(text)), None),
-            "confidence": confidence, "raw_lines": lines}
+            "confidence": confidence, "raw_lines": lines, "items": items}
 
 
 @app.get("/health")

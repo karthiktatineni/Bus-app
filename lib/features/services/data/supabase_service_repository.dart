@@ -146,6 +146,61 @@ class SupabaseServiceRepository implements ServiceRepository {
   }
 
   @override
+  Future<ServiceRecord> update(ServiceRecord r) async {
+    final companyId = await _getCompanyId();
+    final row = await _client
+        .from('service_records')
+        .update({
+          'vehicle_id': r.vehicleId,
+          'type': r.type.label,
+          'date': r.date.toIso8601String().split('T').first,
+          'odometer_km': r.odometerKm,
+          'workshop': r.workshop,
+          'mechanic': r.mechanic,
+          'notes': r.notes,
+          'labour_cost': r.labourCost,
+          'tax': r.tax,
+          'total': r.total,
+        })
+        .eq('id', r.id)
+        .select()
+        .single();
+
+    await _client.from('service_parts').delete().eq('service_record_id', r.id);
+    if (r.parts.isNotEmpty) {
+      await _client.from('service_parts').insert(r.parts
+          .map((part) => {
+                'company_id': companyId,
+                'service_record_id': r.id,
+                'name': part.name,
+                'qty': part.quantity,
+                'cost': part.totalCost,
+              })
+          .toList());
+    }
+
+    // Keep existing Supabase photos. Upload only newly selected local files.
+    for (final photo
+        in r.photos.where((photo) => File(photo.url).existsSync())) {
+      final objectPath = await _storage.upload(
+        bucket: 'service-photos',
+        companyId: companyId,
+        parentId: r.id,
+        filePath: photo.url,
+      );
+      await _client.from('service_photos').insert({
+        'company_id': companyId,
+        'service_record_id': r.id,
+        'url': objectPath,
+        'type': photo.type.name,
+        'caption': photo.caption,
+        'part_id': photo.partId,
+      });
+    }
+    return _rowToServiceRecord(row);
+  }
+
+  @override
   Future<void> delete(String id) async {
     final photos = await _client
         .from('service_photos')
@@ -235,6 +290,32 @@ class SupabaseServiceRepository implements ServiceRepository {
           'service_record_id': task.serviceRecordId,
           'created_by': _client.auth.currentUser!.id,
         })
+        .select()
+        .single();
+    return _rowToMaintenanceTask(row);
+  }
+
+  @override
+  Future<MaintenanceTask?> taskForService(String serviceRecordId) async {
+    final row = await _client
+        .from('maintenance_tasks')
+        .select()
+        .eq('service_record_id', serviceRecordId)
+        .maybeSingle();
+    return row == null ? null : _rowToMaintenanceTask(row);
+  }
+
+  @override
+  Future<MaintenanceTask> updateTask(MaintenanceTask task) async {
+    final row = await _client
+        .from('maintenance_tasks')
+        .update({
+          'vehicle_id': task.vehicleId,
+          'title': task.title,
+          'due_date': task.dueDate?.toIso8601String().split('T').first,
+          'due_km': task.dueKm,
+        })
+        .eq('id', task.id)
         .select()
         .single();
     return _rowToMaintenanceTask(row);

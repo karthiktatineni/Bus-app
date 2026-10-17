@@ -71,6 +71,8 @@ void main() {
       await tester.drag(find.byType(ListView).first, const Offset(0, -650));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Add service photo'), findsOneWidget);
+      expect(find.byTooltip('Edit service record'), findsNothing);
+      expect(find.byTooltip('Delete service record'), findsNothing);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -171,7 +173,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add Service Record'), findsOneWidget);
-      expect(find.text('Workshop / Vendor *'), findsOneWidget);
+      expect(find.text('Bill OCR Scanner'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 
@@ -312,6 +314,7 @@ Widget _appWith({
   ServiceRepository? serviceRepository,
 }) {
   return ProviderScope(
+    key: ValueKey('app-${user.id}'),
     overrides: _overrides(
       user: user,
       vehicleRepository: vehicleRepository,
@@ -328,6 +331,7 @@ Widget _screenWith({
   required Widget child,
 }) {
   return ProviderScope(
+    key: ValueKey('screen-${user.id}'),
     overrides: _overrides(
       user: user,
       vehicleRepository: vehicleRepository,
@@ -430,6 +434,9 @@ class _FakeServiceRepository implements ServiceRepository {
   Future<ServiceRecord> create(ServiceRecord r) async => r;
 
   @override
+  Future<ServiceRecord> update(ServiceRecord r) async => r;
+
+  @override
   Future<void> delete(String id) async {}
 
   @override
@@ -448,6 +455,17 @@ class _FakeServiceRepository implements ServiceRepository {
     _tasks.add(task);
     return task;
   }
+
+  @override
+  Future<MaintenanceTask?> taskForService(String serviceRecordId) async {
+    for (final task in _tasks) {
+      if (task.serviceRecordId == serviceRecordId) return task;
+    }
+    return null;
+  }
+
+  @override
+  Future<MaintenanceTask> updateTask(MaintenanceTask task) async => task;
 
   @override
   Future<void> setTaskDone(String taskId, bool done) async {}
