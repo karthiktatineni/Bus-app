@@ -265,6 +265,15 @@ class AppDrawer extends ConsumerWidget {
                     },
                   ),
                   _DrawerItem(
+                    icon: Icons.auto_awesome,
+                    title: 'Fleet AI',
+                    isSelected: currentRoute.startsWith('/fleet-ai'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      if (currentRoute != '/fleet-ai') context.go('/fleet-ai');
+                    },
+                  ),
+                  _DrawerItem(
                     icon: Icons.directions_bus,
                     title: 'Vehicles',
                     isSelected: currentRoute.startsWith('/vehicles') &&

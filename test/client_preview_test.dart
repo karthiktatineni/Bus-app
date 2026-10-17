@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:bus_app/core/theme/app_theme.dart';
-import 'package:bus_app/core/widgets/fleet_ai_launcher.dart';
 import 'package:bus_app/features/auth/providers.dart';
 import 'package:bus_app/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:bus_app/features/services/presentation/service_history_screen.dart';
@@ -19,19 +18,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Client preview interactions', () {
-    testWidgets('Fleet AI launcher is hidden on service add and edit forms',
+    testWidgets('floating Fleet AI launcher is removed from app content',
         (tester) async {
-      for (final path in ['/services/add', '/services/service-123/edit']) {
-        await tester.pumpWidget(MaterialApp(
-          home: FleetAiAppOverlay(
-            currentPath: path,
-            child: const Scaffold(body: Text('Service form')),
-          ),
-        ));
-        expect(find.text('Service form'), findsOneWidget);
-        expect(find.byTooltip('Ask AI questions'), findsNothing);
-        expect(tester.takeException(), isNull);
-      }
+      await tester.pumpWidget(const MaterialApp(
+        home: Scaffold(body: Text('Service form')),
+      ));
+      expect(find.text('Service form'), findsOneWidget);
+      expect(find.byTooltip('Ask AI questions'), findsNothing);
+      expect(find.byType(FloatingActionButton), findsNothing);
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('dashboard and fleet lists fit a narrow phone viewport',
@@ -50,6 +45,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.byTooltip('Fleet AI'), findsOneWidget);
       final vehicleListError = tester.takeException();
       expect(vehicleListError, isNull, reason: vehicleListError?.toString());
 
@@ -61,6 +57,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.byTooltip('Fleet AI'), findsNothing);
       expect(tester.takeException(), isNull);
 
       await tester.pumpWidget(
@@ -202,6 +199,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add vehicle'), findsOneWidget);
+      expect(find.text('Fleet AI'), findsOneWidget);
 
       await tester.drag(find.byType(ListView).last, const Offset(0, -260));
       await tester.pumpAndSettle();

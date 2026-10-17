@@ -137,6 +137,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.auto_awesome),
+            tooltip: 'Fleet AI',
+            onPressed: () => context.push('/fleet-ai'),
+          ),
+          IconButton(
             icon: const Icon(Icons.notifications_outlined),
             tooltip: 'Notifications',
             onPressed: () => NotificationsSheet.show(context),
