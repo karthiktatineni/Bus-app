@@ -40,6 +40,6 @@ For the ordered cloud setup and production handoff, see `docs/PROJECT_HANDOVER.m
 1. Apply all three ordered SQL migrations to a staging Supabase project and inspect the policies/RPCs.
 2. Configure a one-time `BOOTSTRAP_SECRET`; deploy `manage-user` and `bootstrap-company`.
 3. Bootstrap a staging company, accept the administrator invitation, and create a staff account.
-4. Create the Render Blueprint; it provisions private Render Key Value and the combined OCR/AI backend. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `NVIDIA_NIM_API_KEY` for that backend, then use its URL as Flutter's `OCR_SERVICE_URL`.
+4. Create the Render Blueprint; it provisions private Render Key Value and the combined OCR/AI backend. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and a rotated `NVIDIA_NIM_API_KEY` for that backend. Flutter defaults to `https://fleetpulse-ocr.onrender.com` and can override it with `OCR_SERVICE_URL`.
 5. Ingest authorized maintenance manuals using `backend/knowledge/ingest.py`, with company scope for private manuals.
 6. Complete `docs/ACCEPTANCE_TEST.md`, configure release signing, then create and install the release APK.

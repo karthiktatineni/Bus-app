@@ -10,8 +10,11 @@ import '../domain/ocr_service.dart';
 class RenderCloudOcrService implements OcrService {
   RenderCloudOcrService({http.Client? client, String? serviceUrl})
       : _client = client ?? http.Client(),
-        _serviceUrl =
-            serviceUrl ?? const String.fromEnvironment('OCR_SERVICE_URL');
+        _serviceUrl = serviceUrl ??
+            const String.fromEnvironment(
+              'OCR_SERVICE_URL',
+              defaultValue: 'https://fleetpulse-ocr.onrender.com',
+            );
 
   final http.Client _client;
   final String _serviceUrl;

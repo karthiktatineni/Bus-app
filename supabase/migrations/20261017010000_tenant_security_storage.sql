@@ -132,6 +132,14 @@ VALUES ('vehicle-photos','vehicle-photos',false), ('service-photos','service-pho
        ('bills','bills',false), ('avatars','avatars',false)
 ON CONFLICT (id) DO UPDATE SET public = false;
 
+-- Remove permissive policies found on the existing Supabase project. Storage
+-- policies are permissive by default and combine with OR, so leaving these in
+-- place would bypass the tenant-folder checks below.
+DROP POLICY IF EXISTS auth_users_upload ON storage.objects;
+DROP POLICY IF EXISTS auth_users_select ON storage.objects;
+DROP POLICY IF EXISTS auth_users_update ON storage.objects;
+DROP POLICY IF EXISTS auth_users_delete ON storage.objects;
+
 DROP POLICY IF EXISTS fleet_media_read ON storage.objects;
 CREATE POLICY fleet_media_read ON storage.objects FOR SELECT TO authenticated
   USING (bucket_id IN ('vehicle-photos','service-photos','bills','avatars')

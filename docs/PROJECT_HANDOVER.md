@@ -52,7 +52,7 @@ Use public client configuration only:
 
 - `SUPABASE_URL` — the Supabase project URL.
 - `SUPABASE_ANON_KEY` — public anon/publishable client key.
-- `OCR_SERVICE_URL` — deployed Render OCR base URL.
+- `OCR_SERVICE_URL` — optional override for the deployed Render OCR base URL. Defaults to `https://fleetpulse-ocr.onrender.com` in the app.
 
 Never pass the service-role key, NVIDIA key, bootstrap secret, or Redis connection URL through Flutter build defines.
 
@@ -125,7 +125,7 @@ Afterward verify that tables, storage buckets, RPCs, RLS policies, cache generat
 1. Connect the repository to Render and create the Blueprint from `backend/ocr_service/render.yaml`. It provisions an internal-only Render Key Value instance and the existing Docker web service in the same region, then injects the private `REDIS_URL`. The Blueprint sets the Docker context to `backend/ocr_service` so the Dockerfile can copy its requirements and application file.
 2. Add `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `NVIDIA_NIM_API_KEY` to the Render service when prompted by the Blueprint. Never put the NVIDIA key or Redis URL in Flutter defines.
 3. Wait for `/health` to report healthy; then test `/ocr/scan-bill` with a non-sensitive staging bill image and call `/ai/fleet-assistant` from a signed-in staging app.
-4. Use the resulting HTTPS base URL as Flutter `OCR_SERVICE_URL`. The AI screen uses `FLEET_BACKEND_URL` if provided, otherwise it shares `OCR_SERVICE_URL`.
+4. The app defaults to `https://fleetpulse-ocr.onrender.com` for Flutter `OCR_SERVICE_URL`. Override it for staging or another service. The AI screen uses `FLEET_BACKEND_URL` if provided; otherwise it shares the OCR URL.
 5. Repeat OCR and AI requests to confirm cache behavior. If Render exposes cache metrics for the selected Key Value plan, verify hits and generation-based invalidation there; cache outages should not block the app.
 
 ### F. Ingest knowledge for RAG
@@ -148,7 +148,7 @@ flutter test
 flutter run `
   --dart-define=SUPABASE_URL=https://YOUR_STAGING_PROJECT.supabase.co `
   --dart-define=SUPABASE_ANON_KEY=YOUR_STAGING_PUBLIC_KEY `
-  --dart-define=OCR_SERVICE_URL=https://YOUR_OCR_SERVICE.onrender.com
+  --dart-define=OCR_SERVICE_URL=https://fleetpulse-ocr.onrender.com
 ```
 
 Then complete every scenario in `docs/ACCEPTANCE_TEST.md`, recording environment, app version, pass/fail, and non-secret evidence.

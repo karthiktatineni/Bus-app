@@ -37,7 +37,7 @@ Updated 17 October 2026.
 - [x] Flutter bill entry calls the configured OCR URL and handles the returned fields.
 - [x] Dockerfile and Render service configuration are present.
 - [x] Optional Redis cache stores successful parsed OCR output for 24 hours, partitioned by app user scope and image digest; a Redis failure falls back to OCR processing.
-- [ ] Create the Render Blueprint to deploy the combined OCR/AI service and private Key Value cache; set the service URL as Flutter's `OCR_SERVICE_URL`.
+- [ ] Create the Render Blueprint to deploy the combined OCR/AI service and private Key Value cache; the app defaults to `https://fleetpulse-ocr.onrender.com` (override with `OCR_SERVICE_URL` for staging).
 - [ ] Evaluate OCR against representative real bills. The current confidence is a field-presence heuristic, not a calibrated accuracy score.
 
 ## AI model and RAG chatbot

@@ -8,7 +8,7 @@
 - [ ] Set a one-time random `BOOTSTRAP_SECRET` in Supabase Edge Function secrets. Never place privileged keys in Flutter or source control.
 - [ ] Deploy `manage-user` and `bootstrap-company`; run the one-time bootstrap to invite the first company admin.
 - [ ] Create staging company/vehicle/service records through the app. No sample data has been inserted into production.
-- [ ] Create the Render Blueprint in `backend/ocr_service/render.yaml`; it provisions private Render Key Value and the combined OCR/AI backend. Set the backend's Supabase URL/public key and NVIDIA key, then set the service HTTPS URL as Flutter's `OCR_SERVICE_URL` build define.
+- [ ] Create the Render Blueprint in `backend/ocr_service/render.yaml`; it provisions private Render Key Value and the combined OCR/AI backend. Set the backend's Supabase URL/public key and rotated NVIDIA key. The app defaults to `https://fleetpulse-ocr.onrender.com`; use `OCR_SERVICE_URL` only to override it.
 - [ ] Add authorized fleet maintenance manuals to a local Markdown/text corpus and run `backend/knowledge/ingest.py` with service-role and NVIDIA credentials. Scope company documents with `FLEET_KNOWLEDGE_COMPANY_ID`.
 
 ## Verification and release

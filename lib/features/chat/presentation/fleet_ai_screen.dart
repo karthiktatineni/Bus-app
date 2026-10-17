@@ -18,7 +18,10 @@ class FleetAiScreen extends ConsumerStatefulWidget {
 class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
   static const _backendUrl = String.fromEnvironment(
     'FLEET_BACKEND_URL',
-    defaultValue: String.fromEnvironment('OCR_SERVICE_URL'),
+    defaultValue: String.fromEnvironment(
+      'OCR_SERVICE_URL',
+      defaultValue: 'https://fleetpulse-ocr.onrender.com',
+    ),
   );
   final _controller = TextEditingController();
   final _scrollController = ScrollController();

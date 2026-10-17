@@ -15,7 +15,7 @@ Flutter fleet maintenance app with Supabase Auth, PostgreSQL, private Storage, a
 flutter run `
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co `
   --dart-define=SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY `
-  --dart-define=OCR_SERVICE_URL=https://YOUR_OCR_SERVICE.onrender.com
+  --dart-define=OCR_SERVICE_URL=https://fleetpulse-ocr.onrender.com
 ```
 
 `SUPABASE_ANON_KEY` is the public client key. The NVIDIA key is used by the Render backend and must never be included in Flutter build defines. Render Key Value is reached over Render's private network; no Upstash/Redis Cloud REST token is needed. The app intentionally does not contain demo login credentials.
@@ -36,7 +36,7 @@ flutter test
 flutter build apk --release `
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co `
   --dart-define=SUPABASE_ANON_KEY=YOUR_PUBLIC_ANON_KEY `
-  --dart-define=OCR_SERVICE_URL=https://YOUR_OCR_SERVICE.onrender.com
+  --dart-define=OCR_SERVICE_URL=https://fleetpulse-ocr.onrender.com
 ```
 
 Configure an Android release keystore and signing values in a local, untracked Gradle properties file before distributing a release APK.
