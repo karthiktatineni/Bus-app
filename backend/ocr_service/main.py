@@ -1092,18 +1092,22 @@ async def scan_bill(request: Request):
                 ImageFilter.UnsharpMask(radius=1.2, percent=140, threshold=3)
             )
             thresholded = enhanced.point(lambda pixel: 255 if pixel > 180 else 0)
+            rotated_clockwise = image.rotate(90, expand=True)
+            rotated_counterclockwise = image.rotate(270, expand=True)
             attempts = [
                 (sharpened, "--oem 3 --psm 6"),
                 (image, "--oem 3 --psm 11"),
                 (image, "--oem 3 --psm 4"),
                 (thresholded, "--oem 3 --psm 6"),
                 (ImageOps.invert(thresholded), "--oem 3 --psm 11"),
+                (rotated_clockwise, "--oem 3 --psm 6"),
+                (rotated_counterclockwise, "--oem 3 --psm 6"),
             ]
             best_text = ""
             timed_out = 0
             for candidate, config in attempts:
                 try:
-                    text = pytesseract.image_to_string(candidate, config=config, timeout=8)
+                    text = pytesseract.image_to_string(candidate, config=config, timeout=6)
                 except RuntimeError as exc:
                     # pytesseract 0.3.13 reports subprocess timeouts as RuntimeError.
                     if "Tesseract process timeout" not in str(exc):
