@@ -175,32 +175,64 @@ class BillDetailScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .surfaceContainerHighest
-                              .withValues(alpha: 0.4),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppTheme.border),
-                        ),
-                        child: bill.imageUrl == null
-                            ? const Center(
-                                child: Text('No invoice image attached'),
-                              )
-                            : ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  bill.imageUrl!,
-                                  width: double.infinity,
-                                  height: 200,
-                                  fit: BoxFit.contain,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Text('Invoice image unavailable'),
+                          onTap: bill.imageUrl == null
+                              ? null
+                              : () => _showInvoiceImage(context, bill),
+                          child: Container(
+                            height: 200,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppTheme.border),
+                            ),
+                            child: bill.imageUrl == null
+                                ? const Center(
+                                    child: Text('No invoice image attached'),
+                                  )
+                                : ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        Image.network(
+                                          bill.imageUrl!,
+                                          width: double.infinity,
+                                          height: 200,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) =>
+                                              const Center(
+                                            child: Text(
+                                                'Invoice image unavailable'),
+                                          ),
+                                        ),
+                                        const Positioned(
+                                          right: 8,
+                                          bottom: 8,
+                                          child: Tooltip(
+                                            message: 'Tap to open invoice',
+                                            child: CircleAvatar(
+                                              radius: 16,
+                                              backgroundColor: Colors.black54,
+                                              child: Icon(
+                                                Icons.open_in_full,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -210,6 +242,57 @@ class BillDetailScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _showInvoiceImage(BuildContext context, Bill bill) {
+    final imageUrl = bill.imageUrl;
+    if (imageUrl == null) return Future<void>.value();
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(12),
+        child: SizedBox(
+          width: MediaQuery.sizeOf(context).width,
+          height: MediaQuery.sizeOf(context).height * 0.88,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: InteractiveViewer(
+                  minScale: 0.8,
+                  maxScale: 5,
+                  child: Image.network(
+                    imageUrl,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, progress) =>
+                        progress == null
+                            ? child
+                            : const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Text(
+                        'Invoice image unavailable',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: IconButton.filledTonal(
+                  tooltip: 'Close invoice preview',
+                  onPressed: () => Navigator.pop(dialogContext),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -310,6 +393,7 @@ class BillDetailScreen extends ConsumerWidget {
                               ),
                             );
                         ref.invalidate(billRepositoryProvider);
+                        ref.invalidate(billsListProvider);
                         if (dialogContext.mounted) {
                           Navigator.pop(dialogContext);
                         }
@@ -356,6 +440,8 @@ class BillDetailScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(billRepositoryProvider).delete(bill.id);
+      ref.invalidate(billRepositoryProvider);
+      ref.invalidate(billsListProvider);
       if (!context.mounted) return;
       context.go('/bills');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -393,6 +479,8 @@ class BillDetailScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(billRepositoryProvider).deleteImage(bill.id);
+      ref.invalidate(billRepositoryProvider);
+      ref.invalidate(billsListProvider);
       ref.invalidate(billRepositoryProvider);
     } catch (_) {
       if (!context.mounted) return;

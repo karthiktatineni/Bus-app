@@ -852,6 +852,20 @@ def _normalize_evidence(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
 
 
+def _parse_ai_amount(value):
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        cleaned = re.sub(r"[^0-9.-]", "", value.replace(",", ""))
+        try:
+            return float(cleaned)
+        except ValueError:
+            return None
+    return None
+
+
 def _verified_ai_items(value, raw_lines: list[str]):
     """Only accept AI line items whose name and amounts are present in OCR text."""
     if not isinstance(value, list):
@@ -877,8 +891,10 @@ def _verified_ai_items(value, raw_lines: list[str]):
             continue
         try:
             quantity = int(candidate.get("quantity"))
-            amount = float(candidate.get("total"))
         except (TypeError, ValueError, OverflowError):
+            continue
+        amount = _parse_ai_amount(candidate.get("total"))
+        if amount is None:
             continue
         if not 1 <= quantity <= 10000 or not 0 < amount <= 100_000_000:
             continue
@@ -909,9 +925,7 @@ async def structure_bill_text_with_ai(text: str):
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if not lines:
         return None
-    prompt_lines = "\n".join(
-        f"{index + 1}: {line[:300]}" for index, line in enumerate(lines[:120])
-    )
+    prompt_lines = "\n".join(line[:300] for line in lines[:120])
     messages = [
         {
             "role": "system",
@@ -958,7 +972,16 @@ async def structure_bill_text_with_ai(text: str):
             return None
         content = re.sub(r"<think>.*?</think>", "", content.strip(), flags=re.I | re.S)
         content = re.sub(r"^\s*```(?:json)?\s*|\s*```\s*$", "", content.strip(), flags=re.I)
-        structured = json.loads(content)
+        try:
+            structured = json.loads(content)
+        except json.JSONDecodeError:
+            # Some compatible chat models wrap the JSON in a short preamble
+            # despite the JSON-only instruction. Parse only the JSON object;
+            # field and source-line validation still happens below.
+            start, end = content.find("{"), content.rfind("}")
+            if start < 0 or end <= start:
+                return None
+            structured = json.loads(content[start : end + 1])
         return structured if isinstance(structured, dict) else None
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError):
         logger.warning("OCR text structuring failed; using evidence-based OCR extraction")
@@ -986,9 +1009,8 @@ def merge_ai_bill_fields(result: dict, structured, raw_text: str):
         if any(parse_date(match) == ai_date for match in DATE.findall(raw_text)):
             result["bill_date"] = ai_date
     for key in ("grand_total", "labor_total"):
-        try:
-            value = float(structured.get(key))
-        except (TypeError, ValueError, OverflowError):
+        value = _parse_ai_amount(structured.get(key))
+        if value is None:
             continue
         if not 0 < value <= 100_000_000:
             continue

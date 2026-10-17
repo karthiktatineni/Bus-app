@@ -529,6 +529,7 @@ class ServiceDetailScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
     try {
       await ref.read(serviceRepositoryProvider).delete(record.id);
+      ref.invalidate(serviceRepositoryProvider);
       if (!context.mounted) return;
       context.go('/services');
       ScaffoldMessenger.of(context).showSnackBar(

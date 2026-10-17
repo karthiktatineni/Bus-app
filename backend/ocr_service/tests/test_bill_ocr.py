@@ -70,6 +70,48 @@ def test_authenticated_bill_ocr_endpoint_returns_reviewable_fields(monkeypatch):
     assert payload["labor_total"] == 4000.0
 
 
+def test_ai_structured_parts_map_to_reviewable_rows_only_with_ocr_evidence():
+    raw_text = (
+        "Northside Bus Workshop\n"
+        "Front brake pad replacement 2 8,450.00\n"
+        "Labour charge 1 4,000.00\n"
+        "Grand Total Rs. 12,450.00"
+    )
+    result = main.extract(raw_text)
+    structured = {
+        "items": [
+            {
+                "name": "Front brake pad replacement",
+                "quantity": 2,
+                "total": 8450.0,
+                "source_line": "Front brake pad replacement 2 8,450.00",
+                "kind": "part",
+            },
+            {
+                "name": "Labour charge",
+                "quantity": 1,
+                "total": 4000.0,
+                "source_line": "Labour charge 1 4,000.00",
+                "kind": "labor",
+            },
+            {
+                "name": "Engine oil",
+                "quantity": 1,
+                "total": 2500.0,
+                "source_line": "No such engine oil row exists on the bill",
+                "kind": "part",
+            },
+        ]
+    }
+
+    result = main.merge_ai_bill_fields(result, structured, raw_text)
+
+    assert result["items"] == [
+        {"name": "Front brake pad replacement", "quantity": 2, "total": 8450.0}
+    ]
+    assert result["labor_total"] == 4000.0
+
+
 def test_real_tesseract_reads_synthetic_invoice_through_scan_endpoint(monkeypatch):
     tesseract = shutil.which("tesseract")
     if not tesseract:

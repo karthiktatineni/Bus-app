@@ -426,6 +426,9 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
     }
 
     if (mounted) {
+      ref.invalidate(serviceRepositoryProvider);
+      ref.invalidate(billRepositoryProvider);
+      ref.invalidate(billsListProvider);
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
