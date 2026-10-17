@@ -15,11 +15,12 @@ import pytesseract
 import redis.asyncio as redis
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from PIL import Image, ImageOps
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, REGISTRY, generate_latest
 from fastapi.responses import Response
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 load_dotenv(override=False)
 logger = logging.getLogger("fleetpulse")
@@ -668,7 +669,7 @@ async def fleet_assistant(request: Request):
 
 
 @app.post("/ocr/scan-bill")
-async def scan_bill(request: Request, file: UploadFile = File(...)):
+async def scan_bill(request: Request):
     authorization = request.headers.get("authorization", "")
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized.")
@@ -682,6 +683,13 @@ async def scan_bill(request: Request, file: UploadFile = File(...)):
     cache_scope = user.get("id")
     if not isinstance(cache_scope, str) or not cache_scope:
         raise HTTPException(status_code=401, detail="Unauthorized.")
+    try:
+        form = await request.form()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Upload the bill as a multipart image file.") from exc
+    file = form.get("file")
+    if not isinstance(file, StarletteUploadFile):
+        raise HTTPException(status_code=400, detail="The bill image is missing from the multipart 'file' field.")
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=415, detail="Upload an image file.")
     raw = await file.read(12 * 1024 * 1024 + 1)
@@ -703,9 +711,30 @@ async def scan_bill(request: Request, file: UploadFile = File(...)):
                 raise ValueError("unsupported_image_format")
             if source.width <= 0 or source.height <= 0 or source.width * source.height > 25_000_000:
                 raise ValueError("image_dimensions_exceeded")
-            source.load()
-            image = ImageOps.grayscale(source.convert("RGB"))
-            return pytesseract.image_to_string(image, config="--psm 6", timeout=20)
+            oriented = ImageOps.exif_transpose(source)
+            oriented.load()
+            image = ImageOps.autocontrast(ImageOps.grayscale(oriented.convert("RGB")))
+            if image.width < 1600:
+                scale = min(2.0, 1600 / image.width)
+                new_size = (int(image.width * scale), int(image.height * scale))
+                if new_size[0] * new_size[1] <= 25_000_000:
+                    image = image.resize(new_size, Image.Resampling.LANCZOS)
+
+            # Bills have varied layouts. Try a block layout first, then sparse
+            # receipt text, then a contrast-normalized thresholded pass.
+            attempts = [
+                (image, "--oem 3 --psm 6"),
+                (image, "--oem 3 --psm 11"),
+                (image.point(lambda pixel: 255 if pixel > 175 else 0), "--oem 3 --psm 6"),
+            ]
+            best_text = ""
+            for candidate, config in attempts:
+                text = pytesseract.image_to_string(candidate, config=config, timeout=15)
+                if len(text.strip()) > len(best_text.strip()):
+                    best_text = text
+                if len(best_text.strip()) >= 24:
+                    break
+            return best_text
 
     try:
         text = await asyncio.to_thread(recognize_bill, raw)
@@ -718,7 +747,17 @@ async def scan_bill(request: Request, file: UploadFile = File(...)):
             raise HTTPException(status_code=408, detail="Bill image processing timed out. Try a smaller image.") from exc
         raise HTTPException(status_code=422, detail="Could not read the uploaded bill image.") from exc
     if not text.strip():
-        raise HTTPException(status_code=422, detail="No text was detected in the bill image.")
+        logger.info(
+            "Bill OCR found no readable text image_bytes=%d content_type=%s",
+            len(raw), file.content_type,
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "No readable text was found. Retake the bill in sharp focus, with the full page visible "
+                "and even lighting, or enter the bill fields manually."
+            ),
+        )
     result = extract(text)
     if cache_key and app.state.redis:
         try:

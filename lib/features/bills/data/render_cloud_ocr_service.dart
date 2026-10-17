@@ -55,6 +55,14 @@ class RenderCloudOcrService implements OcrService {
         final error = jsonDecode(response.body);
         if (error is Map<String, dynamic> && error['detail'] is String) {
           detail = ': ${error['detail']}';
+        } else if (error is Map<String, dynamic> && error['detail'] is List) {
+          final messages = (error['detail'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map((item) => item['msg'])
+              .whereType<String>()
+              .where((message) => message.isNotEmpty)
+              .toList();
+          if (messages.isNotEmpty) detail = ': ${messages.join('; ')}';
         }
       } catch (_) {
         // Keep the status code when the server response is not JSON.
