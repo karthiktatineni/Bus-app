@@ -5,7 +5,7 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 ## Verified in this pass
 
 - [x] Flutter analysis clean.
-- [x] Full Flutter suite: 58 tests passed.
+- [x] Full Flutter suite: 59 tests passed.
 - [x] Narrow 320 px dashboard, vehicle list, service detail/history layout regression passed.
 - [x] Python OCR/RAG tests: 5 passed, including the authenticated bill image upload/extraction response and missing-session rejection.
 - [x] Supabase migration list reconciled through `20261017170000`.
@@ -17,6 +17,7 @@ Updated 17 October 2026. See [PROJECT_HANDOVER.md](PROJECT_HANDOVER.md) for sequ
 - [x] Service entry collects work details, parts/costs and photos; bill-image OCR values are editable and linked bills are retrievable from service detail.
 - [x] Dashboard To do and Maintenance Reminders include Due Soon/Overdue vehicles without open maintenance tasks, without duplicate reminders.
 - [x] Widget regressions cover due-status reminders and the vehicle-level add-service action.
+- [x] 320 px narrow-phone regression covers the service form stepper and vehicle selector.
 
 ## Remaining before production sign-off
 

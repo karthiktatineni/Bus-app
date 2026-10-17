@@ -281,7 +281,9 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
           }
 
           return Stepper(
-            type: StepperType.horizontal,
+            type: MediaQuery.sizeOf(context).width < 600
+                ? StepperType.vertical
+                : StepperType.horizontal,
             currentStep: _currentStep,
             onStepTapped: (step) => setState(() => _currentStep = step),
             onStepContinue: () {
@@ -344,12 +346,17 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                     DropdownButtonFormField<String>(
                       key: ValueKey(vehicleIds.join('|')),
                       initialValue: _selectedVehicleId,
+                      isExpanded: true,
                       decoration: const InputDecoration(
                           labelText: 'Select Bus / Vehicle *'),
                       items: vehicles
                           .map((v) => DropdownMenuItem(
                                 value: v.id,
-                                child: Text('${v.registrationNo} (${v.make})'),
+                                child: Text(
+                                  '${v.registrationNo} (${v.make})',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ))
                           .toList(),
                       onChanged: (val) =>
@@ -358,6 +365,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                     const SizedBox(height: 12),
                     DropdownButtonFormField<ServiceType>(
                       initialValue: _serviceType,
+                      isExpanded: true,
                       decoration:
                           const InputDecoration(labelText: 'Service Type *'),
                       items: ServiceType.values

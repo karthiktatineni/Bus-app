@@ -5,6 +5,7 @@ import 'package:bus_app/features/auth/providers.dart';
 import 'package:bus_app/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:bus_app/features/services/presentation/service_history_screen.dart';
 import 'package:bus_app/features/services/presentation/service_detail_screen.dart';
+import 'package:bus_app/features/services/presentation/add_service_screen.dart';
 import 'package:bus_app/features/services/providers.dart';
 import 'package:bus_app/features/vehicles/presentation/vehicles_list_screen.dart';
 import 'package:bus_app/features/vehicles/presentation/add_edit_vehicle_screen.dart';
@@ -151,6 +152,26 @@ void main() {
       await tester.tap(find.text('Service history'));
       await tester.pumpAndSettle();
       expect(find.text('Add service record'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('service entry form fits a narrow phone viewport',
+        (tester) async {
+      tester.view.physicalSize = const Size(320, 720);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(_screenWith(
+        user: _staffUser,
+        vehicleRepository: _FakeVehicleRepository(_vehicles),
+        serviceRepository: _FakeServiceRepository(),
+        child: const AddServiceScreen(preselectedVehicleId: 'veh-active'),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add Service Record'), findsOneWidget);
+      expect(find.text('Workshop / Vendor *'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

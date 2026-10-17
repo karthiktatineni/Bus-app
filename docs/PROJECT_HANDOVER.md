@@ -8,7 +8,7 @@ Updated 17 October 2026.
 - Remote Supabase migrations through `20261017170000` are applied and match local migration history.
 - After the push, Render health uptime reset; `/health` is currently healthy. This indicates a restart after the push, but the Render dashboard's deployed revision and a signed-in AI request still need direct confirmation.
 - The OnePlus 7T is connected as ADB device `3b038054`. Debug APK `fleetpulse.apk` was installed and launched.
-- All 58 Flutter tests, `flutter analyze`, and 5 Python tests passed. Python syntax compilation passed.
+- All 59 Flutter tests, `flutter analyze`, and 5 Python tests passed. Python syntax compilation passed.
 - No authorized manuals are currently in the RAG corpus; manual-grounded answers are not ready until ingestion.
 
 ## Changes made
@@ -24,10 +24,11 @@ Updated 17 October 2026.
 9. Included Due Soon/Overdue vehicle status in dashboard To do and the full reminder page when no corresponding open maintenance task exists; corrected date-only due comparisons.
 10. Added [SERVICE_RECORD_WORKFLOW.md](SERVICE_RECORD_WORKFLOW.md) with the user flow, data architecture, storage mapping, OCR limits and live acceptance checks.
 11. Tightened bill-number extraction so the generic heading “Tax Invoice” cannot be mistaken for the invoice number; the OCR endpoint contract is covered with an authenticated upload test.
+12. The service form uses a vertical stepper on narrow phones and expanded, ellipsized vehicle dropdowns; a 320 px regression test confirms it does not overflow.
 
 ## Remaining work
 
-1. Confirm the Render dashboard shows commit `348edf7` deployed. Check service logs and run a signed-in Fleet AI question in the app; `/health` does not confirm successful database/RAG/model calls.
+1. Confirm the Render dashboard shows the service/OCR source commit `9852dbf` deployed. Check service logs and run a signed-in Fleet AI question in the app; `/health` does not confirm successful database/RAG/model calls.
 3. Test a real OCR bill scan and fleet-data question, then verify two test tenants cannot read each other's fleet data or RAG chunks.
 4. Ingest authorized manuals and verify citations, retrieval quality, tenant scoping, and abstention for unsupported questions.
 5. Test photo/document upload, display, and deletion with admin and staff accounts against live RLS/Storage.

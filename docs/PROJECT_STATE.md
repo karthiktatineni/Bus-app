@@ -27,12 +27,13 @@ This is the verified handover after the latest UI, backend, RAG embedding, and A
 - User-entered service parts are copied to `bill_items`. OCR does not reliably extract individual part names/quantities; parts must be entered and checked in the form.
 - Fixed an OCR parser false positive where a generic “Tax Invoice” heading could be mistaken for an invoice number; extraction now requires a label and value on the same line. Added authenticated-upload response and missing-session tests.
 - Dashboard To do and Maintenance Reminders now include Due Soon/Overdue vehicle statuses when no open maintenance task exists for that bus. Date-only comparison treats a task due today as due today, not overdue.
+- The Add Service Record stepper switches to vertical on phone widths; the bus selector expands and truncates long labels instead of overflowing. Added a 320 px form regression test.
 - Added [SERVICE_RECORD_WORKFLOW.md](SERVICE_RECORD_WORKFLOW.md) for the user steps, request/data flow, tables/buckets, OCR limits and live acceptance test.
 
 ## Verification completed
 
 - `flutter analyze`: no issues found.
-- `flutter test`: all 58 tests passed, including narrow-phone layout, vehicle-status To do and vehicle service-entry regressions.
+- `flutter test`: all 59 tests passed, including 320 px service-form, vehicle-status To do and vehicle service-entry regressions.
 - Python OCR/backend and knowledge ingestion tests: 5 passed, including signed-in bill-image upload/field extraction and missing-session rejection.
 - `npx supabase migration list --project-ref uwvjvlkkcknwiapvrwng`: local and remote migration versions matched, including `20261017170000`.
 - Render health endpoint returned healthy Redis, Supabase auth, and OCR checks.
