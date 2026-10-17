@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/router/app_router.dart';
+import 'core/security/secure_auth_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 
@@ -15,7 +16,16 @@ void main() async {
     throw StateError(
         'Provide SUPABASE_URL and SUPABASE_ANON_KEY with --dart-define.');
   }
-  await Supabase.initialize(url: supabaseUrl, publishableKey: supabaseKey);
+  final projectKey = Uri.parse(supabaseUrl).host.split('.').first;
+  await Supabase.initialize(
+    url: supabaseUrl,
+    publishableKey: supabaseKey,
+    authOptions: FlutterAuthClientOptions(
+      localStorage: SecureAuthStorage(
+        persistSessionKey: 'sb-$projectKey-auth-token',
+      ),
+    ),
+  );
 
   runApp(const ProviderScope(child: FleetPulseApp()));
 }

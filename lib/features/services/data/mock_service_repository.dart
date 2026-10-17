@@ -78,6 +78,13 @@ class MockServiceRepository implements ServiceRepository {
   }
 
   @override
+  Future<MaintenanceTask> createTask(MaintenanceTask task) async {
+    await MockDelay.simulate();
+    _tasks.add(task);
+    return task;
+  }
+
+  @override
   Future<void> setTaskDone(String taskId, bool done) async {
     if (taskId == 'fail-id') {
       await MockDelay.simulate(

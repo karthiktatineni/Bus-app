@@ -155,6 +155,31 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.vehicleId != null;
+    final makes = <String>[
+      'Ashok Leyland',
+      'Tata Motors',
+      'Eicher',
+      'Volvo',
+      'BharatBenz',
+    ];
+    final depots = <String>[
+      'Bengaluru Central',
+      'Hyderabad East Depot',
+      'Pune Industrial Bay',
+      'Chennai Hub',
+    ];
+    final fuels = <String>['Diesel', 'CNG', 'Electric (EV)'];
+    // Existing fleet records may contain values outside the starter options.
+    // Keep them selectable while editing instead of crashing the whole screen.
+    if (_selectedMake.isNotEmpty && !makes.contains(_selectedMake)) {
+      makes.insert(0, _selectedMake);
+    }
+    if (_selectedDepot.isNotEmpty && !depots.contains(_selectedDepot)) {
+      depots.insert(0, _selectedDepot);
+    }
+    if (_selectedFuel.isNotEmpty && !fuels.contains(_selectedFuel)) {
+      fuels.insert(0, _selectedFuel);
+    }
 
     return PopScope(
       canPop: !_isDirty,
@@ -228,13 +253,7 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                               initialValue: _selectedMake,
                               decoration:
                                   const InputDecoration(labelText: 'Make *'),
-                              items: [
-                                'Ashok Leyland',
-                                'Tata Motors',
-                                'Eicher',
-                                'Volvo',
-                                'BharatBenz'
-                              ]
+                              items: makes
                                   .map((m) => DropdownMenuItem(
                                       value: m, child: Text(m)))
                                   .toList(),
@@ -289,12 +308,7 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                         initialValue: _selectedDepot,
                         decoration: const InputDecoration(
                             labelText: 'Assigned Depot *'),
-                        items: [
-                          'Bengaluru Central',
-                          'Hyderabad East Depot',
-                          'Pune Industrial Bay',
-                          'Chennai Hub'
-                        ]
+                        items: depots
                             .map((d) =>
                                 DropdownMenuItem(value: d, child: Text(d)))
                             .toList(),
@@ -391,7 +405,7 @@ class _AddEditVehicleScreenState extends ConsumerState<AddEditVehicleScreen> {
                               initialValue: _selectedFuel,
                               decoration: const InputDecoration(
                                   labelText: 'Fuel System *'),
-                              items: ['Diesel', 'CNG', 'Electric (EV)']
+                              items: fuels
                                   .map((f) => DropdownMenuItem(
                                       value: f, child: Text(f)))
                                   .toList(),

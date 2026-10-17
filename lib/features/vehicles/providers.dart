@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'domain/vehicle.dart';
 import 'domain/vehicle_repository.dart';
 import 'data/supabase_vehicle_repository.dart';
 import '../../core/services/supabase_service.dart';
@@ -11,4 +12,9 @@ export 'domain/vehicle_repository.dart';
 
 final vehicleRepositoryProvider = Provider<VehicleRepository>((ref) {
   return SupabaseVehicleRepository(ref.watch(supabaseClientProvider));
+});
+
+final vehicleListStreamProvider =
+    StreamProvider.autoDispose<List<Vehicle>>((ref) {
+  return ref.watch(vehicleRepositoryProvider).watch();
 });

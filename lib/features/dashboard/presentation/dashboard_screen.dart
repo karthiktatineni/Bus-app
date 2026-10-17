@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../core/constants/app_strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -24,7 +28,70 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   String _searchQuery = '';
   String _selectedFilter = 'All';
   final Set<String> _completedTaskIds = {};
-  bool _isRefreshing = false;
+  late Future<List<dynamic>> _serviceDataFuture;
+  RealtimeChannel? _dashboardChannel;
+  Timer? _refreshDebounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _serviceDataFuture = _loadServiceData();
+    try {
+      _dashboardChannel = Supabase.instance.client
+          .channel('dashboard-service-data')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'maintenance_tasks',
+            callback: (_) => _scheduleServiceRefresh(),
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'service_records',
+            callback: (_) => _scheduleServiceRefresh(),
+          )
+          .subscribe();
+    } on AssertionError {
+      // Widget tests can inject repositories without initializing Supabase.
+    }
+  }
+
+  void _scheduleServiceRefresh() {
+    _refreshDebounce?.cancel();
+    _refreshDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() => _serviceDataFuture = _loadServiceData());
+      ref.invalidate(vehicleListStreamProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshDebounce?.cancel();
+    final channel = _dashboardChannel;
+    if (channel != null) {
+      unawaited(Supabase.instance.client.removeChannel(channel));
+    }
+    super.dispose();
+  }
+
+  Future<List<dynamic>> _loadServiceData() {
+    final serviceRepo = ref.read(serviceRepositoryProvider);
+    return Future.wait<dynamic>([
+      serviceRepo.upcomingTasks(withinDays: 30),
+      serviceRepo.listAll(),
+    ]);
+  }
+
+  Future<void> _refreshData() async {
+    ref.invalidate(vehicleListStreamProvider);
+    setState(() => _serviceDataFuture = _loadServiceData());
+    await Future.wait([
+      ref.read(vehicleListStreamProvider.future),
+      _serviceDataFuture,
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,11 +99,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final user = authState.user;
     final isAdmin = user?.role == UserRole.admin;
 
-    final vehicleRepo = ref.watch(vehicleRepositoryProvider);
-    final serviceRepo = ref.watch(serviceRepositoryProvider);
+    final vehiclesAsync = ref.watch(vehicleListStreamProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
+      floatingActionButton: FloatingActionButton.small(
+        heroTag: 'dashboard-fleet-ai',
+        tooltip: 'Open Fleet AI',
+        onPressed: () => context.go('/fleet-ai'),
+        child: const Icon(Icons.auto_awesome),
+      ),
       appBar: AppBar(
         titleSpacing: 0,
         leading: Builder(
@@ -51,7 +123,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '${AppStrings.appName.toUpperCase()} DEPOT',
+              AppStrings.appName.toUpperCase(),
               style: const TextStyle(
                 fontFamily: 'JetBrainsMono',
                 fontSize: 10,
@@ -71,24 +143,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         actions: [
           IconButton(
-            icon: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                const Icon(Icons.notifications_outlined),
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppTheme.danger,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            icon: const Icon(Icons.notifications_outlined),
             tooltip: 'Notifications',
             onPressed: () => NotificationsSheet.show(context),
           ),
@@ -113,82 +168,103 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          setState(() => _isRefreshing = true);
-          if (mounted) setState(() => _isRefreshing = false);
-        },
-        child: FutureBuilder<List<dynamic>>(
-          future: Future.wait([
-            vehicleRepo.list(),
-            serviceRepo.upcomingTasks(withinDays: 30),
-            serviceRepo.listAll(),
-          ]),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                !_isRefreshing) {
-              return _buildLoadingSkeleton();
-            }
+        onRefresh: _refreshData,
+        child: vehiclesAsync.when(
+          loading: _buildLoadingSkeleton,
+          error: (error, stackTrace) => ErrorState(
+            message:
+                'Failed to load fleet data. Check your connection and retry.',
+            onRetry: _refreshData,
+          ),
+          data: (vehicles) => FutureBuilder<List<dynamic>>(
+            future: _serviceDataFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildLoadingSkeleton();
+              }
 
-            if (snapshot.hasError) {
-              return ErrorState(
-                message: 'Failed to load depot data',
-                onRetry: () => setState(() {}),
+              if (snapshot.hasError) {
+                return ErrorState(
+                  message: 'Failed to load maintenance data',
+                  onRetry: () => setState(
+                    () => _serviceDataFuture = _loadServiceData(),
+                  ),
+                );
+              }
+
+              final tasks = (snapshot.data?[0] as List<MaintenanceTask>?) ?? [];
+              final serviceRecords =
+                  (snapshot.data?[1] as List<ServiceRecord>?) ?? [];
+
+              // Metrics calculation
+              final inWorkshopBuses = vehicles
+                  .where((v) => v.status == VehicleStatus.inWorkshop)
+                  .length;
+              final overdueTasks = tasks.where((t) => t.isOverdue).length;
+              final due14DaysTasks = tasks.where((t) {
+                if (t.isDone || t.dueDate == null) return false;
+                final diff = t.dueDate!.difference(DateTime.now()).inDays;
+                return diff >= 0 && diff <= 14;
+              }).length;
+
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  if (vehicles.isEmpty)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'No vehicles are visible to this account. Pull to refresh; if the company has vehicles in Supabase, check that this account is active and belongs to the same company.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Greeting & Live Status Banner
+                  _buildGreetingSection(
+                      user?.name ?? 'Fleet manager', vehicles),
+                  const SizedBox(height: 16),
+
+                  // Summary Metric Counters
+                  _buildMetricsSection(
+                    overdueCount: overdueTasks,
+                    dueSoonCount: due14DaysTasks,
+                    inWorkshopCount: inWorkshopBuses,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Visual Fleet Context Strip
+                  _buildContextStrip(vehicles),
+                  const SizedBox(height: 20),
+
+                  // To-Do Section with Undo
+                  _buildTodoSection(tasks, vehicles, isAdmin),
+                  const SizedBox(height: 20),
+
+                  // Horizontal Next 2 Weeks Flashcards
+                  _buildFlashcardsSection(vehicles, tasks, serviceRecords),
+                  const SizedBox(height: 24),
+
+                  // All Vehicles Section with Search & Filter
+                  _buildVehiclesSection(vehicles, isAdmin),
+                  const SizedBox(height: 20),
+
+                  // End-of-shift handover action card
+                  _buildHandoverCard(),
+                  const SizedBox(height: 32),
+                ],
               );
-            }
-
-            final vehicles = (snapshot.data?[0] as List<Vehicle>?) ?? [];
-            final tasks = (snapshot.data?[1] as List<MaintenanceTask>?) ?? [];
-            final serviceRecords =
-                (snapshot.data?[2] as List<ServiceRecord>?) ?? [];
-
-            // Metrics calculation
-            final inWorkshopBuses = vehicles
-                .where((v) => v.status == VehicleStatus.inWorkshop)
-                .length;
-            final overdueTasks = tasks.where((t) => t.isOverdue).length;
-            final due14DaysTasks = tasks.where((t) {
-              if (t.isDone || t.dueDate == null) return false;
-              final diff = t.dueDate!.difference(DateTime.now()).inDays;
-              return diff >= 0 && diff <= 14;
-            }).length;
-
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                // Greeting & Live Status Banner
-                _buildGreetingSection(user?.name ?? 'Fleet manager'),
-                const SizedBox(height: 16),
-
-                // Summary Metric Counters
-                _buildMetricsSection(
-                  overdueCount: overdueTasks,
-                  dueSoonCount: due14DaysTasks,
-                  inWorkshopCount: inWorkshopBuses,
-                ),
-                const SizedBox(height: 16),
-
-                // Visual Fleet Context Strip
-                _buildContextStrip(),
-                const SizedBox(height: 20),
-
-                // To-Do Section with Undo
-                _buildTodoSection(tasks),
-                const SizedBox(height: 20),
-
-                // Horizontal Next 2 Weeks Flashcards
-                _buildFlashcardsSection(vehicles, tasks, serviceRecords),
-                const SizedBox(height: 24),
-
-                // All Vehicles Section with Search & Filter
-                _buildVehiclesSection(vehicles, isAdmin),
-                const SizedBox(height: 20),
-
-                // End-of-shift handover action card
-                _buildHandoverCard(),
-                const SizedBox(height: 32),
-              ],
-            );
-          },
+            },
+          ),
         ),
       ),
     );
@@ -219,7 +295,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildGreetingSection(String userName) {
+  Widget _buildGreetingSection(String userName, List<Vehicle> vehicles) {
     final now = DateTime.now();
     final hour = now.hour;
     final greeting = hour < 12
@@ -228,6 +304,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ? 'Good afternoon'
             : 'Good evening';
     final dateStr = DateFormat('dd MMM yyyy').format(now);
+    final depotLabel = vehicles.isNotEmpty && vehicles.first.depot.isNotEmpty
+        ? vehicles.first.depot.toUpperCase()
+        : 'FLEET OPERATIONS';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,9 +325,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text(
-                  'DEPOT BAY 04 • BENGALURU CENTRAL',
-                  style: TextStyle(
+                Text(
+                  depotLabel,
+                  style: const TextStyle(
                     fontFamily: 'JetBrainsMono',
                     fontSize: 10,
                     letterSpacing: 0.8,
@@ -292,9 +371,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    'Shift Lead Engineer • 10 vehicles monitored',
-                    style: TextStyle(
+                  Text(
+                    '${vehicles.length} ${vehicles.length == 1 ? 'vehicle' : 'vehicles'} monitored',
+                    style: const TextStyle(
                       fontSize: 12,
                       color: AppTheme.textSecondary,
                     ),
@@ -305,15 +384,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             IconButton(
               icon: const Icon(Icons.sync, color: AppTheme.primaryColor),
               tooltip: 'Sync depot',
-              onPressed: () {
-                setState(() {});
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Depot synced successfully'),
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
+              onPressed: _refreshData,
             ),
           ],
         ),
@@ -374,7 +445,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildContextStrip() {
+  Widget _buildContextStrip(List<Vehicle> vehicles) {
+    final activeCount = vehicles
+        .where((vehicle) => vehicle.status == VehicleStatus.active)
+        .length;
+    final workshopCount = vehicles
+        .where((vehicle) => vehicle.status == VehicleStatus.inWorkshop)
+        .length;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -411,9 +488,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         color: AppTheme.primaryColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: const Text(
-                        'BENGALURU - PUNE',
-                        style: TextStyle(
+                      child: Text(
+                        '${vehicles.length} VEHICLES',
+                        style: const TextStyle(
                           fontFamily: 'JetBrainsMono',
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
@@ -422,9 +499,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    const Text(
-                      'Depot Fleet A',
-                      style: TextStyle(
+                    Text(
+                      '$activeCount active',
+                      style: const TextStyle(
                         fontFamily: 'JetBrainsMono',
                         fontSize: 10,
                         color: AppTheme.textSecondary,
@@ -433,15 +510,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ],
                 ),
                 const SizedBox(height: 3),
-                const Text(
-                  'Morning Pre-Trip Audit Live',
-                  style: TextStyle(
+                Text(
+                  '$workshopCount in workshop',
+                  style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const Text(
-                  '9 of 10 vehicle checks completed for departures',
+                  'Live fleet totals from your company data',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppTheme.textSecondary,
@@ -455,7 +532,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildTodoSection(List<MaintenanceTask> tasks) {
+  Widget _buildTodoSection(
+      List<MaintenanceTask> tasks, List<Vehicle> vehicles, bool isAdmin) {
     final displayTasks = tasks.take(4).toList();
 
     return Column(
@@ -493,163 +571,322 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ],
             ),
-            TextButton(
-              onPressed: () => context.go('/reminders'),
-              child: const Row(
-                children: [
-                  Text('View all'),
-                  SizedBox(width: 2),
-                  Icon(Icons.arrow_forward, size: 14),
-                ],
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isAdmin)
+                  IconButton(
+                    tooltip: 'Add maintenance task',
+                    onPressed: vehicles.isEmpty
+                        ? null
+                        : () => _addMaintenanceTask(vehicles),
+                    icon: const Icon(Icons.add_task_outlined),
+                  ),
+                TextButton(
+                  onPressed: () => context.go('/reminders'),
+                  child: const Row(
+                    children: [
+                      Text('View all'),
+                      SizedBox(width: 2),
+                      Icon(Icons.arrow_forward, size: 14),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
         const SizedBox(height: 6),
         Card(
           child: Column(
-            children: displayTasks.map((task) {
-              final isChecked = _completedTaskIds.contains(task.id);
-              final isOverdue = task.isOverdue;
+            children: [
+              if (displayTasks.isEmpty)
+                const ListTile(
+                  leading: Icon(Icons.check_circle_outline),
+                  title: Text('No open maintenance tasks'),
+                  subtitle: Text(
+                    'No task records are due within the next 30 days.',
+                  ),
+                )
+              else
+                ...displayTasks.map((task) {
+                  final isChecked = _completedTaskIds.contains(task.id);
+                  final isOverdue = task.isOverdue;
 
-              return Column(
-                children: [
-                  ListTile(
-                    dense: true,
-                    leading: Checkbox(
-                      value: isChecked,
-                      activeColor: AppTheme.primaryColor,
-                      onChanged: (val) async {
-                        if (val == null) return;
-                        try {
-                          await ref
-                              .read(serviceRepositoryProvider)
-                              .setTaskDone(task.id, val);
-                        } catch (error) {
-                          if (mounted) {
+                  return Column(
+                    children: [
+                      ListTile(
+                        dense: true,
+                        leading: Checkbox(
+                          value: isChecked,
+                          activeColor: AppTheme.primaryColor,
+                          onChanged: (val) async {
+                            if (val == null) return;
+                            try {
+                              await ref
+                                  .read(serviceRepositoryProvider)
+                                  .setTaskDone(task.id, val);
+                            } catch (error) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text(
+                                          'Could not update task: $error')),
+                                );
+                              }
+                              return;
+                            }
+                            if (!mounted) return;
+                            setState(() {
+                              if (val) {
+                                _completedTaskIds.add(task.id);
+                              } else {
+                                _completedTaskIds.remove(task.id);
+                              }
+                            });
+
+                            ScaffoldMessenger.of(context).clearSnackBars();
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                  content:
-                                      Text('Could not update task: $error')),
+                                content: Text(
+                                  val == true
+                                      ? 'Marked "${task.title}" as complete'
+                                      : 'Reopened "${task.title}"',
+                                ),
+                                action: SnackBarAction(
+                                  label: 'UNDO',
+                                  onPressed: () async {
+                                    await ref
+                                        .read(serviceRepositoryProvider)
+                                        .setTaskDone(task.id, val != true);
+                                    if (!mounted) return;
+                                    setState(() {
+                                      if (val == true) {
+                                        _completedTaskIds.remove(task.id);
+                                      } else {
+                                        _completedTaskIds.add(task.id);
+                                      }
+                                    });
+                                  },
+                                ),
+                                duration: const Duration(seconds: 3),
+                              ),
                             );
-                          }
-                          return;
-                        }
-                        if (!mounted) return;
-                        setState(() {
-                          if (val) {
-                            _completedTaskIds.add(task.id);
-                          } else {
-                            _completedTaskIds.remove(task.id);
-                          }
-                        });
-
-                        ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              val == true
-                                  ? 'Marked "${task.title}" as complete'
-                                  : 'Reopened "${task.title}"',
-                            ),
-                            action: SnackBarAction(
-                              label: 'UNDO',
-                              onPressed: () async {
-                                await ref
-                                    .read(serviceRepositoryProvider)
-                                    .setTaskDone(task.id, val != true);
-                                if (!mounted) return;
-                                setState(() {
-                                  if (val == true) {
-                                    _completedTaskIds.remove(task.id);
-                                  } else {
-                                    _completedTaskIds.add(task.id);
-                                  }
-                                });
-                              },
-                            ),
-                            duration: const Duration(seconds: 3),
-                          ),
-                        );
-                      },
-                    ),
-                    title: Text(
-                      task.title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        decoration:
-                            isChecked ? TextDecoration.lineThrough : null,
-                        color: isChecked
-                            ? AppTheme.textSecondary
-                            : Theme.of(context).textTheme.bodyMedium?.color,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    subtitle: Row(
-                      children: [
-                        const Text(
-                          'TS 09 UB 4521',
+                          },
+                        ),
+                        title: Text(
+                          task.title,
                           style: TextStyle(
-                            fontFamily: 'JetBrainsMono',
-                            fontSize: 11,
-                            color: AppTheme.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            decoration:
+                                isChecked ? TextDecoration.lineThrough : null,
+                            color: isChecked
+                                ? AppTheme.textSecondary
+                                : Theme.of(context).textTheme.bodyMedium?.color,
                           ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 6),
-                        const Text('•',
-                            style: TextStyle(color: AppTheme.border)),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Bay 1 • Due ${task.dueDate != null ? DateFormat('dd MMM').format(task.dueDate!) : 'Scheduled'}',
-                            style: const TextStyle(
-                                fontSize: 11, color: AppTheme.textSecondary),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    trailing: SizedBox(
-                      width: 76,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: isOverdue
-                                ? AppTheme.danger.withValues(alpha: 0.12)
-                                : AppTheme.surfaceMuted,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            isOverdue ? 'Overdue' : 'Due soon',
-                            style: TextStyle(
-                              fontFamily: 'JetBrainsMono',
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: isOverdue
-                                  ? AppTheme.danger
-                                  : AppTheme.textSecondary,
+                        subtitle: Row(
+                          children: [
+                            Text(
+                              vehicles
+                                      .where((v) => v.id == task.vehicleId)
+                                      .map((v) => v.registrationNo)
+                                      .firstOrNull ??
+                                  (vehicles.isNotEmpty
+                                      ? vehicles.first.registrationNo
+                                      : 'FLEET'),
+                              style: const TextStyle(
+                                fontFamily: 'JetBrainsMono',
+                                fontSize: 11,
+                                color: AppTheme.textSecondary,
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            const SizedBox(width: 6),
+                            const Text('•',
+                                style: TextStyle(color: AppTheme.border)),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Bay 1 • Due ${task.dueDate != null ? DateFormat('dd MMM').format(task.dueDate!) : 'Scheduled'}',
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.textSecondary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: SizedBox(
+                          width: 76,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isOverdue
+                                    ? AppTheme.danger.withValues(alpha: 0.12)
+                                    : AppTheme.surfaceMuted,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                isOverdue ? 'Overdue' : 'Due soon',
+                                style: TextStyle(
+                                  fontFamily: 'JetBrainsMono',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isOverdue
+                                      ? AppTheme.danger
+                                      : AppTheme.textSecondary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                  if (task != displayTasks.last) const Divider(height: 1),
-                ],
-              );
-            }).toList(),
+                      if (task != displayTasks.last) const Divider(height: 1),
+                    ],
+                  );
+                }),
+            ],
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _addMaintenanceTask(List<Vehicle> vehicles) async {
+    final formKey = GlobalKey<FormState>();
+    final titleController = TextEditingController();
+    final dueKmController = TextEditingController();
+    var selectedVehicleId = vehicles.first.id;
+    var dueDate = DateTime.now().add(const Duration(days: 7));
+
+    final task = await showDialog<MaintenanceTask>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Add maintenance task'),
+          content: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedVehicleId,
+                    decoration: const InputDecoration(labelText: 'Vehicle'),
+                    items: vehicles
+                        .map((vehicle) => DropdownMenuItem(
+                              value: vehicle.id,
+                              child: Text(vehicle.registrationNo),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setDialogState(() => selectedVehicleId = value);
+                      }
+                    },
+                  ),
+                  TextFormField(
+                    controller: titleController,
+                    autofocus: true,
+                    maxLength: 120,
+                    decoration: const InputDecoration(
+                      labelText: 'Task',
+                      hintText: 'e.g. Replace brake pads',
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty
+                        ? 'Enter a task description'
+                        : null,
+                  ),
+                  TextFormField(
+                    controller: dueKmController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Due odometer (optional)',
+                      suffixText: 'km',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) return null;
+                      final km = int.tryParse(value.trim());
+                      return km == null || km < 0 ? 'Enter valid km' : null;
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final chosen = await showDatePicker(
+                          context: context,
+                          initialDate: dueDate,
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(
+                            const Duration(days: 3650),
+                          ),
+                        );
+                        if (chosen != null) {
+                          setDialogState(() => dueDate = chosen);
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_month_outlined),
+                      label: Text(
+                          'Due ${DateFormat('dd MMM yyyy').format(dueDate)}'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (!formKey.currentState!.validate()) return;
+                Navigator.pop(
+                  dialogContext,
+                  MaintenanceTask(
+                    id: const Uuid().v4(),
+                    vehicleId: selectedVehicleId,
+                    title: titleController.text.trim(),
+                    dueDate: dueDate,
+                    dueKm: int.tryParse(dueKmController.text.trim()),
+                  ),
+                );
+              },
+              child: const Text('Save task'),
+            ),
+          ],
+        ),
+      ),
+    );
+    titleController.dispose();
+    dueKmController.dispose();
+    if (task == null || !mounted) return;
+
+    try {
+      await ref.read(serviceRepositoryProvider).createTask(task);
+      if (!mounted) return;
+      setState(() => _serviceDataFuture = _loadServiceData());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Maintenance task saved')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not save task: $error')),
+      );
+    }
   }
 
   Widget _buildFlashcardsSection(List<Vehicle> vehicles,
@@ -957,10 +1194,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Row(
             children: [
               'All (${vehicles.length})',
-              'Due soon (2)',
-              'Overdue (1)',
-              'In workshop (1)',
-              'Active (6)'
+              'Due soon (${vehicles.where((v) => v.status == VehicleStatus.dueSoon).length})',
+              'Overdue (${vehicles.where((v) => v.status == VehicleStatus.overdue).length})',
+              'In workshop (${vehicles.where((v) => v.status == VehicleStatus.inWorkshop).length})',
+              'Active (${vehicles.where((v) => v.status == VehicleStatus.active).length})',
             ].map((filter) {
               final name = filter.replaceFirst(RegExp(r'\s*\(\d+\)$'), '');
               final isSelected = _selectedFilter == name ||
@@ -1034,33 +1271,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ],
                             ),
                             _buildStatusBadge(v.status),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        const Divider(height: 1),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Last: 14 Feb 2024',
-                              style: TextStyle(
-                                fontFamily: 'JetBrainsMono',
-                                fontSize: 10,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                            Text(
-                              'Next: 10 May 2024',
-                              style: TextStyle(
-                                fontFamily: 'JetBrainsMono',
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: v.status == VehicleStatus.overdue
-                                    ? AppTheme.danger
-                                    : AppTheme.primaryColor,
-                              ),
-                            ),
                           ],
                         ),
                       ],

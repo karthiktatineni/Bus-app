@@ -14,6 +14,11 @@ class MockVehicleRepository implements VehicleRepository {
   }
 
   @override
+  Stream<List<Vehicle>> watch() async* {
+    yield await list();
+  }
+
+  @override
   Future<Vehicle> get(String id) async {
     // Deliberate failing path
     if (id == 'fail-id' || id == 'veh-error') {

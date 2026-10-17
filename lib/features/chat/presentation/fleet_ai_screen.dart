@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -66,7 +68,10 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
           )
           .timeout(const Duration(seconds: 60));
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw StateError('Fleet assistant request failed.');
+        final detail = _safeBackendDetail(response.body);
+        throw _FleetAssistantException(
+          _httpErrorMessage(response.statusCode, detail),
+        );
       }
       final payload = jsonDecode(response.body) as Map<String, dynamic>;
       final answer = payload['answer'] as String?;
@@ -79,10 +84,37 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
             user: false,
             sources: sources,
           )));
+    } on _FleetAssistantException catch (error) {
+      setState(() => _messages.add((
+            text: error.message,
+            user: false,
+            sources: const [],
+          )));
+    } on TimeoutException {
+      setState(() => _messages.add((
+            text:
+                'Fleet AI took too long to respond. Please retry in a moment.',
+            user: false,
+            sources: const [],
+          )));
+    } on SocketException {
+      setState(() => _messages.add((
+            text:
+                'Fleet AI could not connect to the Render service. Check your internet connection and retry.',
+            user: false,
+            sources: const [],
+          )));
+    } on FormatException {
+      setState(() => _messages.add((
+            text:
+                'Fleet AI returned an unreadable response. Please retry; if it continues, the backend response needs investigation.',
+            user: false,
+            sources: const [],
+          )));
     } catch (_) {
       setState(() => _messages.add((
             text:
-                'I could not reach the fleet assistant. Check your connection and try again.',
+                'Fleet AI request failed before a usable answer arrived. Please retry.',
             user: false,
             sources: const [],
           )));
@@ -99,6 +131,43 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
         });
       }
     }
+  }
+
+  String _safeBackendDetail(String body) {
+    try {
+      final payload = jsonDecode(body);
+      if (payload is Map<String, dynamic> && payload['detail'] is String) {
+        return (payload['detail'] as String).trim();
+      }
+    } catch (_) {
+      // Do not put unstructured backend response bodies into the chat.
+    }
+    return '';
+  }
+
+  String _httpErrorMessage(int status, String detail) {
+    if (status == 401) {
+      return 'Your sign-in session was rejected by Fleet AI. Sign out and sign in again, then retry.';
+    }
+    if (status == 403) {
+      return detail.isNotEmpty
+          ? detail
+          : 'Your fleet profile is not active for Fleet AI. Ask the company admin to check your account.';
+    }
+    if (status == 503) {
+      return detail.isNotEmpty
+          ? detail
+          : 'Fleet AI is temporarily unavailable because a backend integration is not configured.';
+    }
+    if (status == 502 || status >= 500) {
+      if (detail.isNotEmpty && detail != 'Internal Server Error') {
+        return 'Fleet AI backend error (HTTP $status): $detail';
+      }
+      return 'Fleet AI reached the backend, but a database or AI provider request failed (HTTP $status). Please retry.';
+    }
+    return detail.isNotEmpty
+        ? detail
+        : 'Fleet AI rejected the request (HTTP $status). Please check the message and retry.';
   }
 
   @override
@@ -192,4 +261,10 @@ class _FleetAiScreenState extends ConsumerState<FleetAiScreen> {
                       icon: const Icon(Icons.send))
                 ]))),
       ]));
+}
+
+class _FleetAssistantException implements Exception {
+  final String message;
+
+  const _FleetAssistantException(this.message);
 }

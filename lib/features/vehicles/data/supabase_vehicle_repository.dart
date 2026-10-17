@@ -29,20 +29,45 @@ class SupabaseVehicleRepository implements VehicleRepository {
         .isFilter('deleted_at', null)
         .order('registration_no');
 
-    final vehicles = <Vehicle>[];
-    for (final row in rows) {
-      final docs = await _client
-          .from('vehicle_documents')
-          .select()
-          .eq('vehicle_id', row['id']);
-      final photos = await _client
-          .from('vehicle_photos')
-          .select()
-          .eq('vehicle_id', row['id']);
-      vehicles
-          .add(await _rowToVehicle(row, documents: docs, photoRows: photos));
+    return _hydrateRows(rows);
+  }
+
+  @override
+  Stream<List<Vehicle>> watch() {
+    // Realtime is enabled for public.vehicles by migration 20261017030000.
+    // Keep soft-deleted rows in the stream so their updates remove them from
+    // this list immediately; company visibility remains enforced by RLS.
+    return _client
+        .from('vehicles')
+        .stream(primaryKey: ['id'])
+        .order('registration_no')
+        .asyncMap(_hydrateRows);
+  }
+
+  Future<List<Vehicle>> _hydrateRows(List<Map<String, dynamic>> allRows) async {
+    final rows = allRows.where((row) => row['deleted_at'] == null).toList();
+    if (rows.isEmpty) return const [];
+
+    final ids = rows.map((row) => row['id'] as String).toList();
+    final related = await Future.wait([
+      _client.from('vehicle_documents').select().inFilter('vehicle_id', ids),
+      _client.from('vehicle_photos').select().inFilter('vehicle_id', ids),
+    ]);
+    final documentsByVehicle = <String, List<Map<String, dynamic>>>{};
+    for (final document in related[0]) {
+      (documentsByVehicle[document['vehicle_id'] as String] ??= [])
+          .add(document);
     }
-    return vehicles;
+    final photosByVehicle = <String, List<Map<String, dynamic>>>{};
+    for (final photo in related[1]) {
+      (photosByVehicle[photo['vehicle_id'] as String] ??= []).add(photo);
+    }
+
+    return Future.wait(rows.map((row) => _rowToVehicle(
+          row,
+          documents: documentsByVehicle[row['id'] as String] ?? const [],
+          photoRows: photosByVehicle[row['id'] as String] ?? const [],
+        )));
   }
 
   @override

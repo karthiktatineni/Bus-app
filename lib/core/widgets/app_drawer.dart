@@ -92,7 +92,7 @@ class AppDrawer extends ConsumerWidget {
                             ),
                             SizedBox(width: 4),
                             Text(
-                              'Live Bay 04',
+                              'Fleet workspace',
                               style: TextStyle(
                                 fontFamily: 'JetBrainsMono',
                                 fontSize: 11,
@@ -153,7 +153,7 @@ class AppDrawer extends ConsumerWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          'Bengaluru Central Depot',
+                          'Company fleet',
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: AppTheme.textSecondary,
@@ -302,15 +302,6 @@ class AppDrawer extends ConsumerWidget {
                       if (currentRoute != '/bills') context.go('/bills');
                     },
                   ),
-                  _DrawerItem(
-                    icon: Icons.auto_awesome,
-                    title: 'Fleet AI',
-                    isSelected: currentRoute.startsWith('/fleet-ai'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      if (currentRoute != '/fleet-ai') context.go('/fleet-ai');
-                    },
-                  ),
                   FutureBuilder<List<MaintenanceTask>>(
                     future: serviceRepo.upcomingTasks(withinDays: 30),
                     builder: (context, snapshot) {
@@ -397,13 +388,13 @@ class AppDrawer extends ConsumerWidget {
                   .colorScheme
                   .surfaceContainerHighest
                   .withValues(alpha: 0.3),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           '${AppStrings.appName} v0.1.0',
                           style: TextStyle(
@@ -416,40 +407,24 @@ class AppDrawer extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: 8),
                       Flexible(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Flexible(
-                              child: Text(
-                                'KSRTC-STG-BLR',
-                                style: TextStyle(
-                                  fontFamily: 'JetBrainsMono',
-                                  fontSize: 10,
-                                  color: AppTheme.textSecondary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        child: Text(
+                          AppStrings.appName,
+                          style: TextStyle(
+                            fontFamily: 'JetBrainsMono',
+                            fontSize: 10,
+                            color: AppTheme.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Depot Operations Client • Synced 1m ago',
+                  SizedBox(height: 2),
+                  Text(
+                    'Fleet maintenance workspace',
                     style: TextStyle(
                       fontSize: 10,
                       color: AppTheme.textSecondary,

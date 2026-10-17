@@ -7,6 +7,7 @@ abstract class ServiceRepository {
   Future<ServiceRecord> get(String id);
   Future<ServiceRecord> create(ServiceRecord r);
   Future<List<MaintenanceTask>> upcomingTasks({int withinDays = 14});
+  Future<MaintenanceTask> createTask(MaintenanceTask task);
   Future<void> setTaskDone(String taskId, bool done);
   Future<List<ServiceSchedule>> listSchedules({String? vehicleId});
   Future<ServiceSchedule> createSchedule(ServiceSchedule s);

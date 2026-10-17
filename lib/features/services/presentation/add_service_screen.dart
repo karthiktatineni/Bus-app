@@ -215,9 +215,16 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
       body: FutureBuilder<List<Vehicle>>(
         future: vehicleRepo.list(),
         builder: (context, snapshot) {
-          final vehicles = snapshot.data ?? [];
-          if (_selectedVehicleId == null && vehicles.isNotEmpty) {
-            _selectedVehicleId = vehicles.first.id;
+          final rawVehicles = snapshot.data ?? [];
+          final vehiclesById = <String, Vehicle>{};
+          for (final vehicle in rawVehicles) {
+            vehiclesById.putIfAbsent(vehicle.id, () => vehicle);
+          }
+          final vehicles = vehiclesById.values.toList(growable: false);
+          final vehicleIds = vehiclesById.keys.toSet();
+          if (_selectedVehicleId == null ||
+              !vehicleIds.contains(_selectedVehicleId)) {
+            _selectedVehicleId = vehicles.isEmpty ? null : vehicles.first.id;
           }
 
           return Stepper(
@@ -282,6 +289,7 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DropdownButtonFormField<String>(
+                      key: ValueKey(vehicleIds.join('|')),
                       initialValue: _selectedVehicleId,
                       decoration: const InputDecoration(
                           labelText: 'Select Bus / Vehicle *'),

@@ -133,6 +133,25 @@ class SupabaseServiceRepository implements ServiceRepository {
   }
 
   @override
+  Future<MaintenanceTask> createTask(MaintenanceTask task) async {
+    final companyId = await _getCompanyId();
+    final row = await _client
+        .from('maintenance_tasks')
+        .insert({
+          'company_id': companyId,
+          'vehicle_id': task.vehicleId,
+          'title': task.title,
+          'due_date': task.dueDate?.toIso8601String().split('T').first,
+          'due_km': task.dueKm,
+          'schedule_id': task.scheduleId,
+          'created_by': _client.auth.currentUser!.id,
+        })
+        .select()
+        .single();
+    return _rowToMaintenanceTask(row);
+  }
+
+  @override
   Future<void> setTaskDone(String taskId, bool done) async {
     await _client.from('maintenance_tasks').update({
       'is_done': done,

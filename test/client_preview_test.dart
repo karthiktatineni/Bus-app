@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bus_app/core/theme/app_theme.dart';
 import 'package:bus_app/features/auth/providers.dart';
 import 'package:bus_app/features/services/presentation/service_history_screen.dart';
@@ -107,11 +109,40 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Due soon (2)'));
+      await tester.tap(find.text('Due soon (1)'));
       await tester.pumpAndSettle();
 
       expect(find.text('KA-03-CC-0003'), findsOneWidget);
       expect(find.text('KA-01-AA-0001'), findsNothing);
+    });
+
+    testWidgets('vehicle list reflects streamed database updates',
+        (tester) async {
+      final updates = StreamController<List<Vehicle>>();
+      final repository = _FakeVehicleRepository(_vehicles, updates: updates);
+      await tester.pumpWidget(
+        _screenWith(
+          user: _staffUser,
+          vehicleRepository: repository,
+          child: const VehiclesListScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('KA-04-DD-0004'), findsNothing);
+      updates.add([
+        ..._vehicles,
+        _vehicles.first.copyWith(
+          id: 'veh-live-update',
+          registrationNo: 'KA-04-DD-0004',
+        ),
+      ]);
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(ListView).first, const Offset(0, -500));
+      await tester.pumpAndSettle();
+
+      expect(find.text('KA-04-DD-0004'), findsOneWidget);
+      await updates.close();
     });
 
     testWidgets('service record search and category filter narrow the list',
@@ -219,12 +250,17 @@ class _SeededAuthController extends AuthController {
 }
 
 class _FakeVehicleRepository implements VehicleRepository {
-  _FakeVehicleRepository(this._vehicles);
+  _FakeVehicleRepository(this._vehicles, {this.updates});
 
   final List<Vehicle> _vehicles;
+  final StreamController<List<Vehicle>>? updates;
 
   @override
   Future<List<Vehicle>> list() async => List.unmodifiable(_vehicles);
+
+  @override
+  Stream<List<Vehicle>> watch() =>
+      updates?.stream ?? Stream.value(List.unmodifiable(_vehicles));
 
   @override
   Future<Vehicle> get(String id) async =>
@@ -266,6 +302,12 @@ class _FakeServiceRepository implements ServiceRepository {
   @override
   Future<List<MaintenanceTask>> upcomingTasks({int withinDays = 14}) async =>
       List.unmodifiable(_tasks);
+
+  @override
+  Future<MaintenanceTask> createTask(MaintenanceTask task) async {
+    _tasks.add(task);
+    return task;
+  }
 
   @override
   Future<void> setTaskDone(String taskId, bool done) async {}
