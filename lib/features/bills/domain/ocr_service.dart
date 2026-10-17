@@ -18,6 +18,11 @@ class OcrResult {
   final double confidence;
   final List<String> rawLines;
   final List<OcrLineItem> items;
+  final String? mechanic;
+  final int? odometerKm;
+  final String? vehicleRegistration;
+  final String? serviceDescription;
+  final double? laborTotal;
 
   const OcrResult({
     this.vendor,
@@ -27,6 +32,11 @@ class OcrResult {
     this.confidence = 0.95,
     this.rawLines = const [],
     this.items = const [],
+    this.mechanic,
+    this.odometerKm,
+    this.vehicleRegistration,
+    this.serviceDescription,
+    this.laborTotal,
   });
 }
 

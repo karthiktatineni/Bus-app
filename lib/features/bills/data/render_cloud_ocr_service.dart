@@ -47,7 +47,7 @@ class RenderCloudOcrService implements OcrService {
     }
     request.headers['Authorization'] = 'Bearer $accessToken';
     final streamed =
-        await _client.send(request).timeout(const Duration(seconds: 60));
+        await _client.send(request).timeout(const Duration(seconds: 90));
     final response = await http.Response.fromStream(streamed);
     if (response.statusCode < 200 || response.statusCode >= 300) {
       var detail = '';
@@ -94,6 +94,11 @@ class RenderCloudOcrService implements OcrService {
           .where((item) =>
               item.name.isNotEmpty && item.quantity > 0 && item.total > 0)
           .toList(growable: false),
+      mechanic: payload['mechanic'] as String?,
+      odometerKm: (payload['odometer_km'] as num?)?.toInt(),
+      vehicleRegistration: payload['vehicle_registration'] as String?,
+      serviceDescription: payload['service_description'] as String?,
+      laborTotal: (payload['labor_total'] as num?)?.toDouble(),
     );
   }
 }

@@ -1,6 +1,7 @@
 param(
     [string]$EnvFile = ".env",
-    [string]$OutputPath = "fleetpulse.apk"
+    [string]$OutputPath = "fleetpulse.apk",
+    [string]$OcrServiceUrl = "https://fleetpulse-ocr.onrender.com"
 )
 
 $ErrorActionPreference = "Stop"
@@ -41,15 +42,21 @@ if (-not [Uri]::TryCreate($settings['SUPABASE_URL'], [UriKind]::Absolute, [ref]$
     throw 'SUPABASE_URL must be a valid HTTPS Supabase project URL. No APK was built.'
 }
 
-$ocrServiceUrl = $settings['OCR_SERVICE_URL']
-if ([string]::IsNullOrWhiteSpace($ocrServiceUrl)) {
-    $ocrServiceUrl = 'https://fleetpulse-ocr.onrender.com'
+$ocrUri = $null
+if (-not [Uri]::TryCreate($OcrServiceUrl, [UriKind]::Absolute, [ref]$ocrUri) -or
+    $ocrUri.Scheme -ne 'https' -or [string]::IsNullOrWhiteSpace($ocrUri.Host)) {
+    throw 'OcrServiceUrl must be an externally reachable HTTPS service URL. No APK was built.'
+}
+$localOcrHosts = @('localhost', 'host.docker.internal', '10.0.2.2', '0.0.0.0', '::1')
+if ($localOcrHosts -contains $ocrUri.Host.ToLowerInvariant() -or
+    $ocrUri.Host -match '^127(?:\.\d{1,3}){3}$' -or $ocrUri.Host.EndsWith('.localhost')) {
+    throw 'A release APK cannot use a local OCR host. Use the deployed Render URL. No APK was built.'
 }
 
 $defines = @(
     "--dart-define=SUPABASE_URL=$($settings['SUPABASE_URL'])",
     "--dart-define=SUPABASE_ANON_KEY=$($settings['SUPABASE_ANON_KEY'])",
-    "--dart-define=OCR_SERVICE_URL=$ocrServiceUrl"
+    "--dart-define=OCR_SERVICE_URL=$OcrServiceUrl"
 )
 
 Push-Location $repoRoot

@@ -140,6 +140,18 @@ ITEM_ROW = re.compile(
     r"(?P<amount>\d[\d,]*(?:\.\d{1,2})?)\s*$",
     re.I,
 )
+MECHANIC = re.compile(
+    r"(?im)^\s*(?:mechanic|technician|serviced\s+by|service\s+advisor|attended\s+by)\s*[:#-]\s*(.{2,80})\s*$"
+)
+ODOMETER = re.compile(
+    r"(?im)^\s*(?:odometer|odo(?:meter)?\s*reading|mileage|kms?|kilomet(?:er|re)\s*reading)\s*[:#-]?\s*([\d,]{3,9})\s*(?:km|kms|kilomet(?:er|re)s?)?\b"
+)
+REGISTRATION = re.compile(
+    r"(?im)^\s*(?:vehicle\s*(?:no|number|registration|reg(?:istration)?\s*no)?|reg(?:istration)?\s*(?:no|number))\s*[:#-]\s*([A-Z0-9 -]{5,16})\s*$"
+)
+SERVICE_DESCRIPTION = re.compile(
+    r"(?im)^\s*(?:work\s+performed|service\s+details?|repair\s+details?|job\s+description|nature\s+of\s+work)\s*[:#-]\s*(.{3,180})\s*$"
+)
 FLEET_TOOLS = [
     {"type": "function", "function": {"name": "fleet_summary", "description": "Get live company fleet totals and overdue counts.", "parameters": {"type": "object", "properties": {}, "additionalProperties": False}}},
     {"type": "function", "function": {"name": "vehicle_status", "description": "Find live status for vehicles by registration, make or model. Use all only when requested.", "parameters": {"type": "object", "properties": {"search_query": {"type": "string"}}, "required": ["search_query"], "additionalProperties": False}}},
@@ -804,6 +816,7 @@ def extract(text: str):
     vendor = next((line for line in lines[:5] if len(line) >= 3 and not GSTIN.search(line)
                    and not DATE.search(line) and not re.search(r"tax invoice|invoice|bill\s*no", line, re.I)), None)
     items = []
+    labor_total = None
     for line in lines:
         if re.search(r"\b(total|tax|gst|cgst|sgst|igst|subtotal|discount|balance|invoice|bill no|amount payable)\b", line, re.I):
             continue
@@ -815,12 +828,24 @@ def extract(text: str):
         amount = float(item_match.group("amount").replace(",", ""))
         if len(name) < 3 or quantity < 1 or amount <= 0:
             continue
+        if re.search(r"\b(labou?r|technician|mechanic|service\s+charge|work\s+charge)\b", name, re.I):
+            labor_total = (labor_total or 0.0) + amount
+            continue
         items.append({"name": name, "quantity": quantity, "total": amount})
     fields = sum(value is not None for value in (invoice, bill_date, total, vendor))
     confidence = round(fields / 4, 3)
+    mechanic_match = MECHANIC.search(text)
+    odometer_match = ODOMETER.search(text)
+    registration_match = REGISTRATION.search(text)
+    service_match = SERVICE_DESCRIPTION.search(text)
     return {"vendor": vendor, "invoice_number": invoice, "bill_date": bill_date,
             "grand_total": total, "gstin": next(iter(GSTIN.findall(text)), None),
-            "confidence": confidence, "raw_lines": lines, "items": items}
+            "confidence": confidence, "raw_lines": lines, "items": items,
+            "mechanic": mechanic_match.group(1).strip() if mechanic_match else None,
+            "odometer_km": int(odometer_match.group(1).replace(",", "")) if odometer_match else None,
+            "vehicle_registration": registration_match.group(1).strip() if registration_match else None,
+            "service_description": service_match.group(1).strip() if service_match else None,
+            "labor_total": labor_total}
 
 
 @app.get("/health")
@@ -1078,36 +1103,38 @@ async def scan_bill(request: Request):
             oriented = ImageOps.exif_transpose(source)
             oriented.load()
             image = ImageOps.autocontrast(ImageOps.grayscale(oriented.convert("RGB")))
-            if image.width < 2000:
-                scale = min(2.0, 2000 / image.width)
-                new_size = (int(image.width * scale), int(image.height * scale))
-                if new_size[0] * new_size[1] <= 25_000_000:
-                    image = image.resize(new_size, Image.Resampling.LANCZOS)
+            # Large phone photos make repeated Tesseract passes expensive on
+            # Render's small instances. Bound pixels while retaining enough
+            # resolution for printed invoice text.
+            max_dimension = 1600
+            if max(image.size) > max_dimension:
+                scale = max_dimension / max(image.size)
+                image = image.resize(
+                    (max(1, int(image.width * scale)), max(1, int(image.height * scale))),
+                    Image.Resampling.LANCZOS,
+                )
 
             # Receipts and photographed invoices need different segmentation
             # and contrast handling. Only OCR the uploaded pixels; never infer
             # fields or parts that are not present in the document.
-            enhanced = ImageEnhance.Contrast(image).enhance(1.5)
+            enhanced = ImageEnhance.Contrast(image).enhance(1.35)
             sharpened = enhanced.filter(
-                ImageFilter.UnsharpMask(radius=1.2, percent=140, threshold=3)
+                ImageFilter.UnsharpMask(radius=1, percent=110, threshold=3)
             )
-            thresholded = enhanced.point(lambda pixel: 255 if pixel > 180 else 0)
-            rotated_clockwise = image.rotate(90, expand=True)
-            rotated_counterclockwise = image.rotate(270, expand=True)
-            attempts = [
-                (sharpened, "--oem 3 --psm 6"),
-                (image, "--oem 3 --psm 11"),
-                (image, "--oem 3 --psm 4"),
-                (thresholded, "--oem 3 --psm 6"),
-                (ImageOps.invert(thresholded), "--oem 3 --psm 11"),
-                (rotated_clockwise, "--oem 3 --psm 6"),
-                (rotated_counterclockwise, "--oem 3 --psm 6"),
-            ]
+            # Start with the common full-page invoice layout. Retry sparse
+            # receipts only when the first result is unreadable; avoid eagerly
+            # preparing/rotating several full-size images on every request.
+            attempts = [(sharpened, "--oem 3 --psm 6", 9)]
             best_text = ""
             timed_out = 0
-            for candidate, config in attempts:
+            for index in range(3):
+                if index == 1:
+                    attempts.append((enhanced, "--oem 3 --psm 11", 8))
+                elif index == 2:
+                    attempts.append((enhanced, "--oem 3 --psm 4", 8))
+                candidate, config, timeout_seconds = attempts[index]
                 try:
-                    text = pytesseract.image_to_string(candidate, config=config, timeout=6)
+                    text = pytesseract.image_to_string(candidate, config=config, timeout=timeout_seconds)
                 except RuntimeError as exc:
                     # pytesseract 0.3.13 reports subprocess timeouts as RuntimeError.
                     if "Tesseract process timeout" not in str(exc):
@@ -1118,7 +1145,7 @@ async def scan_bill(request: Request):
                     best_text = text
                 if len(best_text.strip()) >= 24:
                     break
-            if not best_text.strip() and timed_out == len(attempts):
+            if not best_text.strip() and timed_out == 3:
                 raise TimeoutError("All OCR layout attempts timed out.")
             return best_text
 

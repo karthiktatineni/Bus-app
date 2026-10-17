@@ -28,6 +28,10 @@ def test_authenticated_bill_ocr_endpoint_returns_reviewable_fields(monkeypatch):
             "Northside Bus Workshop\n"
             "Tax Invoice\nInvoice No: INV-2026-048\n"
             "Date: 17/10/2026\n"
+            "Mechanic: Ravi Kumar\n"
+            "Odometer: 125,430 km\n"
+            "Vehicle Registration: KA 01 AB 1234\n"
+            "Work Performed: Replaced brake pads\n"
             "Brake pad replacement 1 8,450.00\n"
             "Labour charge 1 4,000.00\nGrand Total Rs. 12,450.00"
         ),
@@ -56,10 +60,14 @@ def test_authenticated_bill_ocr_endpoint_returns_reviewable_fields(monkeypatch):
     assert payload["bill_date"] == "2026-10-17"
     assert payload["grand_total"] == 12450.0
     assert payload["confidence"] == 1.0
+    assert payload["mechanic"] == "Ravi Kumar"
+    assert payload["odometer_km"] == 125430
+    assert payload["vehicle_registration"] == "KA 01 AB 1234"
+    assert payload["service_description"] == "Replaced brake pads"
     assert payload["items"] == [
         {"name": "Brake pad replacement", "quantity": 1, "total": 8450.0},
-        {"name": "Labour charge", "quantity": 1, "total": 4000.0},
     ]
+    assert payload["labor_total"] == 4000.0
 
 
 def test_real_tesseract_reads_synthetic_invoice_through_scan_endpoint(monkeypatch):
@@ -92,10 +100,14 @@ def test_real_tesseract_reads_synthetic_invoice_through_scan_endpoint(monkeypatc
         (220, "TAX INVOICE", font),
         (330, "Invoice No: INV-2026-048", small),
         (410, "Date: 17/10/2026", small),
-        (620, "Description             Qty      Amount", small),
-        (730, "Brake pad replacement    1       8,450.00", small),
-        (820, "Labour charge            1       4,000.00", small),
-        (1100, "Grand Total Rs. 12,450.00", font),
+        (490, "Mechanic: Ravi Kumar", small),
+        (550, "Odometer: 125,430 km", small),
+        (610, "Vehicle Registration: KA 01 AB 1234", small),
+        (690, "Work Performed: Replaced brake pads", small),
+        (820, "Description             Qty      Amount", small),
+        (930, "Brake pad replacement    1       8,450.00", small),
+        (1020, "Labour charge            1       4,000.00", small),
+        (1250, "Grand Total Rs. 12,450.00", font),
     ]
     for y, text, face in invoice_lines:
         draw.text((100, y), text, fill="black", font=face)
@@ -118,10 +130,15 @@ def test_real_tesseract_reads_synthetic_invoice_through_scan_endpoint(monkeypatc
     assert payload["invoice_number"] == "INV-2026-048", payload
     assert payload["bill_date"] == "2026-10-17", payload
     assert payload["grand_total"] == 12450.0, payload
+    assert payload["mechanic"] == "Ravi Kumar", payload
+    assert payload["odometer_km"] == 125430, payload
+    assert payload["vehicle_registration"] == "KA 01 AB 1234", payload
+    assert payload["service_description"] == "Replaced brake pads", payload
+    assert payload["labor_total"] == 4000.0, payload
     assert payload["items"] == [
         {"name": "Brake pad replacement", "quantity": 1, "total": 8450.0},
-        {"name": "Labour charge", "quantity": 1, "total": 4000.0},
     ], payload
+    assert payload["labor_total"] == 4000.0, payload
 
 
 def test_bill_ocr_endpoint_rejects_missing_session():
@@ -214,13 +231,13 @@ def test_bill_ocr_tries_alternate_invoice_layout_before_rejecting(monkeypatch):
     assert response.status_code == 200
     assert response.json()["grand_total"] == 3250.0
     assert calls == [
-        ("--oem 3 --psm 6", 6),
-        ("--oem 3 --psm 11", 6),
-        ("--oem 3 --psm 4", 6),
+        ("--oem 3 --psm 6", 9),
+        ("--oem 3 --psm 11", 8),
+        ("--oem 3 --psm 4", 8),
     ]
 
 
-def test_bill_ocr_retries_sideways_photo_orientation_before_422(monkeypatch):
+def test_bill_ocr_retries_sparse_layout_without_unbounded_rotations(monkeypatch):
     monkeypatch.setenv("SUPABASE_URL", "https://example.supabase.co")
     monkeypatch.setenv("SUPABASE_ANON_KEY", "public-test-key")
     monkeypatch.setattr(main.app.state, "redis", None)
@@ -232,7 +249,7 @@ def test_bill_ocr_retries_sideways_photo_orientation_before_422(monkeypatch):
 
     def recognize(image, *, config, timeout):
         calls.append((image.size, config, timeout))
-        if len(calls) == 7:
+        if len(calls) == 3:
             return "Workshop Invoice\nGrand Total Rs. 2,850.00"
         return ""
 
@@ -254,10 +271,11 @@ def test_bill_ocr_retries_sideways_photo_orientation_before_422(monkeypatch):
 
     assert response.status_code == 200
     assert response.json()["grand_total"] == 2850.0
-    assert len(calls) == 7
-    assert calls[5][0] == calls[6][0]
-    assert calls[5][0][0] > calls[5][0][1]
-    assert all(call[2] == 6 for call in calls)
+    assert len(calls) == 3
+    assert [call[1] for call in calls] == [
+        "--oem 3 --psm 6", "--oem 3 --psm 11", "--oem 3 --psm 4"
+    ]
+    assert all(call[2] <= 12 for call in calls)
 
 
 def test_bill_ocr_reports_engine_timeout_as_408_not_unreadable_image(monkeypatch):

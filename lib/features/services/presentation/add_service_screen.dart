@@ -191,6 +191,37 @@ class _AddServiceScreenState extends ConsumerState<AddServiceScreen> {
         _billNoController.text = result.billNo ?? '';
         _billTotalController.text = result.total?.toStringAsFixed(2) ?? '';
         _billDate = result.billDate;
+        if (result.mechanic?.isNotEmpty == true) {
+          _mechanicController.text = result.mechanic!;
+        }
+        if (_workshopController.text.trim().isEmpty &&
+            result.vendor?.isNotEmpty == true) {
+          _workshopController.text = result.vendor!;
+        }
+        if (result.odometerKm != null) {
+          _odometerController.text = result.odometerKm.toString();
+        }
+        final extractedNotes = <String>[
+          if (result.vehicleRegistration?.isNotEmpty == true)
+            'Vehicle registration: ${result.vehicleRegistration}',
+          if (result.serviceDescription?.isNotEmpty == true)
+            result.serviceDescription!,
+        ];
+        if (extractedNotes.isNotEmpty) {
+          final existingNotes = _notesController.text.trim();
+          final missingNotes = extractedNotes
+              .where((note) => !existingNotes.contains(note))
+              .toList(growable: false);
+          if (missingNotes.isNotEmpty) {
+            _notesController.text = [
+              if (existingNotes.isNotEmpty) existingNotes,
+              ...missingNotes,
+            ].join('\n');
+          }
+        }
+        if (result.laborTotal != null) {
+          _labourCostController.text = result.laborTotal!.toStringAsFixed(2);
+        }
         _parts
           ..clear()
           ..addAll(result.items.map((item) => <String, dynamic>{
