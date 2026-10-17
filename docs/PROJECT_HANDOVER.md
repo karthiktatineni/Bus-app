@@ -4,7 +4,7 @@ Updated 17 October 2026.
 
 ## Current verified state
 
-- Source changes were committed as `348edf7` and pushed to `main`.
+- The RAG/media base was committed as `348edf7`; the vehicle service/OCR and reminder changes were committed as `9852dbf` and pushed to `main`.
 - Remote Supabase migrations through `20261017170000` are applied and match local migration history.
 - After the push, Render health uptime reset; `/health` is currently healthy. This indicates a restart after the push, but the Render dashboard's deployed revision and a signed-in AI request still need direct confirmation.
 - The OnePlus 7T is connected as ADB device `3b038054`. Debug APK `fleetpulse.apk` was installed and launched.
